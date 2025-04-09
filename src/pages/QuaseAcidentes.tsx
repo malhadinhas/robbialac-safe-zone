@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,7 +7,7 @@ import { mockIncidents, mockStatsBySeverity } from "@/services/mockData";
 import { 
   AlertCircle, Send, Image, PlusCircle, Edit, Trash2, 
   MessageSquare, FileUp, FileDown, FileSpreadsheet, Calendar,
-  CheckCircle, Clock, User, BarChart
+  CheckCircle, Clock, User, ChartBar
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Incident } from "@/types";
@@ -55,9 +54,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import { 
+  BarChart as RechartsBarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer, 
+  Cell 
+} from 'recharts';
 
-// Form schema for editing an incident
 const formSchema = z.object({
   status: z.string(),
   implementedAction: z.string().optional(),
@@ -97,12 +104,10 @@ export default function QuaseAcidentes() {
     },
   });
   
-  // Verificar se o usuário é admin
   useEffect(() => {
     setIsAdmin(user?.role === 'admin_app' || user?.role === 'admin_qa');
   }, [user]);
   
-  // Iniciar chatbot quando modal abrir
   useEffect(() => {
     if (isModalOpen) {
       setChatMessages([
@@ -115,14 +120,12 @@ export default function QuaseAcidentes() {
     }
   }, [isModalOpen]);
   
-  // Auto-scroll para a última mensagem
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatMessages]);
   
-  // Load form data when editing an incident
   useEffect(() => {
     if (selectedIncidentId) {
       const incident = incidents.find(inc => inc.id === selectedIncidentId);
@@ -152,15 +155,9 @@ export default function QuaseAcidentes() {
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
     
-    // Adicionar mensagem do usuário ao chat
     setChatMessages(prev => [...prev, { text: newMessage, isBot: false }]);
-    
-    // Lógica do chatbot para perguntar os campos necessários
     const botResponse = processChatbotResponse(newMessage);
-    
     setNewMessage("");
-    
-    // Simular resposta do chatbot após um breve delay
     setTimeout(() => {
       setChatMessages(prev => [...prev, { text: botResponse, isBot: true }]);
     }, 500);
@@ -169,7 +166,6 @@ export default function QuaseAcidentes() {
   const processChatbotResponse = (message: string): string => {
     const lastBotMessage = [...chatMessages].reverse().find(msg => msg.isBot)?.text || "";
     
-    // Fluxo de perguntas do chatbot
     if (lastBotMessage.includes("qual o título ou breve descrição")) {
       setCurrentIncident(prev => ({ ...prev, title: message }));
       return "Obrigado! Em qual local da fábrica isso aconteceu?";
@@ -192,26 +188,20 @@ export default function QuaseAcidentes() {
         ? "Médio" 
         : "Baixo";
       
-      // Define gravity value based on severity
       const gravityValue = severity === "Alto" ? 7 : severity === "Médio" ? 4 : 1;
       
-      // Define frequency as Baixa by default
       const frequency = "Baixa";
-      const frequencyValue = 2; // Baixa is 2 according to requirements
+      const frequencyValue = 2;
       
-      // Calculate risk (frequency * gravity)
       const risk = frequencyValue * gravityValue;
       
-      // Determine QA quality based on risk
       let qaQuality: "Baixa" | "Média" | "Alta" = "Baixa";
       if (risk > 24) qaQuality = "Alta";
       else if (risk >= 8) qaQuality = "Média";
       else qaQuality = "Baixa";
       
-      // Set default resolution days based on severity
       const resolutionDays = severity === "Alto" ? 7 : severity === "Médio" ? 14 : 30;
       
-      // Calculate resolution deadline
       const resolutionDeadline = new Date();
       resolutionDeadline.setDate(resolutionDeadline.getDate() + resolutionDays);
       
@@ -232,7 +222,6 @@ export default function QuaseAcidentes() {
         resolutionDeadline
       }));
       
-      // Após coletar todos os dados, criar o novo incidente
       setTimeout(() => {
         if (currentIncident.title && currentIncident.location && currentIncident.description) {
           const newIncident = currentIncident as Incident;
@@ -268,23 +257,19 @@ export default function QuaseAcidentes() {
   const onSubmitEdit = (values: z.infer<typeof formSchema>) => {
     if (!selectedIncidentId) return;
     
-    // Find the incident to update
     const updatedIncidents = incidents.map(incident => {
       if (incident.id === selectedIncidentId) {
         const gravityValue = parseInt(values.gravityValue || "1");
         const frequencyValue = values.frequency === "Alta" ? 8 : values.frequency === "Moderada" ? 6 : 2;
         const risk = gravityValue * frequencyValue;
         
-        // Determine QA quality based on risk
         let qaQuality: "Baixa" | "Média" | "Alta" = "Baixa";
         if (risk > 24) qaQuality = "Alta";
         else if (risk >= 8) qaQuality = "Média";
         else qaQuality = "Baixa";
         
-        // Calculate resolution days based on severity/risk
         const resolutionDays = qaQuality === "Alta" ? 7 : qaQuality === "Média" ? 14 : 30;
         
-        // Calculate resolution deadline if not already set
         let resolutionDeadline = incident.resolutionDeadline;
         if (!resolutionDeadline) {
           const newDeadline = new Date();
@@ -349,8 +334,6 @@ export default function QuaseAcidentes() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Here we would normally process the Excel file
-      // For now, we'll just show a success message
       toast.success(`Arquivo "${file.name}" importado com sucesso!`);
       setIsImportDialogOpen(false);
     }
@@ -557,7 +540,7 @@ export default function QuaseAcidentes() {
               </CardHeader>
               <CardContent className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={mockStatsBySeverity}>
+                  <RechartsBarChart data={mockStatsBySeverity}>
                     <XAxis dataKey="severity" />
                     <YAxis />
                     <Tooltip />
@@ -567,7 +550,7 @@ export default function QuaseAcidentes() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Bar>
-                  </BarChart>
+                  </RechartsBarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
@@ -622,7 +605,7 @@ export default function QuaseAcidentes() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
+                    <RechartsBarChart
                       data={[
                         { month: 'Jan', baixo: 2, medio: 1, alto: 0 },
                         { month: 'Fev', baixo: 1, medio: 2, alto: 1 },
@@ -637,7 +620,7 @@ export default function QuaseAcidentes() {
                       <Bar dataKey="baixo" name="Baixo" fill="#ffc107" />
                       <Bar dataKey="medio" name="Médio" fill="#fd7e14" />
                       <Bar dataKey="alto" name="Alto" fill="#dc3545" />
-                    </BarChart>
+                    </RechartsBarChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
@@ -646,7 +629,6 @@ export default function QuaseAcidentes() {
         </TabsContent>
       </Tabs>
       
-      {/* Modal de Chatbot para Reportar Quase Acidente */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-lg max-w-md w-full max-h-[80vh] flex flex-col">
@@ -708,7 +690,6 @@ export default function QuaseAcidentes() {
         </div>
       )}
       
-      {/* Diálogo de confirmação para apagar incidente */}
       <AlertDialog open={!!incidentToDelete} onOpenChange={() => setIncidentToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -729,7 +710,6 @@ export default function QuaseAcidentes() {
         </AlertDialogContent>
       </AlertDialog>
       
-      {/* Modal de edição de incidente */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -905,7 +885,6 @@ export default function QuaseAcidentes() {
         </DialogContent>
       </Dialog>
       
-      {/* Dialog para importar excel */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -936,7 +915,6 @@ export default function QuaseAcidentes() {
         </DialogContent>
       </Dialog>
       
-      {/* Dialog para exportar */}
       <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -959,7 +937,7 @@ export default function QuaseAcidentes() {
                 onClick={handleExportAnalytics}
               >
                 <div className="text-center">
-                  <BarChart className="mx-auto h-8 w-8" />
+                  <ChartBar className="mx-auto h-8 w-8" />
                   <p className="mt-2 text-sm">Exportar Relatórios</p>
                 </div>
               </Button>
