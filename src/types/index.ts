@@ -1,3 +1,4 @@
+
 export type UserRole = "admin_app" | "admin_qa" | "user";
 
 export interface User {
@@ -60,6 +61,7 @@ export interface Incident {
   reporterName?: string;
   factoryArea?: string;
   suggestionToFix?: string;
+  images?: string[]; // Add images property to the interface
 }
 
 export interface StatsByCategory {

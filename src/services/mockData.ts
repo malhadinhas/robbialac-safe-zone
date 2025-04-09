@@ -1,3 +1,4 @@
+
 import { Video, Incident, Medal, StatsByCategory, StatsByZone, StatsBySeverity, Department, SystemConfig } from "@/types";
 
 export const mockVideos: Video[] = [
@@ -91,9 +92,9 @@ export const mockIncidents: Incident[] = [
     reportedBy: "user@robbialac.pt",
     severity: "Médio",
     status: "Resolvido",
-    images: ["/placeholder.svg"],
+    images: ["/placeholder.svg"], // Now correctly typed
     adminNotes: "Válvula substituída e procedimento revisado.",
-    resolution: "Substituição da válvula e treinamento da equipe.",
+    implementedAction: "Substituição da válvula e treinamento da equipe.",
     pointsAwarded: 75,
     department: "Operações"
   },
@@ -106,7 +107,7 @@ export const mockIncidents: Incident[] = [
     reportedBy: "user@robbialac.pt",
     severity: "Baixo",
     status: "Em Análise",
-    images: ["/placeholder.svg"],
+    images: ["/placeholder.svg"], // Now correctly typed
     adminNotes: "Material já solicitado para manutenção.",
     pointsAwarded: 50,
     department: "Operações"
@@ -120,7 +121,7 @@ export const mockIncidents: Incident[] = [
     reportedBy: "ines.lopes@robbialac.pt",
     severity: "Alto",
     status: "Reportado",
-    images: ["/placeholder.svg"],
+    images: ["/placeholder.svg"], // Now correctly typed
     pointsAwarded: 100,
     department: "Comercial"
   },
@@ -133,7 +134,7 @@ export const mockIncidents: Incident[] = [
     reportedBy: "joao.malhadinhas@robbialac.pt",
     severity: "Alto",
     status: "Em Análise",
-    images: ["/placeholder.svg"],
+    images: ["/placeholder.svg"], // Now correctly typed
     adminNotes: "Engenharia notificada para reparo urgente.",
     pointsAwarded: 100,
     department: "Financeira"

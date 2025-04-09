@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Image, MessageSquare, Send, Calendar as CalendarIcon } from "lucide-react";
@@ -190,9 +189,12 @@ export default function ChatbotModal({
         const resolutionDeadline = new Date();
         resolutionDeadline.setDate(resolutionDeadline.getDate() + resolutionDays);
         
+        const incidentDescription = currentIncident.description || "Sem descrição";
+        
         const finalIncident: Incident = {
           ...currentIncident as Partial<Incident>,
           title: currentIncident.description?.substring(0, 50) + "...",
+          description: incidentDescription,
           severity: severity as "Baixo" | "Médio" | "Alto",
           date: date || new Date(),
           reportedBy: user?.email || "",
