@@ -190,11 +190,13 @@ export default function ChatbotModal({
         resolutionDeadline.setDate(resolutionDeadline.getDate() + resolutionDays);
         
         const incidentDescription = currentIncident.description || "Sem descrição";
+        const incidentLocation = currentIncident.location || "Local não especificado";
         
         const finalIncident: Incident = {
           ...currentIncident as Partial<Incident>,
           title: currentIncident.description?.substring(0, 50) + "...",
           description: incidentDescription,
+          location: incidentLocation,
           severity: severity as "Baixo" | "Médio" | "Alto",
           date: date || new Date(),
           reportedBy: user?.email || "",
@@ -207,7 +209,8 @@ export default function ChatbotModal({
           risk,
           qaQuality,
           resolutionDays,
-          resolutionDeadline
+          resolutionDeadline,
+          images: []
         };
         
         setCurrentIncident(finalIncident);
