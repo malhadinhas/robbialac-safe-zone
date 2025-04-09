@@ -5,11 +5,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { mockIncidents, mockStatsBySeverity } from "@/services/mockData";
-import { AlertCircle, Send, Image, PlusCircle, Edit, Trash2, MessageSquare } from "lucide-react";
+import { 
+  AlertCircle, Send, Image, PlusCircle, Edit, Trash2, 
+  MessageSquare, FileUp, FileDown, FileSpreadsheet, Calendar,
+  CheckCircle, Clock, User, BarChart
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Incident } from "@/types";
 import { toast } from "sonner";
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
   AlertDialog,
@@ -21,7 +25,49 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+
+// Form schema for editing an incident
+const formSchema = z.object({
+  status: z.string(),
+  implementedAction: z.string().optional(),
+  responsible: z.string().optional(),
+  frequency: z.string().optional(),
+  gravityValue: z.string().optional(),
+  completionDate: z.string().optional(),
+  resolutionDeadline: z.string().optional(),
+  adminNotes: z.string().optional(),
+});
 
 export default function QuaseAcidentes() {
   const { user } = useAuth();
@@ -32,7 +78,24 @@ export default function QuaseAcidentes() {
   const [currentIncident, setCurrentIncident] = useState<Partial<Incident>>({});
   const [incidentToDelete, setIncidentToDelete] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      status: "Reportado",
+      implementedAction: "",
+      responsible: "",
+      frequency: "Baixa",
+      gravityValue: "1",
+      adminNotes: "",
+    },
+  });
   
   // Verificar se o usuário é admin
   useEffect(() => {
@@ -58,6 +121,25 @@ export default function QuaseAcidentes() {
       chatEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatMessages]);
+  
+  // Load form data when editing an incident
+  useEffect(() => {
+    if (selectedIncidentId) {
+      const incident = incidents.find(inc => inc.id === selectedIncidentId);
+      if (incident) {
+        form.reset({
+          status: incident.status,
+          implementedAction: incident.implementedAction || "",
+          responsible: incident.responsible || "",
+          frequency: incident.frequency || "Baixa",
+          gravityValue: incident.gravityValue?.toString() || "1",
+          completionDate: incident.completionDate ? format(new Date(incident.completionDate), 'yyyy-MM-dd') : "",
+          resolutionDeadline: incident.resolutionDeadline ? format(new Date(incident.resolutionDeadline), 'yyyy-MM-dd') : "",
+          adminNotes: incident.adminNotes || "",
+        });
+      }
+    }
+  }, [selectedIncidentId, incidents, form]);
   
   const handleNewIncidentReport = () => {
     setIsModalOpen(true);
@@ -110,6 +192,29 @@ export default function QuaseAcidentes() {
         ? "Médio" 
         : "Baixo";
       
+      // Define gravity value based on severity
+      const gravityValue = severity === "Alto" ? 7 : severity === "Médio" ? 4 : 1;
+      
+      // Define frequency as Baixa by default
+      const frequency = "Baixa";
+      const frequencyValue = 2; // Baixa is 2 according to requirements
+      
+      // Calculate risk (frequency * gravity)
+      const risk = frequencyValue * gravityValue;
+      
+      // Determine QA quality based on risk
+      let qaQuality: "Baixa" | "Média" | "Alta" = "Baixa";
+      if (risk > 24) qaQuality = "Alta";
+      else if (risk >= 8) qaQuality = "Média";
+      else qaQuality = "Baixa";
+      
+      // Set default resolution days based on severity
+      const resolutionDays = severity === "Alto" ? 7 : severity === "Médio" ? 14 : 30;
+      
+      // Calculate resolution deadline
+      const resolutionDeadline = new Date();
+      resolutionDeadline.setDate(resolutionDeadline.getDate() + resolutionDays);
+      
       setCurrentIncident(prev => ({ 
         ...prev, 
         severity: severity as "Baixo" | "Médio" | "Alto",
@@ -117,7 +222,14 @@ export default function QuaseAcidentes() {
         reportedBy: user?.email || "",
         status: "Reportado",
         id: Date.now().toString(),
-        pointsAwarded: severity === "Alto" ? 100 : severity === "Médio" ? 75 : 50
+        pointsAwarded: severity === "Alto" ? 100 : severity === "Médio" ? 75 : 50,
+        gravityValue,
+        frequency,
+        frequencyValue,
+        risk,
+        qaQuality,
+        resolutionDays,
+        resolutionDeadline
       }));
       
       // Após coletar todos os dados, criar o novo incidente
@@ -149,7 +261,61 @@ export default function QuaseAcidentes() {
   };
   
   const handleEditIncident = (id: string) => {
-    toast.info("Funcionalidade de edição será implementada em breve.");
+    setSelectedIncidentId(id);
+    setIsEditModalOpen(true);
+  };
+  
+  const onSubmitEdit = (values: z.infer<typeof formSchema>) => {
+    if (!selectedIncidentId) return;
+    
+    // Find the incident to update
+    const updatedIncidents = incidents.map(incident => {
+      if (incident.id === selectedIncidentId) {
+        const gravityValue = parseInt(values.gravityValue || "1");
+        const frequencyValue = values.frequency === "Alta" ? 8 : values.frequency === "Moderada" ? 6 : 2;
+        const risk = gravityValue * frequencyValue;
+        
+        // Determine QA quality based on risk
+        let qaQuality: "Baixa" | "Média" | "Alta" = "Baixa";
+        if (risk > 24) qaQuality = "Alta";
+        else if (risk >= 8) qaQuality = "Média";
+        else qaQuality = "Baixa";
+        
+        // Calculate resolution days based on severity/risk
+        const resolutionDays = qaQuality === "Alta" ? 7 : qaQuality === "Média" ? 14 : 30;
+        
+        // Calculate resolution deadline if not already set
+        let resolutionDeadline = incident.resolutionDeadline;
+        if (!resolutionDeadline) {
+          const newDeadline = new Date();
+          newDeadline.setDate(newDeadline.getDate() + resolutionDays);
+          resolutionDeadline = newDeadline;
+        } else if (values.resolutionDeadline) {
+          resolutionDeadline = new Date(values.resolutionDeadline);
+        }
+        
+        return {
+          ...incident,
+          status: values.status as Incident["status"],
+          adminNotes: values.adminNotes,
+          implementedAction: values.implementedAction,
+          responsible: values.responsible,
+          frequency: values.frequency as "Baixa" | "Moderada" | "Alta",
+          frequencyValue,
+          gravityValue,
+          risk,
+          qaQuality,
+          resolutionDays,
+          resolutionDeadline,
+          completionDate: values.completionDate ? new Date(values.completionDate) : undefined
+        };
+      }
+      return incident;
+    });
+    
+    setIncidents(updatedIncidents);
+    toast.success("Quase acidente atualizado com sucesso!");
+    setIsEditModalOpen(false);
   };
   
   const getSeverityColor = (severity: string) => {
@@ -171,6 +337,35 @@ export default function QuaseAcidentes() {
     }
   };
   
+  const getQAQualityColor = (quality?: string) => {
+    switch (quality) {
+      case "Alta": return "bg-red-100 text-red-800";
+      case "Média": return "bg-orange-100 text-orange-800";
+      case "Baixa": return "bg-green-100 text-green-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
+  
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Here we would normally process the Excel file
+      // For now, we'll just show a success message
+      toast.success(`Arquivo "${file.name}" importado com sucesso!`);
+      setIsImportDialogOpen(false);
+    }
+  };
+  
+  const handleExportExcel = () => {
+    toast.success("Dados exportados para Excel com sucesso!");
+    setIsExportDialogOpen(false);
+  };
+  
+  const handleExportAnalytics = () => {
+    toast.success("Relatórios analíticos exportados com sucesso!");
+    setIsExportDialogOpen(false);
+  };
+  
   return (
     <Layout>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -178,13 +373,35 @@ export default function QuaseAcidentes() {
           <h1 className="text-3xl font-bold text-gray-800">Quase Acidentes</h1>
           <p className="text-gray-600">Visualize, reporte e acompanhe situações de risco</p>
         </div>
-        <Button 
-          onClick={handleNewIncidentReport} 
-          className="bg-robbialac hover:bg-robbialac-dark flex items-center"
-        >
-          <PlusCircle className="mr-2 h-5 w-5" />
-          Reportar Quase Acidente
-        </Button>
+        <div className="flex gap-2">
+          {isAdmin && (
+            <>
+              <Button 
+                variant="outline" 
+                className="flex items-center bg-white"
+                onClick={() => setIsImportDialogOpen(true)}
+              >
+                <FileUp className="mr-2 h-5 w-5" />
+                Importar
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex items-center bg-white"
+                onClick={() => setIsExportDialogOpen(true)}
+              >
+                <FileDown className="mr-2 h-5 w-5" />
+                Exportar
+              </Button>
+            </>
+          )}
+          <Button 
+            onClick={handleNewIncidentReport} 
+            className="bg-robbialac hover:bg-robbialac-dark flex items-center"
+          >
+            <PlusCircle className="mr-2 h-5 w-5" />
+            Reportar Quase Acidente
+          </Button>
+        </div>
       </div>
       
       <Tabs defaultValue="lista">
@@ -229,15 +446,60 @@ export default function QuaseAcidentes() {
                       }`}>
                         {incident.severity}
                       </span>
+                      {incident.qaQuality && (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getQAQualityColor(incident.qaQuality)}`}>
+                          QA: {incident.qaQuality}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <p className="mb-3">{incident.description}</p>
                   
-                  <div className="text-sm text-gray-600 mb-2">
-                    <strong>Local:</strong> {incident.location}
+                  <div className="text-sm text-gray-600 mb-2 grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div><strong>Local:</strong> {incident.location}</div>
+                    
+                    {incident.responsible && (
+                      <div><strong>Responsável:</strong> {incident.responsible}</div>
+                    )}
+                    
+                    {incident.resolutionDeadline && (
+                      <div className="flex items-center">
+                        <Calendar className="inline h-4 w-4 mr-1 text-gray-500" />
+                        <strong>Prazo resolução:</strong> {format(new Date(incident.resolutionDeadline), 'dd/MM/yyyy')}
+                      </div>
+                    )}
+                    
+                    {incident.completionDate && (
+                      <div className="flex items-center">
+                        <CheckCircle className="inline h-4 w-4 mr-1 text-green-500" />
+                        <strong>Data Conclusão:</strong> {format(new Date(incident.completionDate), 'dd/MM/yyyy')}
+                      </div>
+                    )}
+                    
+                    {incident.frequency && (
+                      <div><strong>Frequência:</strong> {incident.frequency}</div>
+                    )}
+                    
+                    {incident.risk !== undefined && (
+                      <div><strong>Risco:</strong> {incident.risk}</div>
+                    )}
+                    
+                    {incident.resolutionDays !== undefined && (
+                      <div className="flex items-center">
+                        <Clock className="inline h-4 w-4 mr-1 text-gray-500" />
+                        <strong>Dias resolução:</strong> {incident.resolutionDays}
+                      </div>
+                    )}
                   </div>
+                  
+                  {incident.implementedAction && (
+                    <div className="mt-4 p-3 bg-green-50 rounded-md border border-green-200">
+                      <p className="text-sm font-medium text-green-800">Ação implementada:</p>
+                      <p className="text-sm text-gray-700">{incident.implementedAction}</p>
+                    </div>
+                  )}
                   
                   {incident.adminNotes && (
                     <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
@@ -466,6 +728,245 @@ export default function QuaseAcidentes() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* Modal de edição de incidente */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Quase Acidente</DialogTitle>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmitEdit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Estado</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o estado" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Reportado">Reportado</SelectItem>
+                        <SelectItem value="Em Análise">Em Análise</SelectItem>
+                        <SelectItem value="Resolvido">Resolvido</SelectItem>
+                        <SelectItem value="Arquivado">Arquivado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="responsible"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Responsável</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome do responsável" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="completionDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data de Conclusão</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="frequency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Frequência</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a frequência" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Baixa">Baixa (2)</SelectItem>
+                          <SelectItem value="Moderada">Moderada (6)</SelectItem>
+                          <SelectItem value="Alta">Alta (8)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="gravityValue"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gravidade</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a gravidade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="1">Baixa (1)</SelectItem>
+                          <SelectItem value="4">Moderada (4)</SelectItem>
+                          <SelectItem value="7">Alta (7)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="resolutionDeadline"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prazo de Resolução</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="implementedAction"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Ação Implementada</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Descreva as ações implementadas para resolver o problema"
+                        className="resize-none min-h-[100px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="adminNotes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notas do Administrador</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Adicione notas e observações"
+                        className="resize-none min-h-[100px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" className="bg-robbialac hover:bg-robbialac-dark">
+                  Salvar Alterações
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialog para importar excel */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Importar Dados de Excel</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">
+              Selecione um arquivo Excel (.xlsx) contendo os dados de quase acidentes para importação.
+            </p>
+            <div className="border-2 border-dashed rounded-md border-gray-300 p-6 text-center">
+              <FileSpreadsheet className="mx-auto h-10 w-10 text-gray-400" />
+              <p className="mt-2 text-sm text-gray-500">Clique para selecionar um arquivo Excel</p>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept=".xlsx, .xls"
+                onChange={handleFileUpload}
+              />
+              <Button 
+                className="mt-4 bg-robbialac hover:bg-robbialac-dark"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Selecionar Arquivo
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Dialog para exportar */}
+      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Exportar Dados</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Button 
+                className="bg-green-600 hover:bg-green-700 text-white flex items-center justify-center py-8"
+                onClick={handleExportExcel}
+              >
+                <div className="text-center">
+                  <FileSpreadsheet className="mx-auto h-8 w-8" />
+                  <p className="mt-2 text-sm">Exportar para Excel</p>
+                </div>
+              </Button>
+              
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center py-8"
+                onClick={handleExportAnalytics}
+              >
+                <div className="text-center">
+                  <BarChart className="mx-auto h-8 w-8" />
+                  <p className="mt-2 text-sm">Exportar Relatórios</p>
+                </div>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }

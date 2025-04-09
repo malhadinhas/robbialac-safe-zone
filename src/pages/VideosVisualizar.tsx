@@ -1,215 +1,235 @@
 
 import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
-import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Progress } from "@/components/ui/progress";
 import { mockVideos } from "@/services/mockData";
 import { Video } from "@/types";
-import { Button } from "@/components/ui/button";
-import { 
-  ArrowLeft, ThumbsUp, MessageSquare, Share2, Bookmark, 
-  Flag, Clock, MoreVertical, Eye 
-} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { 
+  ArrowLeft, 
+  Play, 
+  Pause, 
+  Volume2, 
+  VolumeX,
+  Maximize, 
+  SkipBack, 
+  SkipForward, 
+  Share2
+} from "lucide-react";
 
 export default function VideosVisualizar() {
-  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [video, setVideo] = useState<Video | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+  const { id } = useParams();
   const { user } = useAuth();
+  const [video, setVideo] = useState<Video | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [volume, setVolume] = useState(80);
+  const [isMuted, setIsMuted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   
   useEffect(() => {
     if (id) {
-      // Simular carregamento do vídeo
-      setIsLoading(true);
-      setTimeout(() => {
-        const foundVideo = mockVideos.find(video => video.id === id);
-        setVideo(foundVideo || null);
-        setIsLoading(false);
+      const foundVideo = mockVideos.find(v => v.id === id);
+      if (foundVideo) {
+        setVideo(foundVideo);
+        setDuration(foundVideo.duration);
         
-        if (foundVideo) {
-          // Registrar visualização e pontos
-          toast.success(`+${foundVideo.pointsForWatching} pontos por assistir este vídeo!`);
-        }
-      }, 1000);
+        // Simular que o usuário assistiu ao vídeo após carregar
+        const timer = setTimeout(() => {
+          if (user && !user.viewedVideos.includes(id)) {
+            // Adicionar pontos pela visualização
+            toast.success(`+${foundVideo.pointsForWatching} pontos por assistir este vídeo!`);
+          }
+        }, 3000);
+        
+        return () => clearTimeout(timer);
+      } else {
+        toast.error("Vídeo não encontrado!");
+        navigate("/formacoes");
+      }
     }
-  }, [id]);
+  }, [id, navigate, user]);
   
-  const handleBackClick = () => {
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isPlaying && progress < 100) {
+      interval = setInterval(() => {
+        const newProgress = progress + (100 / (duration || 1)) * 0.5;
+        const newTime = currentTime + 0.5;
+        
+        setProgress(Math.min(newProgress, 100));
+        setCurrentTime(Math.min(newTime, duration));
+        
+        if (newProgress >= 100) {
+          setIsPlaying(false);
+        }
+      }, 500);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isPlaying, progress, duration, currentTime]);
+  
+  const handlePlayPause = () => {
+    setIsPlaying(!isPlaying);
+  };
+  
+  const handleVolumeChange = (value: number[]) => {
+    setVolume(value[0]);
+    if (value[0] === 0) {
+      setIsMuted(true);
+    } else {
+      setIsMuted(false);
+    }
+  };
+  
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+  };
+  
+  const handleProgressChange = (value: number[]) => {
+    const newProgress = value[0];
+    const newTime = (duration * newProgress) / 100;
+    
+    setProgress(newProgress);
+    setCurrentTime(newTime);
+  };
+  
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+  
+  const handleGoBack = () => {
     navigate(-1);
   };
   
-  const toggleLike = () => {
-    setIsLiked(!isLiked);
-    toast.success(isLiked ? "Gostei removido" : "Você gostou deste vídeo!");
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => toast.success("Link copiado para a área de transferência!"))
+      .catch(() => toast.error("Erro ao copiar o link!"));
   };
-  
-  const toggleSave = () => {
-    setIsSaved(!isSaved);
-    toast.success(isSaved 
-      ? "Vídeo removido dos salvos" 
-      : "Vídeo salvo para assistir mais tarde!"
-    );
-  };
-  
-  const shareVideo = () => {
-    toast.success("Link do vídeo copiado para a área de transferência!");
-  };
-  
-  if (isLoading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-96">
-          <div className="animate-pulse text-robbialac text-xl font-semibold">
-            Carregando vídeo...
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-  
-  if (!video) {
-    return (
-      <Layout>
-        <div className="flex flex-col items-center justify-center h-96">
-          <p className="text-xl font-semibold mb-4">Vídeo não encontrado</p>
-          <Button onClick={handleBackClick}>Voltar</Button>
-        </div>
-      </Layout>
-    );
-  }
   
   return (
     <Layout>
-      <div className="mb-4">
-        <Button variant="ghost" onClick={handleBackClick} className="mb-2">
-          <ArrowLeft className="h-5 w-5 mr-2" /> Voltar
+      <div className="flex items-center mb-4">
+        <Button variant="ghost" onClick={handleGoBack} className="mr-2">
+          <ArrowLeft className="h-5 w-5 mr-1" />
+          Voltar
         </Button>
+        <h1 className="text-2xl font-bold flex-1">{video?.title}</h1>
       </div>
       
-      {/* Player de Vídeo */}
-      <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4 relative">
+      <div className="bg-black relative rounded-lg overflow-hidden aspect-video max-h-[70vh]">
+        {/* Placeholder para o vídeo */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-white text-center">
-            <div className="mb-4">
-              <Play className="h-16 w-16 mx-auto" />
+          <img 
+            src={video?.thumbnail || "/placeholder.svg"} 
+            alt={video?.title} 
+            className="w-full h-full object-contain"
+          />
+        </div>
+        
+        {/* Overlay de controles */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+          {/* Barra de progresso */}
+          <div className="pb-2">
+            <Slider
+              value={[progress]}
+              max={100}
+              step={0.1}
+              onValueChange={handleProgressChange}
+              className="cursor-pointer"
+            />
+          </div>
+          
+          {/* Controles de reprodução */}
+          <div className="flex items-center justify-between text-white">
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={handlePlayPause}>
+                {isPlaying ? (
+                  <Pause className="h-5 w-5" />
+                ) : (
+                  <Play className="h-5 w-5" />
+                )}
+              </Button>
+              
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                <SkipBack className="h-4 w-4" />
+              </Button>
+              
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                <SkipForward className="h-4 w-4" />
+              </Button>
+              
+              <span className="text-xs">
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </span>
             </div>
-            <p>
-              Video Player será integrado aqui.<br />
-              (Placeholder - sem vídeo real)
-            </p>
+            
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={toggleMute}>
+                  {isMuted ? (
+                    <VolumeX className="h-4 w-4" />
+                  ) : (
+                    <Volume2 className="h-4 w-4" />
+                  )}
+                </Button>
+                <Slider
+                  value={[isMuted ? 0 : volume]}
+                  max={100}
+                  step={1}
+                  onValueChange={handleVolumeChange}
+                  className="w-20"
+                />
+              </div>
+              
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={handleShare}>
+                <Share2 className="h-4 w-4" />
+              </Button>
+              
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                <Maximize className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
       
       {/* Informações do vídeo */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">{video.title}</h1>
-        <div className="flex items-center justify-between flex-wrap gap-2 text-sm text-gray-500 mb-4">
-          <div className="flex items-center space-x-4">
-            <span className="flex items-center">
-              <Eye className="h-4 w-4 mr-1" /> {video.views} visualizações
-            </span>
-            <span>
-              {formatDistanceToNow(new Date(video.uploadDate), { 
-                addSuffix: true, 
-                locale: ptBR 
-              })}
-            </span>
-          </div>
-          <div>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-              {video.category}
-            </span>
-          </div>
+      <div className="mt-6">
+        <h2 className="text-2xl font-bold mb-2">{video?.title}</h2>
+        <div className="flex items-center text-sm text-gray-500 mb-4">
+          <span className="bg-robbialac text-white px-2 py-1 rounded-full text-xs mr-2">
+            {video?.category}
+          </span>
+          <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs mr-2">
+            {video?.zone}
+          </span>
+          <span>{video?.views} visualizações</span>
         </div>
         
-        {/* Ações do vídeo */}
-        <div className="flex flex-wrap gap-2 mb-6 border-b pb-4">
-          <Button 
-            variant={isLiked ? "default" : "outline"} 
-            size="sm"
-            onClick={toggleLike}
-            className={isLiked ? "bg-robbialac hover:bg-robbialac-dark" : ""}
-          >
-            <ThumbsUp className="h-4 w-4 mr-2" /> Gostei
-          </Button>
-          <Button variant="outline" size="sm">
-            <MessageSquare className="h-4 w-4 mr-2" /> Comentar
-          </Button>
-          <Button variant="outline" size="sm" onClick={shareVideo}>
-            <Share2 className="h-4 w-4 mr-2" /> Compartilhar
-          </Button>
-          <Button 
-            variant={isSaved ? "default" : "outline"} 
-            size="sm"
-            onClick={toggleSave}
-            className={isSaved ? "bg-robbialac hover:bg-robbialac-dark" : ""}
-          >
-            <Bookmark className="h-4 w-4 mr-2" /> Salvar
-          </Button>
-          <Button variant="outline" size="sm" className="ml-auto">
-            <MoreVertical className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        {/* Descrição */}
         <div className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="font-semibold mb-2">Descrição</h3>
-          <p className="text-gray-700 mb-4">{video.description}</p>
-          <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-            <div>
-              <span className="font-medium">Área:</span> {video.zone}
-            </div>
-            <div>
-              <span className="font-medium">Categoria:</span> {video.category}
-            </div>
-            <div>
-              <span className="font-medium">Duração:</span> {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
-            </div>
-            <div>
-              <span className="font-medium">Pontos:</span> +{video.pointsForWatching}
-            </div>
-          </div>
+          <h3 className="font-medium mb-2">Descrição</h3>
+          <p className="text-gray-700">{video?.description}</p>
         </div>
-      </div>
-      
-      {/* Seção de Vídeos Relacionados */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-4">Vídeos Relacionados</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {mockVideos
-            .filter(v => v.id !== video.id && v.zone === video.zone)
-            .slice(0, 3)
-            .map(relatedVideo => (
-              <div 
-                key={relatedVideo.id}
-                className="flex flex-col cursor-pointer hover:bg-gray-50 rounded-lg overflow-hidden"
-                onClick={() => navigate(`/videos/visualizar/${relatedVideo.id}`)}
-              >
-                <div className="relative aspect-video bg-gray-200">
-                  <img 
-                    src={relatedVideo.thumbnail}
-                    alt={relatedVideo.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                    {Math.floor(relatedVideo.duration / 60)}:{(relatedVideo.duration % 60).toString().padStart(2, '0')}
-                  </div>
-                </div>
-                <div className="p-2">
-                  <h3 className="font-medium line-clamp-2 text-sm">{relatedVideo.title}</h3>
-                  <div className="text-xs text-gray-500">
-                    {relatedVideo.views} visualizações
-                  </div>
-                </div>
-              </div>
-            ))}
+        
+        <div className="mt-4">
+          <Progress value={progress} className="h-1" />
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <span>Progresso: {Math.round(progress)}%</span>
+            {progress === 100 && <span className="text-green-600 font-medium">Concluído</span>}
+          </div>
         </div>
       </div>
     </Layout>

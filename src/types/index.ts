@@ -49,6 +49,18 @@ export interface Incident {
   adminNotes?: string;
   resolution?: string;
   pointsAwarded: number;
+  
+  // New fields added based on Excel requirements
+  implementedAction?: string;
+  completionDate?: Date;
+  responsible?: string;
+  frequency?: "Baixa" | "Moderada" | "Alta"; // 2-Baixa, 6-Moderada, 8-Alta
+  frequencyValue?: number; // Numerical value of frequency
+  gravityValue?: number; // 1-Baixa, 4-Moderada, 7-Alta
+  risk?: number; // Calculated field (frequency * gravity)
+  qaQuality?: "Baixa" | "Média" | "Alta"; // Alta>24, Media 8 ou 14, Baixa <6
+  resolutionDays?: number;
+  resolutionDeadline?: Date;
 }
 
 export interface StatsByCategory {
@@ -68,3 +80,4 @@ export interface StatsBySeverity {
   count: number;
   color: string;
 }
+
