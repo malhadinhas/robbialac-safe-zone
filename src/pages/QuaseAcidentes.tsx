@@ -487,178 +487,184 @@ export default function QuaseAcidentes() {
               <CardHeader>
                 <CardTitle className="text-lg font-medium">Análise de Quase Acidentes</CardTitle>
               </CardHeader>
-              <CardContent className="overflow-hidden">
+              <CardContent className="overflow-hidden pb-6">
                 <Tabs defaultValue="departamento" className="w-full">
-                  <TabsList variant="card" className="mb-4 w-full justify-start bg-background">
-                    <TabsTrigger variant="card" value="departamento">Por Departamento</TabsTrigger>
-                    <TabsTrigger variant="card" value="severidade">Por Severidade</TabsTrigger>
-                    <TabsTrigger variant="card" value="mensal">Tendência Mensal</TabsTrigger>
+                  <TabsList variant="fitted" className="mb-4 w-full justify-start">
+                    <TabsTrigger variant="fitted" value="departamento">Por Departamento</TabsTrigger>
+                    <TabsTrigger variant="fitted" value="severidade">Por Severidade</TabsTrigger>
+                    <TabsTrigger variant="fitted" value="mensal">Tendência Mensal</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="departamento" className="h-[350px] mt-4">
-                    <DepartmentAnalyticsChart 
-                      incidents={incidents}
-                      departments={departments}
-                      systemConfig={systemConfig}
-                      onUpdateDepartments={handleUpdateDepartments}
-                      onUpdateConfig={handleUpdateSystemConfig}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="severidade" className="h-[350px] mt-4">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsBarChart data={mockStatsBySeverity}>
-                        <XAxis dataKey="severity" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="count" name="Quantidade">
-                          {mockStatsBySeverity.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Bar>
-                      </RechartsBarChart>
-                    </ResponsiveContainer>
-                  </TabsContent>
-                  
-                  <TabsContent value="mensal" className="h-[350px] mt-4">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsBarChart
-                        data={monthlyData}
-                      >
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="baixo" name="Baixo" fill="#ffc107" />
-                        <Bar dataKey="medio" name="Médio" fill="#fd7e14" />
-                        <Bar dataKey="alto" name="Alto" fill="#dc3545" />
-                      </RechartsBarChart>
-                    </ResponsiveContainer>
-                  </TabsContent>
+                  <div className="h-[350px] mt-4">
+                    <TabsContent value="departamento" className="h-full">
+                      <DepartmentAnalyticsChart 
+                        incidents={incidents}
+                        departments={departments}
+                        systemConfig={systemConfig}
+                        onUpdateDepartments={handleUpdateDepartments}
+                        onUpdateConfig={handleUpdateSystemConfig}
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="severidade" className="h-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsBarChart data={mockStatsBySeverity}>
+                          <XAxis dataKey="severity" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="count" name="Quantidade">
+                            {mockStatsBySeverity.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Bar>
+                        </RechartsBarChart>
+                      </ResponsiveContainer>
+                    </TabsContent>
+                    
+                    <TabsContent value="mensal" className="h-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsBarChart
+                          data={monthlyData}
+                        >
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="baixo" name="Baixo" fill="#ffc107" />
+                          <Bar dataKey="medio" name="Médio" fill="#fd7e14" />
+                          <Bar dataKey="alto" name="Alto" fill="#dc3545" />
+                        </RechartsBarChart>
+                      </ResponsiveContainer>
+                    </TabsContent>
+                  </div>
                 </Tabs>
               </CardContent>
             </Card>
             
-            <Card className="bg-white shadow">
+            <Card className="bg-white shadow h-[500px]">
               <CardHeader>
                 <CardTitle className="text-lg font-medium">Distribuição de Quase Acidentes</CardTitle>
               </CardHeader>
               <CardContent className="overflow-hidden">
                 <Tabs defaultValue="status" className="w-full">
-                  <TabsList variant="card" className="mb-4 w-full justify-start bg-background">
-                    <TabsTrigger variant="card" value="status">Por Status</TabsTrigger>
-                    <TabsTrigger variant="card" value="frequencia">Por Frequência</TabsTrigger>
+                  <TabsList variant="fitted" className="mb-4 w-full justify-start">
+                    <TabsTrigger variant="fitted" value="status">Por Status</TabsTrigger>
+                    <TabsTrigger variant="fitted" value="frequencia">Por Frequência</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="status" className="mt-4">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-yellow-400 mr-2"></div>
-                          <span>Reportados</span>
+                  <div className="h-[350px]">
+                    <TabsContent value="status" className="h-full">
+                      <div className="space-y-4 pt-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="w-2 h-2 rounded-full bg-yellow-400 mr-2"></div>
+                            <span>Reportados</span>
+                          </div>
+                          <span className="font-medium">{incidents.filter(i => i.status === "Reportado").length}</span>
                         </div>
-                        <span className="font-medium">{incidents.filter(i => i.status === "Reportado").length}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
-                          <span>Em Análise</span>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
+                            <span>Em Análise</span>
+                          </div>
+                          <span className="font-medium">{incidents.filter(i => i.status === "Em Análise").length}</span>
                         </div>
-                        <span className="font-medium">{incidents.filter(i => i.status === "Em Análise").length}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-                          <span>Resolvidos</span>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                            <span>Resolvidos</span>
+                          </div>
+                          <span className="font-medium">{incidents.filter(i => i.status === "Resolvido").length}</span>
                         </div>
-                        <span className="font-medium">{incidents.filter(i => i.status === "Resolvido").length}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-gray-400 mr-2"></div>
-                          <span>Arquivados</span>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="w-2 h-2 rounded-full bg-gray-400 mr-2"></div>
+                            <span>Arquivados</span>
+                          </div>
+                          <span className="font-medium">{incidents.filter(i => i.status === "Arquivado").length}</span>
                         </div>
-                        <span className="font-medium">{incidents.filter(i => i.status === "Arquivado").length}</span>
                       </div>
-                    </div>
+                      
+                      <div className="mt-6 pt-6 border-t">
+                        <h3 className="font-medium mb-2">Tempo médio de resolução</h3>
+                        <div className="text-3xl font-bold text-robbialac">3.5 dias</div>
+                      </div>
+                    </TabsContent>
                     
-                    <div className="mt-6 pt-6 border-t">
-                      <h3 className="font-medium mb-2">Tempo médio de resolução</h3>
-                      <div className="text-3xl font-bold text-robbialac">3.5 dias</div>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="frequencia" className="h-[250px] mt-4">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          dataKey="value"
-                          data={frequencyData}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          label={(entry) => `${entry.name}: ${entry.value}`}
-                        >
-                          {frequencyData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </TabsContent>
+                    <TabsContent value="frequencia" className="h-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            dataKey="value"
+                            data={frequencyData}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            label={(entry) => `${entry.name}: ${entry.value}`}
+                          >
+                            {frequencyData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </TabsContent>
+                  </div>
                 </Tabs>
               </CardContent>
             </Card>
             
-            <Card className="bg-white shadow">
+            <Card className="bg-white shadow h-[500px]">
               <CardHeader>
                 <CardTitle className="text-lg font-medium">Análise de Riscos</CardTitle>
               </CardHeader>
               <CardContent className="overflow-hidden">
                 <Tabs defaultValue="tendencia" className="w-full">
-                  <TabsList variant="card" className="mb-4 w-full justify-start bg-background">
-                    <TabsTrigger variant="card" value="tendencia">Tendência Mensal</TabsTrigger>
-                    <TabsTrigger variant="card" value="risco">Por Nível de Risco</TabsTrigger>
+                  <TabsList variant="fitted" className="mb-4 w-full justify-start">
+                    <TabsTrigger variant="fitted" value="tendencia">Tendência Mensal</TabsTrigger>
+                    <TabsTrigger variant="fitted" value="risco">Por Nível de Risco</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="tendencia" className="h-[250px] mt-4">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={monthlyData}>
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="total" stroke="#8884d8" name="Total" />
-                        <Line type="monotone" dataKey="alto" stroke="#ff0000" name="Alto" />
-                        <Line type="monotone" dataKey="medio" stroke="#ff9800" name="Médio" />
-                        <Line type="monotone" dataKey="baixo" stroke="#ffeb3b" name="Baixo" />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </TabsContent>
-                  
-                  <TabsContent value="risco" className="h-[250px] mt-4">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          dataKey="value"
-                          data={riskData}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          label={(entry) => `${entry.name}: ${entry.value}`}
-                        >
-                          {riskData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </TabsContent>
+                  <div className="h-[350px]">
+                    <TabsContent value="tendencia" className="h-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={monthlyData}>
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Line type="monotone" dataKey="total" stroke="#8884d8" name="Total" />
+                          <Line type="monotone" dataKey="alto" stroke="#ff0000" name="Alto" />
+                          <Line type="monotone" dataKey="medio" stroke="#ff9800" name="Médio" />
+                          <Line type="monotone" dataKey="baixo" stroke="#ffeb3b" name="Baixo" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </TabsContent>
+                    
+                    <TabsContent value="risco" className="h-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            dataKey="value"
+                            data={riskData}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            label={(entry) => `${entry.name}: ${entry.value}`}
+                          >
+                            {riskData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </TabsContent>
+                  </div>
                 </Tabs>
               </CardContent>
             </Card>

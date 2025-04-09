@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { Department, Incident, SystemConfig } from "@/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   BarChart,
   Bar,
@@ -160,63 +159,61 @@ export default function DepartmentAnalyticsChart({
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg font-medium">Reportes por Departamento vs. Meta Anual</CardTitle>
-        {isAdmin && (
-          <div className="flex space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setIsTargetDialogOpen(true)}
-            >
-              <Settings className="h-4 w-4 mr-1" />
-              Alterar Meta ({systemConfig.annualIncidentTargetPerEmployee} por colaborador)
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setIsEmployeesDialogOpen(true)}
-            >
-              <Settings className="h-4 w-4 mr-1" />
-              Nº de Colaboradores
-            </Button>
-          </div>
-        )}
-      </CardHeader>
-      <CardContent className="h-96">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 50 }}
+    <div className="relative h-full">
+      {isAdmin && (
+        <div className="absolute top-0 right-0 z-10 flex space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setIsTargetDialogOpen(true)}
+            className="bg-white"
           >
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="name" 
-              angle={-45} 
-              textAnchor="end"
-              height={70}
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis
-              label={{ 
-                value: "Número de Reportes", 
-                angle: -90, 
-                position: "insideLeft",
-                style: { textAnchor: "middle" }
-              }}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Bar dataKey="targetCount" name="Meta Anual" fill="#9b87f5" />
-            <Bar dataKey="reportCount" name="Reportes Atuais">
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
+            <Settings className="h-4 w-4 mr-1" />
+            Alterar Meta ({systemConfig.annualIncidentTargetPerEmployee} por colaborador)
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setIsEmployeesDialogOpen(true)}
+            className="bg-white"
+          >
+            <Settings className="h-4 w-4 mr-1" />
+            Nº de Colaboradores
+          </Button>
+        </div>
+      )}
+      
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={chartData}
+          margin={{ top: 30, right: 30, left: 20, bottom: 50 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis 
+            dataKey="name" 
+            angle={-45} 
+            textAnchor="end"
+            height={70}
+            tick={{ fontSize: 12 }}
+          />
+          <YAxis
+            label={{ 
+              value: "Número de Reportes", 
+              angle: -90, 
+              position: "insideLeft",
+              style: { textAnchor: "middle" }
+            }}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend />
+          <Bar dataKey="targetCount" name="Meta Anual" fill="#9b87f5" />
+          <Bar dataKey="reportCount" name="Reportes Atuais">
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
 
       {/* Dialog for updating annual target */}
       <Dialog open={isTargetDialogOpen} onOpenChange={setIsTargetDialogOpen}>
@@ -294,6 +291,6 @@ export default function DepartmentAnalyticsChart({
           </Form>
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
   );
 }
