@@ -1,4 +1,3 @@
-
 export type UserRole = "admin_app" | "admin_qa" | "user";
 
 export interface User {
@@ -42,26 +41,25 @@ export interface Incident {
   description: string;
   location: string;
   date: Date;
-  reportedBy: string;
   severity: "Baixo" | "Médio" | "Alto";
   status: "Reportado" | "Em Análise" | "Resolvido" | "Arquivado";
-  images?: string[];
-  adminNotes?: string;
-  resolution?: string;
-  pointsAwarded: number;
-  department?: string;
-  
-  // New fields added based on Excel requirements
+  reportedBy: string;
+  department: string;
   implementedAction?: string;
-  completionDate?: Date;
   responsible?: string;
-  frequency?: "Baixa" | "Moderada" | "Alta"; // 2-Baixa, 6-Moderada, 8-Alta
-  frequencyValue?: number; // Numerical value of frequency
-  gravityValue?: number; // 1-Baixa, 4-Moderada, 7-Alta
-  risk?: number; // Calculated field (frequency * gravity)
-  qaQuality?: "Baixa" | "Média" | "Alta"; // Alta>24, Media 8 ou 14, Baixa <6
-  resolutionDays?: number;
+  adminNotes?: string;
+  pointsAwarded: number;
+  completionDate?: Date;
   resolutionDeadline?: Date;
+  gravityValue?: number;
+  frequency?: "Baixa" | "Moderada" | "Alta";
+  frequencyValue?: number;
+  risk?: number;
+  qaQuality?: "Baixa" | "Média" | "Alta";
+  resolutionDays?: number;
+  reporterName?: string;
+  factoryArea?: string;
+  suggestionToFix?: string;
 }
 
 export interface StatsByCategory {
