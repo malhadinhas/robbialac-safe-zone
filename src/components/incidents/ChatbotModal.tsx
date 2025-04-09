@@ -20,7 +20,6 @@ interface ChatbotModalProps {
   departments: Department[];
 }
 
-// Define factory locations
 const factoryLocations = [
   "Uf1 - Enchimento",
   "Uf1 - fabrico",
@@ -30,7 +29,6 @@ const factoryLocations = [
   "Silos Areia Uf3"
 ];
 
-// Chat steps
 enum ChatStep {
   NAME,
   DATE,
@@ -191,12 +189,14 @@ export default function ChatbotModal({
         
         const incidentDescription = currentIncident.description || "Sem descrição";
         const incidentLocation = currentIncident.location || "Local não especificado";
+        const departmentName = currentIncident.department || departments[0].name;
         
         const finalIncident: Incident = {
           ...currentIncident as Partial<Incident>,
           title: currentIncident.description?.substring(0, 50) + "...",
           description: incidentDescription,
           location: incidentLocation,
+          department: departmentName,
           severity: severity as "Baixo" | "Médio" | "Alto",
           date: date || new Date(),
           reportedBy: user?.email || "",
