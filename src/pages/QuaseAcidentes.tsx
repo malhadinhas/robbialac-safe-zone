@@ -1,16 +1,16 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { mockIncidents, mockStatsBySeverity } from "@/services/mockData";
+import { mockIncidents, mockStatsBySeverity, mockDepartments, mockSystemConfig } from "@/services/mockData";
 import { 
-  AlertCircle, Send, Image, PlusCircle, Edit, Trash2, 
-  MessageSquare, FileUp, FileDown, FileSpreadsheet, Calendar,
-  CheckCircle, Clock, User, ChartBar
+  AlertCircle, FileUp, FileDown, FileSpreadsheet, Calendar,
+  CheckCircle, Clock, User, ChartBar, PlusCircle, Edit, Trash2
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Incident } from "@/types";
+import { Incident, Department, SystemConfig } from "@/types";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -24,20 +24,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -64,6 +55,8 @@ import {
   ResponsiveContainer, 
   Cell 
 } from 'recharts';
+import DepartmentAnalyticsChart from "@/components/incidents/DepartmentAnalyticsChart";
+import ChatbotModal from "@/components/incidents/ChatbotModal";
 
 const formSchema = z.object({
   status: z.string(),
@@ -74,15 +67,15 @@ const formSchema = z.object({
   completionDate: z.string().optional(),
   resolutionDeadline: z.string().optional(),
   adminNotes: z.string().optional(),
+  department: z.string().optional(),
 });
 
 export default function QuaseAcidentes() {
   const { user } = useAuth();
   const [incidents, setIncidents] = useState<Incident[]>(mockIncidents);
+  const [departments, setDepartments] = useState<Department[]>(mockDepartments);
+  const [systemConfig, setSystemConfig] = useState<SystemConfig>(mockSystemConfig);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<{text: string, isBot: boolean}[]>([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [currentIncident, setCurrentIncident] = useState<Partial<Incident>>({});
   const [incidentToDelete, setIncidentToDelete] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -90,7 +83,6 @@ export default function QuaseAcidentes() {
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const chatEndRef = useRef<HTMLDivElement>(null);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -101,30 +93,13 @@ export default function QuaseAcidentes() {
       frequency: "Baixa",
       gravityValue: "1",
       adminNotes: "",
+      department: "",
     },
   });
   
   useEffect(() => {
     setIsAdmin(user?.role === 'admin_app' || user?.role === 'admin_qa');
   }, [user]);
-  
-  useEffect(() => {
-    if (isModalOpen) {
-      setChatMessages([
-        { 
-          text: "Olá! Vou ajudar você a reportar um quase acidente. Para começar, qual o título ou breve descrição do ocorrido?", 
-          isBot: true 
-        }
-      ]);
-      setCurrentIncident({});
-    }
-  }, [isModalOpen]);
-  
-  useEffect(() => {
-    if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [chatMessages]);
   
   useEffect(() => {
     if (selectedIncidentId) {
@@ -139,6 +114,7 @@ export default function QuaseAcidentes() {
           completionDate: incident.completionDate ? format(new Date(incident.completionDate), 'yyyy-MM-dd') : "",
           resolutionDeadline: incident.resolutionDeadline ? format(new Date(incident.resolutionDeadline), 'yyyy-MM-dd') : "",
           adminNotes: incident.adminNotes || "",
+          department: incident.department || "",
         });
       }
     }
@@ -148,93 +124,9 @@ export default function QuaseAcidentes() {
     setIsModalOpen(true);
   };
   
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-  
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    
-    setChatMessages(prev => [...prev, { text: newMessage, isBot: false }]);
-    const botResponse = processChatbotResponse(newMessage);
-    setNewMessage("");
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, { text: botResponse, isBot: true }]);
-    }, 500);
-  };
-  
-  const processChatbotResponse = (message: string): string => {
-    const lastBotMessage = [...chatMessages].reverse().find(msg => msg.isBot)?.text || "";
-    
-    if (lastBotMessage.includes("qual o título ou breve descrição")) {
-      setCurrentIncident(prev => ({ ...prev, title: message }));
-      return "Obrigado! Em qual local da fábrica isso aconteceu?";
-    }
-    
-    if (lastBotMessage.includes("qual local da fábrica")) {
-      setCurrentIncident(prev => ({ ...prev, location: message }));
-      return "Agora, por favor descreva com mais detalhes o que aconteceu:";
-    }
-    
-    if (lastBotMessage.includes("descreva com mais detalhes")) {
-      setCurrentIncident(prev => ({ ...prev, description: message }));
-      return "Qual a gravidade do quase acidente? Responda com: Baixo, Médio ou Alto";
-    }
-    
-    if (lastBotMessage.includes("gravidade do quase acidente")) {
-      const severity = message.toLowerCase().includes("alto") 
-        ? "Alto" 
-        : message.toLowerCase().includes("médio") || message.toLowerCase().includes("medio")
-        ? "Médio" 
-        : "Baixo";
-      
-      const gravityValue = severity === "Alto" ? 7 : severity === "Médio" ? 4 : 1;
-      
-      const frequency = "Baixa";
-      const frequencyValue = 2;
-      
-      const risk = frequencyValue * gravityValue;
-      
-      let qaQuality: "Baixa" | "Média" | "Alta" = "Baixa";
-      if (risk > 24) qaQuality = "Alta";
-      else if (risk >= 8) qaQuality = "Média";
-      else qaQuality = "Baixa";
-      
-      const resolutionDays = severity === "Alto" ? 7 : severity === "Médio" ? 14 : 30;
-      
-      const resolutionDeadline = new Date();
-      resolutionDeadline.setDate(resolutionDeadline.getDate() + resolutionDays);
-      
-      setCurrentIncident(prev => ({ 
-        ...prev, 
-        severity: severity as "Baixo" | "Médio" | "Alto",
-        date: new Date(),
-        reportedBy: user?.email || "",
-        status: "Reportado",
-        id: Date.now().toString(),
-        pointsAwarded: severity === "Alto" ? 100 : severity === "Médio" ? 75 : 50,
-        gravityValue,
-        frequency,
-        frequencyValue,
-        risk,
-        qaQuality,
-        resolutionDays,
-        resolutionDeadline
-      }));
-      
-      setTimeout(() => {
-        if (currentIncident.title && currentIncident.location && currentIncident.description) {
-          const newIncident = currentIncident as Incident;
-          setIncidents(prev => [newIncident, ...prev]);
-          toast.success(`Quase acidente reportado! +${newIncident.pointsAwarded} pontos`);
-          setIsModalOpen(false);
-        }
-      }, 1000);
-      
-      return "Obrigado por reportar! Seu relato é muito importante para melhorarmos a segurança. Estou processando as informações...";
-    }
-    
-    return "Desculpe, não entendi. Pode tentar novamente?";
+  const handleSubmitIncident = (incident: Incident) => {
+    setIncidents(prev => [incident, ...prev]);
+    toast.success(`Quase acidente reportado! +${incident.pointsAwarded} pontos`);
   };
   
   const handleDeleteIncident = (id: string) => {
@@ -292,7 +184,8 @@ export default function QuaseAcidentes() {
           qaQuality,
           resolutionDays,
           resolutionDeadline,
-          completionDate: values.completionDate ? new Date(values.completionDate) : undefined
+          completionDate: values.completionDate ? new Date(values.completionDate) : undefined,
+          department: values.department || incident.department,
         };
       }
       return incident;
@@ -301,6 +194,14 @@ export default function QuaseAcidentes() {
     setIncidents(updatedIncidents);
     toast.success("Quase acidente atualizado com sucesso!");
     setIsEditModalOpen(false);
+  };
+  
+  const handleUpdateDepartments = (updatedDepartments: Department[]) => {
+    setDepartments(updatedDepartments);
+  };
+
+  const handleUpdateSystemConfig = (updatedConfig: SystemConfig) => {
+    setSystemConfig(updatedConfig);
   };
   
   const getSeverityColor = (severity: string) => {
@@ -443,6 +344,10 @@ export default function QuaseAcidentes() {
                   <div className="text-sm text-gray-600 mb-2 grid grid-cols-1 md:grid-cols-3 gap-2">
                     <div><strong>Local:</strong> {incident.location}</div>
                     
+                    {incident.department && (
+                      <div><strong>Departamento:</strong> {incident.department}</div>
+                    )}
+                    
                     {incident.responsible && (
                       <div><strong>Responsável:</strong> {incident.responsible}</div>
                     )}
@@ -534,6 +439,15 @@ export default function QuaseAcidentes() {
         
         <TabsContent value="estatisticas">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <DepartmentAnalyticsChart 
+              incidents={incidents}
+              departments={departments}
+              systemConfig={systemConfig}
+              onUpdateDepartments={handleUpdateDepartments}
+              onUpdateConfig={handleUpdateSystemConfig}
+              className="md:col-span-2 mb-6"
+            />
+
             <Card className="bg-white shadow">
               <CardHeader>
                 <CardTitle className="text-lg font-medium">Quase Acidentes por Severidade</CardTitle>
@@ -629,67 +543,15 @@ export default function QuaseAcidentes() {
         </TabsContent>
       </Tabs>
       
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full max-h-[80vh] flex flex-col">
-            <div className="p-4 border-b bg-robbialac text-white rounded-t-lg flex justify-between items-center">
-              <div className="flex items-center">
-                <MessageSquare className="h-5 w-5 mr-2" />
-                <h2 className="text-lg font-semibold">Reportar Quase Acidente</h2>
-              </div>
-              <button onClick={handleCloseModal} className="text-white">
-                &times;
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: '60vh' }}>
-              {chatMessages.map((message, index) => (
-                <div 
-                  key={index} 
-                  className={`mb-4 ${message.isBot ? 'flex' : 'flex justify-end'}`}
-                >
-                  <div 
-                    className={`max-w-[80%] p-3 rounded-lg ${
-                      message.isBot 
-                        ? 'bg-gray-100 text-gray-800' 
-                        : 'bg-robbialac text-white'
-                    }`}
-                  >
-                    {message.text}
-                  </div>
-                </div>
-              ))}
-              <div ref={chatEndRef} />
-            </div>
-            
-            <div className="p-4 border-t">
-              <div className="flex items-center">
-                <Button variant="outline" size="icon" className="mr-2">
-                  <Image className="h-5 w-5" />
-                </Button>
-                <input
-                  type="text"
-                  className="flex-1 border rounded-l-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-robbialac focus:border-transparent"
-                  placeholder="Digite sua mensagem..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                />
-                <Button 
-                  className="rounded-l-none bg-robbialac hover:bg-robbialac-dark"
-                  onClick={handleSendMessage}
-                >
-                  <Send className="h-5 w-5" />
-                </Button>
-              </div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                O chatbot ajudará a coletar todas as informações necessárias
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Chatbot Modal for Incident Reporting */}
+      <ChatbotModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmitIncident={handleSubmitIncident}
+        departments={departments}
+      />
       
+      {/* Dialog to confirm incident deletion */}
       <AlertDialog open={!!incidentToDelete} onOpenChange={() => setIncidentToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -710,6 +572,7 @@ export default function QuaseAcidentes() {
         </AlertDialogContent>
       </AlertDialog>
       
+      {/* Dialog for editing an incident */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -735,6 +598,29 @@ export default function QuaseAcidentes() {
                         <SelectItem value="Em Análise">Em Análise</SelectItem>
                         <SelectItem value="Resolvido">Resolvido</SelectItem>
                         <SelectItem value="Arquivado">Arquivado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="department"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Departamento</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o departamento" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {departments.map(dept => (
+                          <SelectItem key={dept.name} value={dept.name}>{dept.name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -885,6 +771,7 @@ export default function QuaseAcidentes() {
         </DialogContent>
       </Dialog>
       
+      {/* Dialog for importing Excel data */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -915,6 +802,7 @@ export default function QuaseAcidentes() {
         </DialogContent>
       </Dialog>
       
+      {/* Dialog for exporting data */}
       <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
         <DialogContent>
           <DialogHeader>

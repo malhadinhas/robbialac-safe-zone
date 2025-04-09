@@ -49,6 +49,7 @@ export interface Incident {
   adminNotes?: string;
   resolution?: string;
   pointsAwarded: number;
+  department?: string;
   
   // New fields added based on Excel requirements
   implementedAction?: string;
@@ -81,3 +82,12 @@ export interface StatsBySeverity {
   color: string;
 }
 
+export interface Department {
+  name: string;
+  employeeCount: number;
+  color: string;
+}
+
+export interface SystemConfig {
+  annualIncidentTargetPerEmployee: number;
+}

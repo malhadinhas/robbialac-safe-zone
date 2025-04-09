@@ -1,5 +1,4 @@
-
-import { Video, Incident, Medal, StatsByCategory, StatsByZone, StatsBySeverity } from "@/types";
+import { Video, Incident, Medal, StatsByCategory, StatsByZone, StatsBySeverity, Department, SystemConfig } from "@/types";
 
 export const mockVideos: Video[] = [
   {
@@ -95,7 +94,8 @@ export const mockIncidents: Incident[] = [
     images: ["/placeholder.svg"],
     adminNotes: "Válvula substituída e procedimento revisado.",
     resolution: "Substituição da válvula e treinamento da equipe.",
-    pointsAwarded: 75
+    pointsAwarded: 75,
+    department: "Operações"
   },
   {
     id: "2",
@@ -108,19 +108,21 @@ export const mockIncidents: Incident[] = [
     status: "Em Análise",
     images: ["/placeholder.svg"],
     adminNotes: "Material já solicitado para manutenção.",
-    pointsAwarded: 50
+    pointsAwarded: 50,
+    department: "Operações"
   },
   {
     id: "3",
     title: "Painel elétrico aberto",
     description: "Painel elétrico encontrado aberto próximo à linha de produção principal.",
-    location: "Fábrico - Linha 2",
+    location: "Fábrica - Linha 2",
     date: new Date("2024-04-01"),
     reportedBy: "ines.lopes@robbialac.pt",
     severity: "Alto",
     status: "Reportado",
     images: ["/placeholder.svg"],
-    pointsAwarded: 100
+    pointsAwarded: 100,
+    department: "Comercial"
   },
   {
     id: "4",
@@ -133,7 +135,8 @@ export const mockIncidents: Incident[] = [
     status: "Em Análise",
     images: ["/placeholder.svg"],
     adminNotes: "Engenharia notificada para reparo urgente.",
-    pointsAwarded: 100
+    pointsAwarded: 100,
+    department: "Financeira"
   }
 ];
 
@@ -195,3 +198,16 @@ export const mockStatsBySeverity: StatsBySeverity[] = [
   { severity: "Médio", count: 8, color: "#fd7e14" },
   { severity: "Alto", count: 5, color: "#dc3545" }
 ];
+
+export const mockDepartments: Department[] = [
+  { name: "Comercial", employeeCount: 185, color: "#4e79a7" },
+  { name: "Financeira", employeeCount: 19, color: "#f28e2c" },
+  { name: "Marketing", employeeCount: 16, color: "#e15759" },
+  { name: "Operações", employeeCount: 66, color: "#76b7b2" },
+  { name: "Recursos Humanos", employeeCount: 5, color: "#59a14f" },
+  { name: "Direção", employeeCount: 2, color: "#edc949" }
+];
+
+export const mockSystemConfig: SystemConfig = {
+  annualIncidentTargetPerEmployee: 5
+};
