@@ -1,10 +1,13 @@
 
 import { Video } from "@/types";
-import { getCollection } from "./database";
+import { getCollection, initializeMockCollection } from "./database";
 import { mockVideos } from "./mockData";
 
 export async function getVideos(): Promise<Video[]> {
   try {
+    // Inicializa a coleção com dados mockados se estiver vazia
+    await initializeMockCollection("videos", mockVideos);
+    
     const collection = await getCollection("videos");
     const count = await collection.countDocuments();
     

@@ -1,6 +1,5 @@
-
 import { User, Medal } from "@/types";
-import { getCollection } from "./database";
+import { getCollection, initializeMockCollection } from "./database";
 import { mockMedals } from "./mockData";
 
 // Usuários mockados - retirado de auth.ts
@@ -45,6 +44,10 @@ const mockUsers = [
 
 export async function getUserByEmail(email: string): Promise<User | null> {
   try {
+    // Inicializa a coleção com dados mockados
+    const usersWithoutPasswords = mockUsers.map(({ password, ...user }) => user);
+    await initializeMockCollection("users", usersWithoutPasswords);
+    
     const collection = await getCollection("users");
     const count = await collection.countDocuments();
     
@@ -52,7 +55,6 @@ export async function getUserByEmail(email: string): Promise<User | null> {
     if (count === 0) {
       console.log("Inicializando coleção de usuários com dados mockados");
       // Remove as senhas antes de inserir no banco
-      const usersWithoutPasswords = mockUsers.map(({ password, ...user }) => user);
       await collection.insertMany(usersWithoutPasswords);
     }
     

@@ -1,10 +1,13 @@
 
 import { Incident } from "@/types";
-import { getCollection } from "./database";
+import { getCollection, initializeMockCollection } from "./database";
 import { mockIncidents } from "./mockData";
 
 export async function getIncidents(): Promise<Incident[]> {
   try {
+    // Inicializa a coleção com dados mockados
+    await initializeMockCollection("incidents", mockIncidents);
+    
     const collection = await getCollection("incidents");
     const count = await collection.countDocuments();
     
