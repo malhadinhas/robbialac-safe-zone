@@ -1,5 +1,5 @@
-
 import { User, UserRole } from "@/types";
+import { getUserByEmail, validateUser } from "./userService";
 
 // Usuários mockados - na implementação real, viriam do MongoDB
 const mockUsers = [
@@ -50,19 +50,16 @@ export async function loginUser(email: string, password: string): Promise<User |
     throw new Error('Apenas emails @robbialac.pt são permitidos');
   }
   
-  const user = mockUsers.find(u => u.email === email && u.password === password);
+  const user = await validateUser(email, password);
   
   if (!user) {
     return null;
   }
   
-  // Não retornar a senha
-  const { password: _, ...userWithoutPassword } = user;
-  
   // Salvar informações do usuário no localStorage
-  localStorage.setItem('robbialac_user', JSON.stringify(userWithoutPassword));
+  localStorage.setItem('robbialac_user', JSON.stringify(user));
   
-  return userWithoutPassword as User;
+  return user;
 }
 
 export function logoutUser(): void {
