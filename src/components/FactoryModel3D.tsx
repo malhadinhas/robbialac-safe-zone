@@ -2,6 +2,7 @@
 import React, { useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Environment, PresentationControls } from '@react-three/drei';
+import * as THREE from 'three';
 
 // Componente para uma zona da fábrica que pode ser clicada
 type FactoryZoneProps = {
