@@ -483,61 +483,76 @@ export default function QuaseAcidentes() {
         
         <TabsContent value="estatisticas">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="md:col-span-2">
-              <Card className="bg-white shadow">
-                <CardHeader>
-                  <CardTitle className="text-lg font-medium">Análise de Quase Acidentes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Tabs defaultValue="departamento" className="w-full">
-                    <TabsList variant="segment" className="mb-4 w-full justify-start">
-                      <TabsTrigger value="departamento">Por Departamento</TabsTrigger>
-                      <TabsTrigger value="severidade">Por Severidade</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="departamento" className="h-[350px]">
-                      <DepartmentAnalyticsChart 
-                        incidents={incidents}
-                        departments={departments}
-                        systemConfig={systemConfig}
-                        onUpdateDepartments={handleUpdateDepartments}
-                        onUpdateConfig={handleUpdateSystemConfig}
-                      />
-                    </TabsContent>
-                    
-                    <TabsContent value="severidade" className="h-[350px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RechartsBarChart data={mockStatsBySeverity}>
-                          <XAxis dataKey="severity" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Bar dataKey="count" name="Quantidade">
-                            {mockStatsBySeverity.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Bar>
-                        </RechartsBarChart>
-                      </ResponsiveContainer>
-                    </TabsContent>
-                  </Tabs>
-                </CardContent>
-              </Card>
-            </div>
+            <Card className="md:col-span-2 bg-white shadow">
+              <CardHeader>
+                <CardTitle className="text-lg font-medium">Análise de Quase Acidentes</CardTitle>
+              </CardHeader>
+              <CardContent className="overflow-hidden">
+                <Tabs defaultValue="departamento" className="w-full">
+                  <TabsList variant="card" className="mb-4 w-full justify-start bg-background">
+                    <TabsTrigger variant="card" value="departamento">Por Departamento</TabsTrigger>
+                    <TabsTrigger variant="card" value="severidade">Por Severidade</TabsTrigger>
+                    <TabsTrigger variant="card" value="mensal">Tendência Mensal</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="departamento" className="h-[350px] mt-4">
+                    <DepartmentAnalyticsChart 
+                      incidents={incidents}
+                      departments={departments}
+                      systemConfig={systemConfig}
+                      onUpdateDepartments={handleUpdateDepartments}
+                      onUpdateConfig={handleUpdateSystemConfig}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="severidade" className="h-[350px] mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsBarChart data={mockStatsBySeverity}>
+                        <XAxis dataKey="severity" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="count" name="Quantidade">
+                          {mockStatsBySeverity.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Bar>
+                      </RechartsBarChart>
+                    </ResponsiveContainer>
+                  </TabsContent>
+                  
+                  <TabsContent value="mensal" className="h-[350px] mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsBarChart
+                        data={monthlyData}
+                      >
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="baixo" name="Baixo" fill="#ffc107" />
+                        <Bar dataKey="medio" name="Médio" fill="#fd7e14" />
+                        <Bar dataKey="alto" name="Alto" fill="#dc3545" />
+                      </RechartsBarChart>
+                    </ResponsiveContainer>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
             
             <Card className="bg-white shadow">
               <CardHeader>
                 <CardTitle className="text-lg font-medium">Distribuição de Quase Acidentes</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-hidden">
                 <Tabs defaultValue="status" className="w-full">
-                  <TabsList variant="segment" className="mb-4 w-full justify-start">
-                    <TabsTrigger value="status">Por Status</TabsTrigger>
-                    <TabsTrigger value="frequencia">Por Frequência</TabsTrigger>
+                  <TabsList variant="card" className="mb-4 w-full justify-start bg-background">
+                    <TabsTrigger variant="card" value="status">Por Status</TabsTrigger>
+                    <TabsTrigger variant="card" value="frequencia">Por Frequência</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="status">
-                    <div className="space-y-4 mt-4">
+                  <TabsContent value="status" className="mt-4">
+                    <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
                           <div className="w-2 h-2 rounded-full bg-yellow-400 mr-2"></div>
@@ -574,7 +589,7 @@ export default function QuaseAcidentes() {
                     </div>
                   </TabsContent>
                   
-                  <TabsContent value="frequencia" className="h-[250px]">
+                  <TabsContent value="frequencia" className="h-[250px] mt-4">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -602,14 +617,14 @@ export default function QuaseAcidentes() {
               <CardHeader>
                 <CardTitle className="text-lg font-medium">Análise de Riscos</CardTitle>
               </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="mensal" className="w-full">
-                  <TabsList variant="segment" className="mb-4 w-full justify-start">
-                    <TabsTrigger value="mensal">Tendência Mensal</TabsTrigger>
-                    <TabsTrigger value="risco">Por Nível de Risco</TabsTrigger>
+              <CardContent className="overflow-hidden">
+                <Tabs defaultValue="tendencia" className="w-full">
+                  <TabsList variant="card" className="mb-4 w-full justify-start bg-background">
+                    <TabsTrigger variant="card" value="tendencia">Tendência Mensal</TabsTrigger>
+                    <TabsTrigger variant="card" value="risco">Por Nível de Risco</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="mensal" className="h-[250px]">
+                  <TabsContent value="tendencia" className="h-[250px] mt-4">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={monthlyData}>
                         <XAxis dataKey="month" />
@@ -624,7 +639,7 @@ export default function QuaseAcidentes() {
                     </ResponsiveContainer>
                   </TabsContent>
                   
-                  <TabsContent value="risco" className="h-[250px]">
+                  <TabsContent value="risco" className="h-[250px] mt-4">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -645,29 +660,6 @@ export default function QuaseAcidentes() {
                     </ResponsiveContainer>
                   </TabsContent>
                 </Tabs>
-              </CardContent>
-            </Card>
-            
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">Histórico Mensal de Quase Acidentes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsBarChart
-                      data={monthlyData}
-                    >
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="baixo" name="Baixo" fill="#ffc107" />
-                      <Bar dataKey="medio" name="Médio" fill="#fd7e14" />
-                      <Bar dataKey="alto" name="Alto" fill="#dc3545" />
-                    </RechartsBarChart>
-                  </ResponsiveContainer>
-                </div>
               </CardContent>
             </Card>
           </div>
