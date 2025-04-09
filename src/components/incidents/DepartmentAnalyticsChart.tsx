@@ -11,7 +11,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  ReferenceLine,
   Cell
 } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
@@ -145,8 +144,8 @@ export default function DepartmentAnalyticsChart({
         <div className="bg-white p-4 border rounded shadow-md">
           <p className="font-bold text-gray-800">{data.name}</p>
           <p className="text-sm text-gray-600">Funcionários: {data.employeeCount}</p>
-          <p className="text-sm text-green-600">Reportes: {data.reportCount}</p>
-          <p className="text-sm text-blue-600">Meta: {data.targetCount}</p>
+          <p className="text-sm text-[#7E69AB]">Reportes: {data.reportCount}</p>
+          <p className="text-sm text-[#9b87f5]">Meta: {data.targetCount}</p>
           <p className="text-sm font-medium mt-1">
             {data.reportCount >= data.targetCount ? (
               <span className="text-green-600">✅ Meta alcançada</span>
@@ -161,7 +160,7 @@ export default function DepartmentAnalyticsChart({
   };
 
   return (
-    <Card className="col-span-full">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-medium">Reportes por Departamento vs. Meta Anual</CardTitle>
         {isAdmin && (
@@ -209,17 +208,12 @@ export default function DepartmentAnalyticsChart({
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
+            <Bar dataKey="targetCount" name="Meta Anual" fill="#9b87f5" />
             <Bar dataKey="reportCount" name="Reportes Atuais">
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Bar>
-            <ReferenceLine 
-              ifOverflow="extendDomain"
-              label="Meta Total" 
-              stroke="#8884d8" 
-              strokeDasharray="3 3" 
-            />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

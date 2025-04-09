@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -439,14 +438,15 @@ export default function QuaseAcidentes() {
         
         <TabsContent value="estatisticas">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <DepartmentAnalyticsChart 
-              incidents={incidents}
-              departments={departments}
-              systemConfig={systemConfig}
-              onUpdateDepartments={handleUpdateDepartments}
-              onUpdateConfig={handleUpdateSystemConfig}
-              className="md:col-span-2 mb-6"
-            />
+            <div className="md:col-span-2">
+              <DepartmentAnalyticsChart 
+                incidents={incidents}
+                departments={departments}
+                systemConfig={systemConfig}
+                onUpdateDepartments={handleUpdateDepartments}
+                onUpdateConfig={handleUpdateSystemConfig}
+              />
+            </div>
 
             <Card className="bg-white shadow">
               <CardHeader>
@@ -543,7 +543,6 @@ export default function QuaseAcidentes() {
         </TabsContent>
       </Tabs>
       
-      {/* Chatbot Modal for Incident Reporting */}
       <ChatbotModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -551,7 +550,6 @@ export default function QuaseAcidentes() {
         departments={departments}
       />
       
-      {/* Dialog to confirm incident deletion */}
       <AlertDialog open={!!incidentToDelete} onOpenChange={() => setIncidentToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -572,7 +570,6 @@ export default function QuaseAcidentes() {
         </AlertDialogContent>
       </AlertDialog>
       
-      {/* Dialog for editing an incident */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -771,7 +768,6 @@ export default function QuaseAcidentes() {
         </DialogContent>
       </Dialog>
       
-      {/* Dialog for importing Excel data */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -802,7 +798,6 @@ export default function QuaseAcidentes() {
         </DialogContent>
       </Dialog>
       
-      {/* Dialog for exporting data */}
       <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
         <DialogContent>
           <DialogHeader>
