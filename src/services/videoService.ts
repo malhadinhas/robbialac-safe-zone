@@ -18,6 +18,7 @@ export async function getVideos(): Promise<Video[]> {
     }
     
     const videos = await collection.find<Video>({}).toArray();
+    console.log(`Recuperados ${videos.length} vídeos do banco de dados local`);
     return videos.map(video => ({
       ...video,
       uploadDate: new Date(video.uploadDate)
@@ -56,6 +57,7 @@ export async function incrementVideoViews(id: string): Promise<void> {
       { id },
       { $inc: { views: 1 } }
     );
+    console.log(`Visualizações incrementadas para o vídeo ID: ${id}`);
   } catch (error) {
     console.error("Erro ao incrementar visualizações do vídeo:", error);
   }

@@ -32,11 +32,13 @@ const createMockClient = () => {
           toArray: async (): Promise<T[]> => {
             // Simular um pequeno atraso como em uma chamada real
             await new Promise(resolve => setTimeout(resolve, 100));
+            console.log(`[Mock DB] Buscando documentos na coleção: ${collectionName}`);
             return (mockCollections[collectionName] || []) as T[];
           }
         }),
         findOne: async <T>(query: any = {}): Promise<T | null> => {
           await new Promise(resolve => setTimeout(resolve, 100));
+          console.log(`[Mock DB] Buscando documento único na coleção: ${collectionName}`);
           const items = mockCollections[collectionName] || [];
           const found = items.find(item => {
             // Comparar as propriedades de query com o item
@@ -46,6 +48,7 @@ const createMockClient = () => {
         },
         insertMany: async (docs: any[]): Promise<any> => {
           await new Promise(resolve => setTimeout(resolve, 100));
+          console.log(`[Mock DB] Inserindo ${docs.length} documentos na coleção: ${collectionName}`);
           if (!mockCollections[collectionName]) {
             mockCollections[collectionName] = [];
           }
@@ -54,6 +57,7 @@ const createMockClient = () => {
         },
         insertOne: async (doc: any): Promise<any> => {
           await new Promise(resolve => setTimeout(resolve, 100));
+          console.log(`[Mock DB] Inserindo 1 documento na coleção: ${collectionName}`);
           if (!mockCollections[collectionName]) {
             mockCollections[collectionName] = [];
           }
@@ -62,6 +66,7 @@ const createMockClient = () => {
         },
         updateOne: async (filter: any, update: any): Promise<any> => {
           await new Promise(resolve => setTimeout(resolve, 100));
+          console.log(`[Mock DB] Atualizando documento na coleção: ${collectionName}`);
           const items = mockCollections[collectionName] || [];
           const index = items.findIndex(item => {
             return Object.keys(filter).every(key => item[key] === filter[key]);
@@ -82,17 +87,18 @@ const createMockClient = () => {
         },
         countDocuments: async (): Promise<number> => {
           await new Promise(resolve => setTimeout(resolve, 100));
+          console.log(`[Mock DB] Contando documentos na coleção: ${collectionName}`);
           return (mockCollections[collectionName] || []).length;
         }
       })
     }),
     connect: async (): Promise<void> => {
       await new Promise(resolve => setTimeout(resolve, 200));
-      console.log("Mock de conexão MongoDB estabelecida");
+      console.log("[Mock DB] Conexão estabelecida com sucesso");
     },
     close: async (): Promise<void> => {
       await new Promise(resolve => setTimeout(resolve, 100));
-      console.log("Mock de conexão MongoDB fechada");
+      console.log("[Mock DB] Conexão fechada");
     }
   };
 };

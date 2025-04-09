@@ -18,6 +18,7 @@ export async function getIncidents(): Promise<Incident[]> {
     }
     
     const incidents = await collection.find<Incident>({}).toArray();
+    console.log(`Recuperados ${incidents.length} incidentes do banco de dados local`);
     return incidents.map(incident => ({
       ...incident,
       date: new Date(incident.date),
@@ -62,6 +63,7 @@ export async function createIncident(incident: Omit<Incident, "id">): Promise<In
     };
     
     await collection.insertOne(newIncident);
+    console.log(`Novo incidente criado com ID: ${newIncident.id}`);
     return newIncident;
   } catch (error) {
     console.error("Erro ao criar incidente:", error);
