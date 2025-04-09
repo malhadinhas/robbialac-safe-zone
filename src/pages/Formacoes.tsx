@@ -7,18 +7,20 @@ import { useNavigate } from "react-router-dom";
 import { mockStatsByZone } from "@/services/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import FactoryModel3D from "@/components/FactoryModel3D";
 
 export default function Formacoes() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [useSimpleView, setUseSimpleView] = useState(false);
   
   useEffect(() => {
     setIsAdmin(user?.role === 'admin_app');
   }, [user]);
   
-  // Quando tivermos os modelos 3D reais, este código será substituído
+  // Função para navegar para os vídeos de uma zona específica
   const handleZoneClick = (zone: string) => {
     navigate(`/videos/${zone.toLowerCase()}`);
   };
@@ -36,6 +38,10 @@ export default function Formacoes() {
     toast.success("Vídeo enviado com sucesso para Cloudflare R2!");
     setIsModalOpen(false);
   };
+
+  const handleToggleView = () => {
+    setUseSimpleView(!useSimpleView);
+  };
   
   return (
     <Layout>
@@ -50,6 +56,10 @@ export default function Formacoes() {
             Importar Vídeo
           </Button>
         )}
+
+        <Button onClick={handleToggleView} variant="outline">
+          {useSimpleView ? "Ver Modelo 3D" : "Ver Lista Simples"}
+        </Button>
       </div>
       
       <Card className="mb-6">
@@ -58,32 +68,42 @@ export default function Formacoes() {
           <CardDescription>Selecione uma área para ver os vídeos relacionados</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Placeholder para o componente 3D */}
-          <div className="aspect-video bg-gray-100 rounded-md flex flex-col items-center justify-center p-8">
-            <div className="text-gray-500 mb-8 text-center">
-              <p className="mb-4">Visualização 3D da fábrica será renderizada aqui.</p>
-              <p>Até a importação dos modelos 3D reais, use os botões abaixo para navegar.</p>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl w-full">
-              {mockStatsByZone.map((zone) => (
-                <Button
-                  key={zone.zone}
-                  onClick={() => handleZoneClick(zone.zone)}
-                  className="h-24 text-lg"
-                  style={{ backgroundColor: zone.color }}
-                >
-                  Área de {zone.zone}
-                </Button>
-              ))}
-            </div>
-          </div>
-          <p className="text-sm text-gray-500 mt-2 text-center">
-            Nota: A visualização 3D interativa completa estará disponível em breve.
-          </p>
+          {useSimpleView ? (
+            <>
+              {/* Visão simplificada por botões */}
+              <div className="aspect-video bg-gray-100 rounded-md flex flex-col items-center justify-center p-8">
+                <div className="text-gray-500 mb-8 text-center">
+                  <p className="mb-4">Visualização simplificada por botões.</p>
+                  <p>Selecione uma das áreas abaixo:</p>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl w-full">
+                  {mockStatsByZone.map((zone) => (
+                    <Button
+                      key={zone.zone}
+                      onClick={() => handleZoneClick(zone.zone)}
+                      className="h-24 text-lg"
+                      style={{ backgroundColor: zone.color }}
+                    >
+                      Área de {zone.zone}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Visualização 3D da fábrica */}
+              <FactoryModel3D onZoneClick={handleZoneClick} />
+              <p className="text-sm text-gray-500 mt-2 text-center">
+                Interaja com o modelo 3D para explorar as diferentes áreas da fábrica
+              </p>
+            </>
+          )}
         </CardContent>
       </Card>
       
+      {/* Cards informativos - manter como estão */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
@@ -128,7 +148,7 @@ export default function Formacoes() {
         </Card>
       </div>
       
-      {/* Modal de Upload */}
+      {/* Modal de Upload - manter como está */}
       {isModalOpen && (
         <>
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
