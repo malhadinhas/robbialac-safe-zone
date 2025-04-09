@@ -1,13 +1,14 @@
 
 import { useState, useEffect } from 'react';
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { mockStatsByZone } from "@/services/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import FactoryModel3D from "@/components/FactoryModel3D";
+import VideosCategoryCard from '@/components/VideosCategoryCard';
 
 export default function Formacoes() {
   const navigate = useNavigate();
@@ -42,6 +43,22 @@ export default function Formacoes() {
   const handleToggleView = () => {
     setUseSimpleView(!useSimpleView);
   };
+
+  // Video categories data
+  const videoCategories = [
+    { 
+      title: "Segurança", 
+      description: "Vídeos sobre protocolos de segurança, EPIs e procedimentos de emergência."
+    },
+    { 
+      title: "Qualidade", 
+      description: "Vídeos sobre controle de qualidade, inspeções e padrões de produção."
+    },
+    { 
+      title: "Procedimentos e Regras", 
+      description: "Vídeos sobre normas da empresa, processos e boas práticas."
+    }
+  ];
   
   return (
     <Layout>
@@ -103,49 +120,15 @@ export default function Formacoes() {
         </CardContent>
       </Card>
       
-      {/* Cards informativos - manter como estão */}
+      {/* Cards informativos com os últimos vídeos visualizados e próximas sugestões */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Segurança</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600">Vídeos sobre protocolos de segurança, EPIs e procedimentos de emergência.</p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full" onClick={() => toast.info("Selecione uma zona primeiro")}>
-              Ver Todos
-            </Button>
-          </CardFooter>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Qualidade</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600">Vídeos sobre controle de qualidade, inspeções e padrões de produção.</p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full" onClick={() => toast.info("Selecione uma zona primeiro")}>
-              Ver Todos
-            </Button>
-          </CardFooter>
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Procedimentos e Regras</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600">Vídeos sobre normas da empresa, processos e boas práticas.</p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full" onClick={() => toast.info("Selecione uma zona primeiro")}>
-              Ver Todos
-            </Button>
-          </CardFooter>
-        </Card>
+        {videoCategories.map((category) => (
+          <VideosCategoryCard 
+            key={category.title}
+            category={category.title} 
+            description={category.description}
+          />
+        ))}
       </div>
       
       {/* Modal de Upload - manter como está */}
