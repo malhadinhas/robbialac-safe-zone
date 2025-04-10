@@ -8,9 +8,12 @@ import { mockMedals } from "@/services/mockData";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NoScrollLayout } from "@/components/NoScrollLayout";
+import { useIsCompactView } from "@/hooks/use-mobile";
 
 export default function Pontuacao() {
   const { user } = useAuth();
+  const isCompactView = useIsCompactView();
   
   // Cálculo da próxima medalha e progresso
   const earnedMedals = mockMedals.filter(medal => medal.acquired);
@@ -122,198 +125,224 @@ export default function Pontuacao() {
     }
   };
   
-  return (
-    <Layout>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Sua Pontuação</h1>
-        <p className="text-gray-600">Acompanhe seu progresso e conquistas</p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="col-span-1 md:col-span-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl">Progresso de Nível</CardTitle>
-            <CardDescription>
-              Você está no nível {currentLevel}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500">Nível {currentLevel}</span>
-                <span className="text-gray-500">Nível {currentLevel + 1}</span>
-              </div>
-              
-              <Progress value={progressToNextLevel} className="h-3" />
-              
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">{user?.points || 0} pontos acumulados</span>
-                <span className="text-gray-600">Faltam {pointsToNextLevel} pontos</span>
-              </div>
-              
-              <div className="pt-4 border-t mt-4">
-                <h4 className="font-medium text-gray-800 mb-3">Distribuição de Pontos</h4>
-                <div className="space-y-3">
-                  {pointsBreakdown.map((item, index) => (
-                    <div key={index}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>{item.category}</span>
-                        <span>{item.points} pts</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="h-2 rounded-full" 
-                          style={{ 
-                            width: `${(item.points / (user?.points || 1)) * 100}%`,
-                            backgroundColor: item.color 
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+  // Define sections for the NoScrollLayout
+  const headerSection = (
+    <div className="mb-6">
+      <h1 className="text-3xl font-bold text-gray-800">Sua Pontuação</h1>
+      <p className="text-gray-600">Acompanhe seu progresso e conquistas</p>
+    </div>
+  );
+  
+  const progressSection = (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <Card className="col-span-1 md:col-span-2">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xl">Progresso de Nível</CardTitle>
+          <CardDescription>
+            Você está no nível {currentLevel}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-500">Nível {currentLevel}</span>
+              <span className="text-gray-500">Nível {currentLevel + 1}</span>
             </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl">Pontuação Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center">
-              <div className="text-5xl font-bold text-robbialac mb-6">{user?.points || 0}</div>
-              <div className="text-center space-y-2">
-                <p className="font-medium">Nível {currentLevel}</p>
-                <p className="text-sm text-gray-600">Ranking: #12 de 50</p>
-                <Button className="mt-4 w-full bg-robbialac hover:bg-robbialac-dark">
-                  Ver Ranking Completo
-                </Button>
-              </div>
+            
+            <Progress value={progressToNextLevel} className="h-3" />
+            
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">{user?.points || 0} pontos acumulados</span>
+              <span className="text-gray-600">Faltam {pointsToNextLevel} pontos</span>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Tabs defaultValue="medals" className="mb-8">
-        <TabsList className="mb-6">
-          <TabsTrigger value="medals" className="px-6">Medalhas</TabsTrigger>
-          <TabsTrigger value="history" className="px-6">Histórico</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="medals">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold mb-4">Medalhas Conquistadas</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {earnedMedals.map((medal) => (
-                <Card key={medal.id} className="bg-gradient-to-br from-white to-gray-50 border-2 border-yellow-300">
-                  <CardContent className="p-6 flex items-center">
-                    <div className="text-5xl mr-4">{medal.image}</div>
-                    <div>
-                      <h3 className="font-bold text-lg">{medal.name}</h3>
-                      <p className="text-gray-600 text-sm">{medal.description}</p>
-                      <p className="text-gray-500 text-xs mt-1">
-                        Conquistada em {medal.acquiredDate && format(new Date(medal.acquiredDate), 'dd/MM/yyyy')}
-                      </p>
+            
+            <div className="pt-4 border-t mt-4">
+              <h4 className="font-medium text-gray-800 mb-3">Distribuição de Pontos</h4>
+              <div className="space-y-3">
+                {pointsBreakdown.map((item, index) => (
+                  <div key={index}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>{item.category}</span>
+                      <span>{item.points} pts</span>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-          
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Próximas Conquistas</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {unearnedMedals.map((medal) => (
-                <Card key={medal.id} className="bg-gray-50 opacity-80">
-                  <CardContent className="p-6 flex items-center">
-                    <div className="text-5xl mr-4 opacity-50">{medal.image}</div>
-                    <div>
-                      <h3 className="font-bold text-lg">{medal.name}</h3>
-                      <p className="text-gray-600 text-sm">{medal.description}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Atividades</CardTitle>
-              <CardDescription>Suas ações e pontos ganhos</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {activityHistory.map((activity) => (
-                  <div key={activity.id} className="flex items-start">
-                    <div className="bg-gray-100 p-2 rounded-full mr-4 mt-1">
-                      {getTypeIcon(activity.type)}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium">{activity.description}</p>
-                          <p className="text-sm text-gray-500">
-                            {format(new Date(activity.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                          </p>
-                        </div>
-                        <span className="bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded">
-                          +{activity.points} pts
-                        </span>
-                      </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="h-2 rounded-full" 
+                        style={{ 
+                          width: `${(item.points / (user?.points || 1)) * 100}%`,
+                          backgroundColor: item.color 
+                        }}
+                      ></div>
                     </div>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Sistema de Pontuação</CardTitle>
-          <CardDescription>Como ganhar pontos na plataforma</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h3 className="font-medium text-blue-800 mb-2">Assistir Vídeos</h3>
-              <ul className="text-sm space-y-2 text-gray-700">
-                <li>• Vídeos de Segurança: 50 pts</li>
-                <li>• Vídeos de Qualidade: 50 pts</li>
-                <li>• Vídeos de Procedimentos: 50 pts</li>
-                <li>• Formação Completa: +100 pts</li>
-              </ul>
-            </div>
-            
-            <div className="p-4 bg-orange-50 rounded-lg">
-              <h3 className="font-medium text-orange-800 mb-2">Reportar Quase Acidentes</h3>
-              <ul className="text-sm space-y-2 text-gray-700">
-                <li>• Severidade Baixa: 50 pts</li>
-                <li>• Severidade Média: 75 pts</li>
-                <li>• Severidade Alta: 100 pts</li>
-                <li>• Com evidência fotográfica: +25 pts</li>
-              </ul>
-            </div>
-            
-            <div className="p-4 bg-yellow-50 rounded-lg">
-              <h3 className="font-medium text-yellow-800 mb-2">Conquistas e Bônus</h3>
-              <ul className="text-sm space-y-2 text-gray-700">
-                <li>• Nova Medalha: 100 pts</li>
-                <li>• Primeiro da semana: 50 pts</li>
-                <li>• Sequência de 5 dias: 75 pts</li>
-                <li>• Completar área: 200 pts</li>
-              </ul>
             </div>
           </div>
         </CardContent>
       </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xl">Pontuação Total</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center">
+            <div className="text-5xl font-bold text-robbialac mb-6">{user?.points || 0}</div>
+            <div className="text-center space-y-2">
+              <p className="font-medium">Nível {currentLevel}</p>
+              <p className="text-sm text-gray-600">Ranking: #12 de 50</p>
+              <Button className="mt-4 w-full bg-robbialac hover:bg-robbialac-dark">
+                Ver Ranking Completo
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+  
+  const tabsSection = (
+    <Tabs defaultValue="medals" className="mb-8">
+      <TabsList className="mb-6">
+        <TabsTrigger value="medals" className="px-6">Medalhas</TabsTrigger>
+        <TabsTrigger value="history" className="px-6">Histórico</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="medals">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-4">Medalhas Conquistadas</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {earnedMedals.map((medal) => (
+              <Card key={medal.id} className="bg-gradient-to-br from-white to-gray-50 border-2 border-yellow-300">
+                <CardContent className="p-6 flex items-center">
+                  <div className="text-5xl mr-4">{medal.image}</div>
+                  <div>
+                    <h3 className="font-bold text-lg">{medal.name}</h3>
+                    <p className="text-gray-600 text-sm">{medal.description}</p>
+                    <p className="text-gray-500 text-xs mt-1">
+                      Conquistada em {medal.acquiredDate && format(new Date(medal.acquiredDate), 'dd/MM/yyyy')}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+        
+        <div>
+          <h2 className="text-2xl font-bold mb-4">Próximas Conquistas</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {unearnedMedals.map((medal) => (
+              <Card key={medal.id} className="bg-gray-50 opacity-80">
+                <CardContent className="p-6 flex items-center">
+                  <div className="text-5xl mr-4 opacity-50">{medal.image}</div>
+                  <div>
+                    <h3 className="font-bold text-lg">{medal.name}</h3>
+                    <p className="text-gray-600 text-sm">{medal.description}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="history">
+        <Card>
+          <CardHeader>
+            <CardTitle>Histórico de Atividades</CardTitle>
+            <CardDescription>Suas ações e pontos ganhos</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {activityHistory.map((activity) => (
+                <div key={activity.id} className="flex items-start">
+                  <div className="bg-gray-100 p-2 rounded-full mr-4 mt-1">
+                    {getTypeIcon(activity.type)}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium">{activity.description}</p>
+                        <p className="text-sm text-gray-500">
+                          {format(new Date(activity.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                        </p>
+                      </div>
+                      <span className="bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded">
+                        +{activity.points} pts
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
+  );
+  
+  const pointsSystemSection = (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-xl">Sistema de Pontuação</CardTitle>
+        <CardDescription>Como ganhar pontos na plataforma</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 bg-blue-50 rounded-lg">
+            <h3 className="font-medium text-blue-800 mb-2">Assistir Vídeos</h3>
+            <ul className="text-sm space-y-2 text-gray-700">
+              <li>• Vídeos de Segurança: 50 pts</li>
+              <li>• Vídeos de Qualidade: 50 pts</li>
+              <li>• Vídeos de Procedimentos: 50 pts</li>
+              <li>• Formação Completa: +100 pts</li>
+            </ul>
+          </div>
+          
+          <div className="p-4 bg-orange-50 rounded-lg">
+            <h3 className="font-medium text-orange-800 mb-2">Reportar Quase Acidentes</h3>
+            <ul className="text-sm space-y-2 text-gray-700">
+              <li>• Severidade Baixa: 50 pts</li>
+              <li>• Severidade Média: 75 pts</li>
+              <li>• Severidade Alta: 100 pts</li>
+              <li>• Com evidência fotográfica: +25 pts</li>
+            </ul>
+          </div>
+          
+          <div className="p-4 bg-yellow-50 rounded-lg">
+            <h3 className="font-medium text-yellow-800 mb-2">Conquistas e Bônus</h3>
+            <ul className="text-sm space-y-2 text-gray-700">
+              <li>• Nova Medalha: 100 pts</li>
+              <li>• Primeiro da semana: 50 pts</li>
+              <li>• Sequência de 5 dias: 75 pts</li>
+              <li>• Completar área: 200 pts</li>
+            </ul>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+  
+  // Conditional rendering based on view mode
+  const pageContent = isCompactView ? (
+    <NoScrollLayout 
+      sections={[headerSection, progressSection, tabsSection, pointsSystemSection]} 
+      showPagination={true}
+    />
+  ) : (
+    <>
+      {headerSection}
+      {progressSection}
+      {tabsSection}
+      {pointsSystemSection}
+    </>
+  );
+  
+  return (
+    <Layout>
+      {pageContent}
     </Layout>
   );
 }

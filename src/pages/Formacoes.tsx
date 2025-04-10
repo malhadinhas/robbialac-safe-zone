@@ -9,6 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import FactoryModel3D from "@/components/FactoryModel3D";
 import VideosCategoryCard from '@/components/VideosCategoryCard';
+import { NoScrollLayout } from '@/components/NoScrollLayout';
+import { useIsCompactView } from '@/hooks/use-mobile';
 
 export default function Formacoes() {
   const navigate = useNavigate();
@@ -16,6 +18,7 @@ export default function Formacoes() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [useSimpleView, setUseSimpleView] = useState(false);
+  const isCompactView = useIsCompactView();
   
   useEffect(() => {
     setIsAdmin(user?.role === 'admin_app');
@@ -60,8 +63,9 @@ export default function Formacoes() {
     }
   ];
   
-  return (
-    <Layout>
+  // Define sections for the no-scroll layout
+  const mainSection = (
+    <>
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Formações</h1>
         <p className="text-gray-600">Selecione uma área da fábrica para ver os vídeos disponíveis</p>
@@ -119,17 +123,33 @@ export default function Formacoes() {
           )}
         </CardContent>
       </Card>
-      
-      {/* Cards informativos com os últimos vídeos visualizados e próximas sugestões */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {videoCategories.map((category) => (
-          <VideosCategoryCard 
-            key={category.title}
-            category={category.title} 
-            description={category.description}
-          />
-        ))}
-      </div>
+    </>
+  );
+  
+  const categoriesSection = (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {videoCategories.map((category) => (
+        <VideosCategoryCard 
+          key={category.title}
+          category={category.title} 
+          description={category.description}
+        />
+      ))}
+    </div>
+  );
+  
+  const pageContent = isCompactView 
+    ? <NoScrollLayout sections={[mainSection, categoriesSection]} />
+    : (
+        <>
+          {mainSection}
+          {categoriesSection}
+        </>
+      );
+  
+  return (
+    <Layout>
+      {pageContent}
       
       {/* Modal de Upload - manter como está */}
       {isModalOpen && (
