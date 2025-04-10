@@ -1,37 +1,209 @@
 
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { Button } from "./button"
+import { useState, useEffect, useRef } from "react"
+import { ScrollArea } from "./scroll-area"
 
 const Tabs = TabsPrimitive.Root
 
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List> & {
-    variant?: "default" | "segment" | "outline" | "card" | "fitted"
+    variant?: "default" | "segment" | "outline" | "card" | "fitted" | "paginated" | "compact"
   }
->(({ className, variant = "default", ...props }, ref) => (
-  <TabsPrimitive.List
-    ref={ref}
-    className={cn(
-      "inline-flex items-center justify-center",
-      variant === "default" && "h-10 rounded-md bg-muted p-1 text-muted-foreground",
-      variant === "segment" && "bg-transparent p-0 text-muted-foreground space-x-1",
-      variant === "outline" && "h-9 border-b border-border text-muted-foreground",
-      variant === "card" && "w-full flex-wrap gap-2 bg-transparent p-0 text-muted-foreground",
-      variant === "fitted" && "w-full flex-nowrap overflow-x-auto gap-0 bg-transparent p-0 text-muted-foreground",
-      className
-    )}
-    {...props}
-  />
-))
+>(({ className, variant = "default", ...props }, ref) => {
+  const [currentPage, setCurrentPage] = useState(0)
+  const [pageCount, setPageCount] = useState(1)
+  const [visibleItems, setVisibleItems] = useState<HTMLElement[]>([])
+  const listRef = useRef<HTMLDivElement>(null)
+
+  // Função para paginar as tabs quando no modo paginated
+  const paginate = (direction: 'next' | 'prev') => {
+    if (direction === 'next') {
+      setCurrentPage(prev => Math.min(prev + 1, pageCount - 1))
+    } else {
+      setCurrentPage(prev => Math.max(prev - 1, 0))
+    }
+  }
+
+  // Efeito para calcular páginas quando no modo paginated
+  useEffect(() => {
+    if (variant === 'paginated' && listRef.current) {
+      const listEl = listRef.current
+      const items = Array.from(listEl.querySelectorAll('[role="tab"]')) as HTMLElement[]
+      
+      if (items.length > 0) {
+        setVisibleItems(items)
+        // Mostra todos os itens inicialmente para fazer o cálculo
+        items.forEach(item => {
+          item.style.display = 'flex'
+        })
+        
+        // Recalcula quando o tamanho da janela muda
+        const calculatePages = () => {
+          const containerWidth = listEl.clientWidth - 80 // Espaço para os botões de navegação
+          let currentWidth = 0
+          let itemsPerPage = 0
+
+          for (let item of items) {
+            currentWidth += item.offsetWidth
+            if (currentWidth <= containerWidth) {
+              itemsPerPage++
+            } else {
+              break
+            }
+          }
+
+          // Garantir que pelo menos um item seja mostrado
+          itemsPerPage = Math.max(1, itemsPerPage)
+          const newPageCount = Math.ceil(items.length / itemsPerPage)
+          
+          setPageCount(newPageCount)
+          // Ajusta a página atual se necessário
+          setCurrentPage(prev => Math.min(prev, newPageCount - 1))
+          
+          // Atualiza visibilidade
+          items.forEach((item, index) => {
+            const startIdx = currentPage * itemsPerPage
+            const endIdx = startIdx + itemsPerPage
+            item.style.display = index >= startIdx && index < endIdx ? 'flex' : 'none'
+          })
+        }
+        
+        calculatePages()
+        window.addEventListener('resize', calculatePages)
+        
+        return () => {
+          window.removeEventListener('resize', calculatePages)
+        }
+      }
+    }
+  }, [variant, currentPage])
+
+  // Atualiza a visibilidade dos itens quando a página muda
+  useEffect(() => {
+    if (variant === 'paginated' && visibleItems.length > 0 && listRef.current) {
+      const listEl = listRef.current
+      const containerWidth = listEl.clientWidth - 80
+      let currentWidth = 0
+      let itemsPerPage = 0
+
+      for (let item of visibleItems) {
+        currentWidth += item.offsetWidth
+        if (currentWidth <= containerWidth) {
+          itemsPerPage++
+        } else {
+          break
+        }
+      }
+
+      itemsPerPage = Math.max(1, itemsPerPage)
+      
+      visibleItems.forEach((item, index) => {
+        const startIdx = currentPage * itemsPerPage
+        const endIdx = startIdx + itemsPerPage
+        item.style.display = index >= startIdx && index < endIdx ? 'flex' : 'none'
+      })
+    }
+  }, [currentPage, variant, visibleItems])
+
+  if (variant === 'paginated') {
+    return (
+      <div className="flex items-center">
+        <Button 
+          size="icon" 
+          variant="ghost" 
+          className={cn("flex-shrink-0", currentPage === 0 && "opacity-50 cursor-not-allowed")}
+          onClick={() => paginate('prev')}
+          disabled={currentPage === 0}
+          aria-label="Página anterior"
+        >
+          <ChevronLeft size={18} />
+        </Button>
+        
+        <TabsPrimitive.List
+          ref={(el) => {
+            if (typeof ref === 'function') ref(el)
+            else if (ref) ref.current = el
+            // @ts-ignore - listRef is a React.RefObject<HTMLDivElement>
+            listRef.current = el
+          }}
+          className={cn(
+            "flex items-center justify-center flex-1 px-1",
+            variant === "default" && "h-10 rounded-md bg-muted p-1 text-muted-foreground",
+            variant === "segment" && "bg-transparent p-0 text-muted-foreground space-x-1",
+            variant === "outline" && "h-9 border-b border-border text-muted-foreground",
+            variant === "card" && "w-full flex-wrap gap-2 bg-transparent p-0 text-muted-foreground",
+            variant === "fitted" && "w-full flex-nowrap gap-0 bg-transparent p-0 text-muted-foreground",
+            variant === "paginated" && "w-full flex-nowrap gap-1 bg-transparent p-0 text-muted-foreground overflow-hidden",
+            variant === "compact" && "w-full flex-nowrap justify-start gap-0 bg-transparent p-0 text-muted-foreground",
+            className
+          )}
+          {...props}
+        />
+        
+        <Button 
+          size="icon" 
+          variant="ghost" 
+          className={cn("flex-shrink-0", currentPage >= pageCount - 1 && "opacity-50 cursor-not-allowed")}
+          onClick={() => paginate('next')}
+          disabled={currentPage >= pageCount - 1}
+          aria-label="Próxima página"
+        >
+          <ChevronRight size={18} />
+        </Button>
+      </div>
+    )
+  }
+  
+  // Para variante compacta, usar ScrollArea
+  if (variant === 'compact') {
+    return (
+      <ScrollArea className="w-full">
+        <TabsPrimitive.List
+          ref={ref}
+          className={cn(
+            "min-w-max inline-flex items-center justify-start",
+            variant === "default" && "h-10 rounded-md bg-muted p-1 text-muted-foreground",
+            variant === "segment" && "bg-transparent p-0 text-muted-foreground space-x-1",
+            variant === "outline" && "h-9 border-b border-border text-muted-foreground",
+            variant === "card" && "w-full flex-nowrap gap-2 bg-transparent p-0 text-muted-foreground",
+            variant === "fitted" && "w-full flex-nowrap gap-0 bg-transparent p-0 text-muted-foreground",
+            variant === "compact" && "flex-nowrap gap-0 bg-transparent p-0 text-muted-foreground",
+            className
+          )}
+          {...props}
+        />
+      </ScrollArea>
+    )
+  }
+
+  return (
+    <TabsPrimitive.List
+      ref={ref}
+      className={cn(
+        "inline-flex items-center justify-center",
+        variant === "default" && "h-10 rounded-md bg-muted p-1 text-muted-foreground",
+        variant === "segment" && "bg-transparent p-0 text-muted-foreground space-x-1",
+        variant === "outline" && "h-9 border-b border-border text-muted-foreground",
+        variant === "card" && "w-full flex-wrap gap-2 bg-transparent p-0 text-muted-foreground",
+        variant === "fitted" && "w-full flex-nowrap overflow-x-auto gap-0 bg-transparent p-0 text-muted-foreground",
+        className
+      )}
+      {...props}
+    />
+  )
+})
 TabsList.displayName = TabsPrimitive.List.displayName
 
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger> & {
-    variant?: "default" | "segment" | "outline" | "card" | "fitted"
+    variant?: "default" | "segment" | "outline" | "card" | "fitted" | "paginated" | "compact"
     fullWidth?: boolean
   }
 >(({ className, variant = "default", fullWidth, ...props }, ref) => (
@@ -44,6 +216,8 @@ const TabsTrigger = React.forwardRef<
       variant === "outline" && "rounded-none border-b-2 border-b-transparent px-4 pb-3 pt-2 data-[state=active]:border-b-primary data-[state=active]:text-foreground",
       variant === "card" && "rounded-md border border-border bg-background px-3 py-1.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/50",
       variant === "fitted" && "flex-1 rounded-none border-b-2 border-b-transparent px-3 py-2 data-[state=active]:border-b-primary data-[state=active]:text-foreground",
+      variant === "paginated" && "flex-1 rounded-md border border-border bg-background px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
+      variant === "compact" && "px-3 py-1.5 rounded-md data-[state=active]:text-primary data-[state=active]:bg-primary/10",
       fullWidth && "flex-1",
       className
     )}

@@ -25,7 +25,7 @@ const buttonVariants = cva(
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
-        responsive: "h-10 px-3 md:px-4", // Simplificado para ser mais consistente
+        responsive: "h-9 px-2 min-w-[70px] sm:h-10 sm:px-3 md:px-4", // Melhorado para tamanhos pequenos
       },
       fullWidth: {
         true: "w-full",
@@ -40,7 +40,7 @@ const buttonVariants = cva(
       {
         size: "responsive",
         iconOnly: true,
-        className: "h-10 w-10", // Aspecto quadrado mais consistente
+        className: "h-9 w-9 sm:h-10 sm:w-10", // Ajustado para ser responsivo mesmo quando é um ícone
       },
     ],
     defaultVariants: {

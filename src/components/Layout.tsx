@@ -39,7 +39,7 @@ export function Layout({ children }: LayoutProps) {
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Mobile header */}
       {isMobile && (
-        <header className="bg-robbialac text-white p-4 flex items-center justify-between">
+        <header className="bg-robbialac text-white p-4 flex items-center justify-between fixed top-0 left-0 right-0 z-30">
           <div className="flex items-center space-x-2">
             <img src="/placeholder.svg" alt="Logo" className="w-8 h-8 rounded-full bg-white" />
             <h1 className="font-bold">RobbialacSegurança</h1>
@@ -144,7 +144,7 @@ export function Layout({ children }: LayoutProps) {
       )}
       
       {/* Main content */}
-      <main className={cn("flex-1 p-4 md:p-6", isMobile && "pt-16")}>
+      <main className={cn("flex-1 p-4 md:p-6", isMobile && "pt-20")}>
         {children}
       </main>
     </div>

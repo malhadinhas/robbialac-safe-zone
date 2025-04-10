@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,11 +60,11 @@ export default function Definicoes() {
       </div>
       
       <Tabs defaultValue="account">
-        <TabsList className="mb-6" variant={isMobile ? "fitted" : "default"}>
-          <TabsTrigger value="account" fullWidth={isMobile}>Conta</TabsTrigger>
-          <TabsTrigger value="notifications" fullWidth={isMobile}>Notificações</TabsTrigger>
-          <TabsTrigger value="security" fullWidth={isMobile}>Segurança</TabsTrigger>
-          {isAdmin && <TabsTrigger value="admin" fullWidth={isMobile}>Administração</TabsTrigger>}
+        <TabsList className="mb-6" variant={isMobile ? "compact" : "default"}>
+          <TabsTrigger value="account">Conta</TabsTrigger>
+          <TabsTrigger value="notifications">Notificações</TabsTrigger>
+          <TabsTrigger value="security">Segurança</TabsTrigger>
+          {isAdmin && <TabsTrigger value="admin">Administração</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="account">
