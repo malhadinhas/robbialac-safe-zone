@@ -10,6 +10,13 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -27,6 +34,7 @@ export default function Definicoes() {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [whatsappNotifications, setWhatsappNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState("pt");
   
   const handleSaveProfile = () => {
     toast.success("Perfil atualizado com sucesso!");
@@ -60,11 +68,11 @@ export default function Definicoes() {
       </div>
       
       <Tabs defaultValue="account">
-        <TabsList className="mb-6" variant={isMobile ? "compact" : "default"}>
-          <TabsTrigger value="account">Conta</TabsTrigger>
-          <TabsTrigger value="notifications">Notificações</TabsTrigger>
-          <TabsTrigger value="security">Segurança</TabsTrigger>
-          {isAdmin && <TabsTrigger value="admin">Administração</TabsTrigger>}
+        <TabsList className="mb-6" variant="responsive">
+          <TabsTrigger value="account" variant="responsive" shortLabel="Conta">Conta</TabsTrigger>
+          <TabsTrigger value="notifications" variant="responsive" shortLabel="Notif.">Notificações</TabsTrigger>
+          <TabsTrigger value="security" variant="responsive" shortLabel="Seg.">Segurança</TabsTrigger>
+          {isAdmin && <TabsTrigger value="admin" variant="responsive" shortLabel="Admin">Administração</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="account">
@@ -117,11 +125,16 @@ export default function Definicoes() {
                   <Label htmlFor="language">Idioma da Plataforma</Label>
                   <p className="text-sm text-gray-500">Selecione o idioma da interface</p>
                 </div>
-                <select className="border rounded p-2">
-                  <option>Português</option>
-                  <option>English</option>
-                  <option>Español</option>
-                </select>
+                <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Selecione o idioma" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pt">Português</SelectItem>
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="es">Español</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="flex items-center justify-between pt-2">

@@ -25,7 +25,8 @@ const buttonVariants = cva(
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
-        responsive: "h-9 px-2 min-w-[70px] sm:h-10 sm:px-3 md:px-4", // Melhorado para tamanhos pequenos
+        responsive: "h-9 px-2 min-w-[70px] sm:h-10 sm:px-3 md:px-4", // Improved for small sizes
+        "ultra-responsive": "h-9 px-2 w-auto sm:h-10 sm:px-3 md:px-4", // Even more responsive
       },
       fullWidth: {
         true: "w-full",
@@ -40,7 +41,12 @@ const buttonVariants = cva(
       {
         size: "responsive",
         iconOnly: true,
-        className: "h-9 w-9 sm:h-10 sm:w-10", // Ajustado para ser responsivo mesmo quando é um ícone
+        className: "h-9 w-9 sm:h-10 sm:w-10", // Adjusted to be responsive even as an icon
+      },
+      {
+        size: "ultra-responsive",
+        iconOnly: true,
+        className: "h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10", // Even smaller on mobile
       },
     ],
     defaultVariants: {
@@ -58,17 +64,25 @@ export interface ButtonProps
   asChild?: boolean
   fullWidth?: boolean
   iconOnly?: boolean
+  shortText?: string // New prop for responsive text
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, fullWidth, iconOnly, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, fullWidth, iconOnly, asChild = false, shortText, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+    const isMobile = window.innerWidth < 768 // Simple mobile check 
+    
+    // Use shortText on mobile if provided
+    const displayContent = isMobile && shortText ? shortText : children
+    
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, fullWidth, iconOnly, className }))}
         ref={ref}
         {...props}
-      />
+      >
+        {displayContent}
+      </Comp>
     )
   }
 )
