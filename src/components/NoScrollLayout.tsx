@@ -12,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsCompactView, useViewportHeight } from "@/hooks/use-mobile";
 
 interface NoScrollLayoutProps {
-  children: React.ReactNode;
+  children?: React.ReactNode; // Making children optional
   sections?: React.ReactNode[];
   showNavigation?: boolean;
   showPagination?: boolean;
