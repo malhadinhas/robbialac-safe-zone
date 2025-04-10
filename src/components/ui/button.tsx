@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -24,11 +25,29 @@ const buttonVariants = cva(
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
+        responsive: "h-9 px-2 sm:px-3 md:h-10 md:px-4", // Novo tamanho responsivo
+      },
+      fullWidth: {
+        true: "w-full",
+        false: "",
+      },
+      iconOnly: {
+        true: "p-0 aspect-square",
+        false: "",
       },
     },
+    compoundVariants: [
+      {
+        size: "responsive",
+        iconOnly: true,
+        className: "w-9 sm:w-9 md:w-10",
+      },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",
+      fullWidth: false,
+      iconOnly: false,
     },
   }
 )
@@ -37,14 +56,16 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
+  fullWidth?: boolean
+  iconOnly?: boolean
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, fullWidth, iconOnly, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(buttonVariants({ variant, size, fullWidth, iconOnly, className }))}
         ref={ref}
         {...props}
       />

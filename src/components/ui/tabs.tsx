@@ -9,7 +9,7 @@ const Tabs = TabsPrimitive.Root
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List> & {
-    variant?: "default" | "segment" | "outline" | "card" | "fitted"
+    variant?: "default" | "segment" | "outline" | "card" | "fitted" | "scrollable"
   }
 >(({ className, variant = "default", ...props }, ref) => (
   <TabsPrimitive.List
@@ -21,6 +21,7 @@ const TabsList = React.forwardRef<
       variant === "outline" && "h-9 border-b border-border text-muted-foreground",
       variant === "card" && "w-full flex-wrap gap-2 bg-transparent p-0 text-muted-foreground",
       variant === "fitted" && "w-full flex-nowrap overflow-x-auto gap-0 bg-transparent p-0 text-muted-foreground",
+      variant === "scrollable" && "w-full flex-nowrap overflow-x-auto gap-1 bg-transparent p-0 pb-1 text-muted-foreground scrollbar-hide",
       className
     )}
     {...props}
@@ -31,9 +32,10 @@ TabsList.displayName = TabsPrimitive.List.displayName
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger> & {
-    variant?: "default" | "segment" | "outline" | "card" | "fitted"
+    variant?: "default" | "segment" | "outline" | "card" | "fitted" | "scrollable"
+    fullWidth?: boolean
   }
->(({ className, variant = "default", ...props }, ref) => (
+>(({ className, variant = "default", fullWidth, ...props }, ref) => (
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
@@ -43,6 +45,8 @@ const TabsTrigger = React.forwardRef<
       variant === "outline" && "rounded-none border-b-2 border-b-transparent px-4 pb-3 pt-2 data-[state=active]:border-b-primary data-[state=active]:text-foreground",
       variant === "card" && "rounded-md border border-border bg-background px-3 py-1.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/50",
       variant === "fitted" && "flex-1 rounded-none border-b-2 border-b-transparent px-3 py-2 data-[state=active]:border-b-primary data-[state=active]:text-foreground",
+      variant === "scrollable" && "flex-shrink-0 rounded-md border border-border bg-background px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
+      fullWidth && "flex-1",
       className
     )}
     {...props}

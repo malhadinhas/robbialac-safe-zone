@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +23,7 @@ import {
 
 export default function Definicoes() {
   const { user, logout } = useAuth();
+  const isMobile = useIsMobile();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [whatsappNotifications, setWhatsappNotifications] = useState(true);
@@ -59,11 +61,11 @@ export default function Definicoes() {
       </div>
       
       <Tabs defaultValue="account">
-        <TabsList className="mb-6">
-          <TabsTrigger value="account">Conta</TabsTrigger>
-          <TabsTrigger value="notifications">Notificações</TabsTrigger>
-          <TabsTrigger value="security">Segurança</TabsTrigger>
-          {isAdmin && <TabsTrigger value="admin">Administração</TabsTrigger>}
+        <TabsList className="mb-6" variant={isMobile ? "scrollable" : "default"}>
+          <TabsTrigger value="account" fullWidth={isMobile}>Conta</TabsTrigger>
+          <TabsTrigger value="notifications" fullWidth={isMobile}>Notificações</TabsTrigger>
+          <TabsTrigger value="security" fullWidth={isMobile}>Segurança</TabsTrigger>
+          {isAdmin && <TabsTrigger value="admin" fullWidth={isMobile}>Administração</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="account">
