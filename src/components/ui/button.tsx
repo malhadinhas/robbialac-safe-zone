@@ -64,7 +64,7 @@ export interface ButtonProps
   asChild?: boolean
   fullWidth?: boolean
   iconOnly?: boolean
-  shortText?: string // New prop for responsive text
+  shortText?: string // Prop for responsive text
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(

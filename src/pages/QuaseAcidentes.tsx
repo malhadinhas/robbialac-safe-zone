@@ -61,7 +61,7 @@ import {
 } from 'recharts';
 import DepartmentAnalyticsChart from "@/components/incidents/DepartmentAnalyticsChart";
 import ChatbotModal from "@/components/incidents/ChatbotModal";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile, useIsTablet, useDeviceSize } from "@/hooks/use-mobile";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const formSchema = z.object({
@@ -90,6 +90,7 @@ export default function QuaseAcidentes() {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   const [activeIncidentIndex, setActiveIncidentIndex] = useState(0);
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -317,45 +318,39 @@ export default function QuaseAcidentes() {
       </div>
       
       <div className="flex flex-col gap-4 mb-6">
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-          {isAdmin && (
-            <>
-              <Button 
-                variant="outline" 
-                className="flex items-center bg-white"
-                onClick={() => setIsImportDialogOpen(true)}
-                size="ultra-responsive"
-                shortText="Importar"
-                iconOnly={isMobile}
-                fullWidth={isMobile}
-              >
-                <FileUp className="h-5 w-5" />
-                Importar
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex items-center bg-white"
-                onClick={() => setIsExportDialogOpen(true)}
-                size="ultra-responsive"
-                shortText="Exportar"
-                iconOnly={isMobile}
-                fullWidth={isMobile}
-              >
-                <FileDown className="h-5 w-5" />
-                Exportar
-              </Button>
-            </>
-          )}
-        </div>
+        {isAdmin && (
+          <div className="grid grid-cols-2 gap-4 w-full">
+            <Button 
+              variant="outline" 
+              className="flex items-center justify-center bg-white w-full"
+              onClick={() => setIsImportDialogOpen(true)}
+              size="ultra-responsive"
+              shortText="Importar"
+            >
+              <FileUp className="h-5 w-5 mr-2" />
+              Importar
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex items-center justify-center bg-white w-full"
+              onClick={() => setIsExportDialogOpen(true)}
+              size="ultra-responsive"
+              shortText="Exportar"
+            >
+              <FileDown className="h-5 w-5 mr-2" />
+              Exportar
+            </Button>
+          </div>
+        )}
         <div>
           <Button 
             onClick={handleNewIncidentReport} 
-            className="bg-robbialac hover:bg-robbialac-dark flex items-center"
+            className="bg-robbialac hover:bg-robbialac-dark flex items-center justify-center"
             size={isMobile ? "ultra-responsive" : "responsive"}
             fullWidth={true}
             shortText="Reportar"
           >
-            <PlusCircle className="h-5 w-5" />
+            <PlusCircle className="h-5 w-5 mr-2" />
             Reportar Quase Acidente
           </Button>
         </div>
