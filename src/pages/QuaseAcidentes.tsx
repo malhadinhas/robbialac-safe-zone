@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { mockIncidents, mockStatsBySeverity, mockDepartments, mockSystemConfig } from "@/services/mockData";
 import { 
   AlertCircle, FileUp, FileDown, FileSpreadsheet, Calendar,
-  CheckCircle, Clock, User, ChartBar, PlusCircle, Edit, Trash2
+  CheckCircle, Clock, User, ChartBar, PlusCircle, Edit, Trash2,
+  ChevronLeft, ChevronRight
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Incident, Department, SystemConfig } from "@/types";
@@ -61,6 +62,7 @@ import {
 import DepartmentAnalyticsChart from "@/components/incidents/DepartmentAnalyticsChart";
 import ChatbotModal from "@/components/incidents/ChatbotModal";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const formSchema = z.object({
   status: z.string(),
@@ -88,6 +90,7 @@ export default function QuaseAcidentes() {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
+  const [activeIncidentIndex, setActiveIncidentIndex] = useState(0);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -296,6 +299,16 @@ export default function QuaseAcidentes() {
 
   const monthlyData = getMonthlyData();
   
+  const nextIncident = () => {
+    if (incidents.length === 0) return;
+    setActiveIncidentIndex((prev) => (prev + 1) % incidents.length);
+  };
+  
+  const prevIncident = () => {
+    if (incidents.length === 0) return;
+    setActiveIncidentIndex((prev) => (prev - 1 + incidents.length) % incidents.length);
+  };
+
   return (
     <Layout>
       <div className="mb-6">
@@ -304,7 +317,7 @@ export default function QuaseAcidentes() {
       </div>
       
       <div className="flex flex-col gap-4 mb-6">
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           {isAdmin && (
             <>
               <Button 
@@ -314,6 +327,7 @@ export default function QuaseAcidentes() {
                 size="ultra-responsive"
                 shortText="Importar"
                 iconOnly={isMobile}
+                fullWidth={isMobile}
               >
                 <FileUp className="h-5 w-5" />
                 Importar
@@ -325,6 +339,7 @@ export default function QuaseAcidentes() {
                 size="ultra-responsive"
                 shortText="Exportar"
                 iconOnly={isMobile}
+                fullWidth={isMobile}
               >
                 <FileDown className="h-5 w-5" />
                 Exportar
@@ -337,7 +352,7 @@ export default function QuaseAcidentes() {
             onClick={handleNewIncidentReport} 
             className="bg-robbialac hover:bg-robbialac-dark flex items-center"
             size={isMobile ? "ultra-responsive" : "responsive"}
-            fullWidth={isMobile}
+            fullWidth={true}
             shortText="Reportar"
           >
             <PlusCircle className="h-5 w-5" />
@@ -358,139 +373,300 @@ export default function QuaseAcidentes() {
         
         <TabsContent value="lista">
           <div className="space-y-4">
-            {incidents.map((incident) => (
-              <Card 
-                key={incident.id}
-                className={`border-l-4 ${getSeverityColor(incident.severity)}`}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg">{incident.title}</CardTitle>
-                      <div className="text-sm text-gray-500 mt-1">
-                        Reportado por {incident.reportedBy.split('@')[0]} • {' '}
-                        {formatDistanceToNow(new Date(incident.date), { 
-                          addSuffix: true, 
-                          locale: ptBR 
-                        })}
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(incident.status)}`}>
-                        {incident.status}
-                      </span>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        incident.severity === "Alto" 
-                          ? "bg-red-100 text-red-800" 
-                          : incident.severity === "Médio"
-                          ? "bg-orange-100 text-orange-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}>
-                        {incident.severity}
-                      </span>
-                      {incident.qaQuality && (
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getQAQualityColor(incident.qaQuality)}`}>
-                          QA: {incident.qaQuality}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="mb-3">{incident.description}</p>
-                  
-                  <div className="text-sm text-gray-600 mb-2 grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <div><strong>Local:</strong> {incident.location}</div>
-                    
-                    {incident.department && (
-                      <div><strong>Departamento:</strong> {incident.department}</div>
-                    )}
-                    
-                    {incident.responsible && (
-                      <div><strong>Responsável:</strong> {incident.responsible}</div>
-                    )}
-                    
-                    {incident.resolutionDeadline && (
-                      <div className="flex items-center">
-                        <Calendar className="inline h-4 w-4 mr-1 text-gray-500" />
-                        <strong>Prazo resolução:</strong> {format(new Date(incident.resolutionDeadline), 'dd/MM/yyyy')}
-                      </div>
-                    )}
-                    
-                    {incident.completionDate && (
-                      <div className="flex items-center">
-                        <CheckCircle className="inline h-4 w-4 mr-1 text-green-500" />
-                        <strong>Data Conclusão:</strong> {format(new Date(incident.completionDate), 'dd/MM/yyyy')}
-                      </div>
-                    )}
-                    
-                    {incident.frequency && (
-                      <div><strong>Frequência:</strong> {incident.frequency}</div>
-                    )}
-                    
-                    {incident.risk !== undefined && (
-                      <div><strong>Risco:</strong> {incident.risk}</div>
-                    )}
-                    
-                    {incident.resolutionDays !== undefined && (
-                      <div className="flex items-center">
-                        <Clock className="inline h-4 w-4 mr-1 text-gray-500" />
-                        <strong>Dias resolução:</strong> {incident.resolutionDays}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {incident.implementedAction && (
-                    <div className="mt-4 p-3 bg-green-50 rounded-md border border-green-200">
-                      <p className="text-sm font-medium text-green-800">Ação implementada:</p>
-                      <p className="text-sm text-gray-700">{incident.implementedAction}</p>
-                    </div>
-                  )}
-                  
-                  {incident.adminNotes && (
-                    <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
-                      <p className="text-sm font-medium text-blue-800">Nota do administrador:</p>
-                      <p className="text-sm text-gray-700">{incident.adminNotes}</p>
-                    </div>
-                  )}
-                  
-                  {isAdmin && (
-                    <div className="mt-4 pt-4 border-t flex justify-end space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEditIncident(incident.id)}
-                      >
-                        <Edit className="h-4 w-4 mr-1" /> Editar
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-red-600 hover:text-red-700 hover:border-red-200"
-                        onClick={() => handleDeleteIncident(incident.id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" /> Apagar
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-            
-            {incidents.length === 0 && (
-              <div className="text-center py-12">
-                <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-lg font-medium text-gray-900">Nenhum quase acidente reportado</h3>
-                <p className="mt-1 text-gray-500">Reporte situações de risco para melhorar a segurança.</p>
-                <div className="mt-6">
-                  <Button 
-                    onClick={handleNewIncidentReport}
-                    className="bg-robbialac hover:bg-robbialac-dark"
+            {isMobile || window.innerWidth < 768 ? (
+              incidents.length > 0 ? (
+                <div className="relative pb-10">
+                  <Card 
+                    key={incidents[activeIncidentIndex].id}
+                    className={`border-l-4 ${getSeverityColor(incidents[activeIncidentIndex].severity)}`}
                   >
-                    Reportar um Quase Acidente
-                  </Button>
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{incidents[activeIncidentIndex].title}</CardTitle>
+                          <div className="text-sm text-gray-500 mt-1">
+                            Reportado por {incidents[activeIncidentIndex].reportedBy.split('@')[0]} • {' '}
+                            {formatDistanceToNow(new Date(incidents[activeIncidentIndex].date), { 
+                              addSuffix: true, 
+                              locale: ptBR 
+                            })}
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(incidents[activeIncidentIndex].status)}`}>
+                            {incidents[activeIncidentIndex].status}
+                          </span>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            incidents[activeIncidentIndex].severity === "Alto" 
+                              ? "bg-red-100 text-red-800" 
+                              : incidents[activeIncidentIndex].severity === "Médio"
+                              ? "bg-orange-100 text-orange-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}>
+                            {incidents[activeIncidentIndex].severity}
+                          </span>
+                          {incidents[activeIncidentIndex].qaQuality && (
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getQAQualityColor(incidents[activeIncidentIndex].qaQuality)}`}>
+                              QA: {incidents[activeIncidentIndex].qaQuality}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="mb-3">{incidents[activeIncidentIndex].description}</p>
+                      
+                      <div className="text-sm text-gray-600 mb-2 grid grid-cols-1 gap-2">
+                        <div><strong>Local:</strong> {incidents[activeIncidentIndex].location}</div>
+                        
+                        {incidents[activeIncidentIndex].department && (
+                          <div><strong>Departamento:</strong> {incidents[activeIncidentIndex].department}</div>
+                        )}
+                        
+                        {incidents[activeIncidentIndex].responsible && (
+                          <div><strong>Responsável:</strong> {incidents[activeIncidentIndex].responsible}</div>
+                        )}
+                        
+                        {incidents[activeIncidentIndex].resolutionDeadline && (
+                          <div className="flex items-center">
+                            <Calendar className="inline h-4 w-4 mr-1 text-gray-500" />
+                            <strong>Prazo resolução:</strong> {format(new Date(incidents[activeIncidentIndex].resolutionDeadline), 'dd/MM/yyyy')}
+                          </div>
+                        )}
+                        
+                        {incidents[activeIncidentIndex].completionDate && (
+                          <div className="flex items-center">
+                            <CheckCircle className="inline h-4 w-4 mr-1 text-green-500" />
+                            <strong>Data Conclusão:</strong> {format(new Date(incidents[activeIncidentIndex].completionDate), 'dd/MM/yyyy')}
+                          </div>
+                        )}
+                        
+                        {incidents[activeIncidentIndex].frequency && (
+                          <div><strong>Frequência:</strong> {incidents[activeIncidentIndex].frequency}</div>
+                        )}
+                        
+                        {incidents[activeIncidentIndex].risk !== undefined && (
+                          <div><strong>Risco:</strong> {incidents[activeIncidentIndex].risk}</div>
+                        )}
+                        
+                        {incidents[activeIncidentIndex].resolutionDays !== undefined && (
+                          <div className="flex items-center">
+                            <Clock className="inline h-4 w-4 mr-1 text-gray-500" />
+                            <strong>Dias resolução:</strong> {incidents[activeIncidentIndex].resolutionDays}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {incidents[activeIncidentIndex].implementedAction && (
+                        <div className="mt-4 p-3 bg-green-50 rounded-md border border-green-200">
+                          <p className="text-sm font-medium text-green-800">Ação implementada:</p>
+                          <p className="text-sm text-gray-700">{incidents[activeIncidentIndex].implementedAction}</p>
+                        </div>
+                      )}
+                      
+                      {incidents[activeIncidentIndex].adminNotes && (
+                        <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+                          <p className="text-sm font-medium text-blue-800">Nota do administrador:</p>
+                          <p className="text-sm text-gray-700">{incidents[activeIncidentIndex].adminNotes}</p>
+                        </div>
+                      )}
+                      
+                      {isAdmin && (
+                        <div className="mt-4 pt-4 border-t flex justify-end space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditIncident(incidents[activeIncidentIndex].id)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" /> Editar
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-red-600 hover:text-red-700 hover:border-red-200"
+                            onClick={() => handleDeleteIncident(incidents[activeIncidentIndex].id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" /> Apagar
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                  
+                  <div className="absolute bottom-0 left-0 right-0 flex justify-center items-center gap-2 mt-4 pb-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={prevIncident}
+                      className="rounded-full"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm text-gray-500">
+                      {activeIncidentIndex + 1} / {incidents.length}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={nextIncident}
+                      className="rounded-full"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-12">
+                  <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-lg font-medium text-gray-900">Nenhum quase acidente reportado</h3>
+                  <p className="mt-1 text-gray-500">Reporte situações de risco para melhorar a segurança.</p>
+                  <div className="mt-6">
+                    <Button 
+                      onClick={handleNewIncidentReport}
+                      className="bg-robbialac hover:bg-robbialac-dark"
+                    >
+                      Reportar um Quase Acidente
+                    </Button>
+                  </div>
+                </div>
+              )
+            ) : (
+              <>
+                {incidents.map((incident) => (
+                  <Card 
+                    key={incident.id}
+                    className={`border-l-4 ${getSeverityColor(incident.severity)}`}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{incident.title}</CardTitle>
+                          <div className="text-sm text-gray-500 mt-1">
+                            Reportado por {incident.reportedBy.split('@')[0]} • {' '}
+                            {formatDistanceToNow(new Date(incident.date), { 
+                              addSuffix: true, 
+                              locale: ptBR 
+                            })}
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(incident.status)}`}>
+                            {incident.status}
+                          </span>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            incident.severity === "Alto" 
+                              ? "bg-red-100 text-red-800" 
+                              : incident.severity === "Médio"
+                              ? "bg-orange-100 text-orange-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}>
+                            {incident.severity}
+                          </span>
+                          {incident.qaQuality && (
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getQAQualityColor(incident.qaQuality)}`}>
+                              QA: {incident.qaQuality}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="mb-3">{incident.description}</p>
+                      
+                      <div className="text-sm text-gray-600 mb-2 grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div><strong>Local:</strong> {incident.location}</div>
+                        
+                        {incident.department && (
+                          <div><strong>Departamento:</strong> {incident.department}</div>
+                        )}
+                        
+                        {incident.responsible && (
+                          <div><strong>Responsável:</strong> {incident.responsible}</div>
+                        )}
+                        
+                        {incident.resolutionDeadline && (
+                          <div className="flex items-center">
+                            <Calendar className="inline h-4 w-4 mr-1 text-gray-500" />
+                            <strong>Prazo resolução:</strong> {format(new Date(incident.resolutionDeadline), 'dd/MM/yyyy')}
+                          </div>
+                        )}
+                        
+                        {incident.completionDate && (
+                          <div className="flex items-center">
+                            <CheckCircle className="inline h-4 w-4 mr-1 text-green-500" />
+                            <strong>Data Conclusão:</strong> {format(new Date(incident.completionDate), 'dd/MM/yyyy')}
+                          </div>
+                        )}
+                        
+                        {incident.frequency && (
+                          <div><strong>Frequência:</strong> {incident.frequency}</div>
+                        )}
+                        
+                        {incident.risk !== undefined && (
+                          <div><strong>Risco:</strong> {incident.risk}</div>
+                        )}
+                        
+                        {incident.resolutionDays !== undefined && (
+                          <div className="flex items-center">
+                            <Clock className="inline h-4 w-4 mr-1 text-gray-500" />
+                            <strong>Dias resolução:</strong> {incident.resolutionDays}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {incident.implementedAction && (
+                        <div className="mt-4 p-3 bg-green-50 rounded-md border border-green-200">
+                          <p className="text-sm font-medium text-green-800">Ação implementada:</p>
+                          <p className="text-sm text-gray-700">{incident.implementedAction}</p>
+                        </div>
+                      )}
+                      
+                      {incident.adminNotes && (
+                        <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+                          <p className="text-sm font-medium text-blue-800">Nota do administrador:</p>
+                          <p className="text-sm text-gray-700">{incident.adminNotes}</p>
+                        </div>
+                      )}
+                      
+                      {isAdmin && (
+                        <div className="mt-4 pt-4 border-t flex justify-end space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditIncident(incident.id)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" /> Editar
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-red-600 hover:text-red-700 hover:border-red-200"
+                            onClick={() => handleDeleteIncident(incident.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" /> Apagar
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+                
+                {incidents.length === 0 && (
+                  <div className="text-center py-12">
+                    <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-lg font-medium text-gray-900">Nenhum quase acidente reportado</h3>
+                    <p className="mt-1 text-gray-500">Reporte situações de risco para melhorar a segurança.</p>
+                    <div className="mt-6">
+                      <Button 
+                        onClick={handleNewIncidentReport}
+                        className="bg-robbialac hover:bg-robbialac-dark"
+                      >
+                        Reportar um Quase Acidente
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </TabsContent>
