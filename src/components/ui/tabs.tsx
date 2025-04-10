@@ -10,10 +10,12 @@ import { ScrollArea } from "./scroll-area"
 
 const Tabs = TabsPrimitive.Root
 
+type TabsListVariant = "default" | "segment" | "outline" | "card" | "fitted" | "paginated" | "compact"
+
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List> & {
-    variant?: "default" | "segment" | "outline" | "card" | "fitted" | "paginated" | "compact"
+    variant?: TabsListVariant
   }
 >(({ className, variant = "default", ...props }, ref) => {
   const [currentPage, setCurrentPage] = useState(0)
@@ -134,13 +136,14 @@ const TabsList = React.forwardRef<
           }}
           className={cn(
             "flex items-center justify-center flex-1 px-1",
-            variant === "default" && "h-10 rounded-md bg-muted p-1 text-muted-foreground",
-            variant === "segment" && "bg-transparent p-0 text-muted-foreground space-x-1",
-            variant === "outline" && "h-9 border-b border-border text-muted-foreground",
-            variant === "card" && "w-full flex-wrap gap-2 bg-transparent p-0 text-muted-foreground",
-            variant === "fitted" && "w-full flex-nowrap gap-0 bg-transparent p-0 text-muted-foreground",
-            variant === "paginated" && "w-full flex-nowrap gap-1 bg-transparent p-0 text-muted-foreground overflow-hidden",
-            variant === "compact" && "w-full flex-nowrap justify-start gap-0 bg-transparent p-0 text-muted-foreground",
+            {
+              "h-10 rounded-md bg-muted p-1 text-muted-foreground": variant === "default",
+              "bg-transparent p-0 text-muted-foreground space-x-1": variant === "segment",
+              "h-9 border-b border-border text-muted-foreground": variant === "outline",
+              "w-full flex-wrap gap-2 bg-transparent p-0 text-muted-foreground": variant === "card",
+              "w-full flex-nowrap gap-0 bg-transparent p-0 text-muted-foreground": variant === "fitted",
+              "w-full flex-nowrap gap-1 bg-transparent p-0 text-muted-foreground overflow-hidden": variant === "paginated",
+            },
             className
           )}
           {...props}
@@ -168,12 +171,14 @@ const TabsList = React.forwardRef<
           ref={ref}
           className={cn(
             "min-w-max inline-flex items-center justify-start",
-            variant === "default" && "h-10 rounded-md bg-muted p-1 text-muted-foreground",
-            variant === "segment" && "bg-transparent p-0 text-muted-foreground space-x-1",
-            variant === "outline" && "h-9 border-b border-border text-muted-foreground",
-            variant === "card" && "w-full flex-nowrap gap-2 bg-transparent p-0 text-muted-foreground",
-            variant === "fitted" && "w-full flex-nowrap gap-0 bg-transparent p-0 text-muted-foreground",
-            variant === "compact" && "flex-nowrap gap-0 bg-transparent p-0 text-muted-foreground",
+            {
+              "h-10 rounded-md bg-muted p-1 text-muted-foreground": variant === "default",
+              "bg-transparent p-0 text-muted-foreground space-x-1": variant === "segment",
+              "h-9 border-b border-border text-muted-foreground": variant === "outline",
+              "w-full flex-nowrap gap-2 bg-transparent p-0 text-muted-foreground": variant === "card",
+              "w-full flex-nowrap gap-0 bg-transparent p-0 text-muted-foreground": variant === "fitted",
+              "flex-nowrap gap-0 bg-transparent p-0 text-muted-foreground": variant === "compact",
+            },
             className
           )}
           {...props}
@@ -187,11 +192,13 @@ const TabsList = React.forwardRef<
       ref={ref}
       className={cn(
         "inline-flex items-center justify-center",
-        variant === "default" && "h-10 rounded-md bg-muted p-1 text-muted-foreground",
-        variant === "segment" && "bg-transparent p-0 text-muted-foreground space-x-1",
-        variant === "outline" && "h-9 border-b border-border text-muted-foreground",
-        variant === "card" && "w-full flex-wrap gap-2 bg-transparent p-0 text-muted-foreground",
-        variant === "fitted" && "w-full flex-nowrap overflow-x-auto gap-0 bg-transparent p-0 text-muted-foreground",
+        {
+          "h-10 rounded-md bg-muted p-1 text-muted-foreground": variant === "default",
+          "bg-transparent p-0 text-muted-foreground space-x-1": variant === "segment",
+          "h-9 border-b border-border text-muted-foreground": variant === "outline",
+          "w-full flex-wrap gap-2 bg-transparent p-0 text-muted-foreground": variant === "card",
+          "w-full flex-nowrap overflow-x-auto gap-0 bg-transparent p-0 text-muted-foreground": variant === "fitted",
+        },
         className
       )}
       {...props}
@@ -200,10 +207,12 @@ const TabsList = React.forwardRef<
 })
 TabsList.displayName = TabsPrimitive.List.displayName
 
+type TabsTriggerVariant = "default" | "segment" | "outline" | "card" | "fitted" | "paginated" | "compact"
+
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger> & {
-    variant?: "default" | "segment" | "outline" | "card" | "fitted" | "paginated" | "compact"
+    variant?: TabsTriggerVariant
     fullWidth?: boolean
   }
 >(({ className, variant = "default", fullWidth, ...props }, ref) => (
@@ -211,13 +220,15 @@ const TabsTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       "inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-      variant === "default" && "rounded-sm px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
-      variant === "segment" && "h-8 rounded-md px-2.5 py-1 text-xs data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm border border-transparent data-[state=active]:border-border",
-      variant === "outline" && "rounded-none border-b-2 border-b-transparent px-4 pb-3 pt-2 data-[state=active]:border-b-primary data-[state=active]:text-foreground",
-      variant === "card" && "rounded-md border border-border bg-background px-3 py-1.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/50",
-      variant === "fitted" && "flex-1 rounded-none border-b-2 border-b-transparent px-3 py-2 data-[state=active]:border-b-primary data-[state=active]:text-foreground",
-      variant === "paginated" && "flex-1 rounded-md border border-border bg-background px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground",
-      variant === "compact" && "px-3 py-1.5 rounded-md data-[state=active]:text-primary data-[state=active]:bg-primary/10",
+      {
+        "rounded-sm px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm": variant === "default",
+        "h-8 rounded-md px-2.5 py-1 text-xs data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm border border-transparent data-[state=active]:border-border": variant === "segment",
+        "rounded-none border-b-2 border-b-transparent px-4 pb-3 pt-2 data-[state=active]:border-b-primary data-[state=active]:text-foreground": variant === "outline",
+        "rounded-md border border-border bg-background px-3 py-1.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/50": variant === "card",
+        "flex-1 rounded-none border-b-2 border-b-transparent px-3 py-2 data-[state=active]:border-b-primary data-[state=active]:text-foreground": variant === "fitted",
+        "flex-1 rounded-md border border-border bg-background px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground": variant === "paginated",
+        "px-3 py-1.5 rounded-md data-[state=active]:text-primary data-[state=active]:bg-primary/10": variant === "compact",
+      },
       fullWidth && "flex-1",
       className
     )}
