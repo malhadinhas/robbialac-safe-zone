@@ -60,6 +60,7 @@ import {
 } from 'recharts';
 import DepartmentAnalyticsChart from "@/components/incidents/DepartmentAnalyticsChart";
 import ChatbotModal from "@/components/incidents/ChatbotModal";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const formSchema = z.object({
   status: z.string(),
@@ -86,6 +87,7 @@ export default function QuaseAcidentes() {
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -296,37 +298,49 @@ export default function QuaseAcidentes() {
   
   return (
     <Layout>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Quase Acidentes</h1>
-          <p className="text-gray-600">Visualize, reporte e acompanhe situações de risco</p>
-        </div>
-        <div className="flex gap-2">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Quase Acidentes</h1>
+        <p className="text-gray-600">Visualize, reporte e acompanhe situações de risco</p>
+      </div>
+      
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex flex-wrap gap-2">
           {isAdmin && (
             <>
               <Button 
                 variant="outline" 
                 className="flex items-center bg-white"
                 onClick={() => setIsImportDialogOpen(true)}
+                size="ultra-responsive"
+                shortText="Importar"
+                iconOnly={isMobile}
               >
-                <FileUp className="mr-2 h-5 w-5" />
+                <FileUp className="h-5 w-5" />
                 Importar
               </Button>
               <Button 
                 variant="outline" 
                 className="flex items-center bg-white"
                 onClick={() => setIsExportDialogOpen(true)}
+                size="ultra-responsive"
+                shortText="Exportar"
+                iconOnly={isMobile}
               >
-                <FileDown className="mr-2 h-5 w-5" />
+                <FileDown className="h-5 w-5" />
                 Exportar
               </Button>
             </>
           )}
+        </div>
+        <div>
           <Button 
             onClick={handleNewIncidentReport} 
             className="bg-robbialac hover:bg-robbialac-dark flex items-center"
+            size={isMobile ? "ultra-responsive" : "responsive"}
+            fullWidth={isMobile}
+            shortText="Reportar"
           >
-            <PlusCircle className="mr-2 h-5 w-5" />
+            <PlusCircle className="h-5 w-5" />
             Reportar Quase Acidente
           </Button>
         </div>
