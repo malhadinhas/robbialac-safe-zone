@@ -4,6 +4,7 @@ import * as React from "react"
 // Define breakpoints consistently
 export const MOBILE_BREAKPOINT = 768
 export const TABLET_BREAKPOINT = 1024
+export const DESKTOP_BREAKPOINT = 1280
 
 /**
  * Hook that returns whether the current viewport is mobile size
@@ -108,4 +109,63 @@ export function useScreenWidth() {
   }, [])
   
   return width
+}
+
+/**
+ * Hook to check if current viewport requires no-scroll layout
+ * Returns true for mobile and tablet views
+ */
+export function useIsCompactView() {
+  const [isCompactView, setIsCompactView] = React.useState<boolean>(false)
+  
+  React.useEffect(() => {
+    const checkCompactView = () => {
+      setIsCompactView(window.innerWidth < TABLET_BREAKPOINT)
+    }
+    
+    // Check on mount
+    checkCompactView()
+    
+    // Add event listener for resize
+    window.addEventListener("resize", checkCompactView)
+    
+    // Cleanup
+    return () => window.removeEventListener("resize", checkCompactView)
+  }, [])
+  
+  return isCompactView
+}
+
+/**
+ * Get viewport height for precise container sizing
+ */
+export function useViewportHeight() {
+  const [height, setHeight] = React.useState<number | null>(null)
+  
+  React.useEffect(() => {
+    const updateHeight = () => {
+      // Use visualViewport when available for more accurate mobile height
+      const viewportHeight = window.visualViewport?.height || window.innerHeight;
+      setHeight(viewportHeight)
+    }
+    
+    // Set initial height
+    updateHeight()
+    
+    // Add event listeners
+    window.addEventListener('resize', updateHeight)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateHeight)
+    }
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', updateHeight)
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', updateHeight)
+      }
+    }
+  }, [])
+  
+  return height
 }

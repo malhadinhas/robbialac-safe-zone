@@ -4,6 +4,7 @@ import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
@@ -26,7 +27,8 @@ const buttonVariants = cva(
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
         responsive: "h-9 px-2 min-w-[70px] sm:h-10 sm:px-3 md:px-4", // Improved for small sizes
-        "ultra-responsive": "h-9 px-2 w-auto sm:h-10 sm:px-3 md:px-4", // Even more responsive
+        "ultra-responsive": "h-8 px-2 w-auto sm:h-9 sm:px-3 md:px-4 lg:h-10 lg:px-4", // Even more responsive
+        "compact": "h-7 px-1.5 text-xs sm:h-8 sm:px-2 md:h-9 md:px-3 md:text-sm", // New compact size for no-scroll layouts
       },
       fullWidth: {
         true: "w-full",
@@ -46,7 +48,12 @@ const buttonVariants = cva(
       {
         size: "ultra-responsive",
         iconOnly: true,
-        className: "h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10", // Even smaller on mobile
+        className: "h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 lg:h-10 lg:w-10", // Even smaller on mobile
+      },
+      {
+        size: "compact",
+        iconOnly: true,
+        className: "h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8", // Compact icon size
       },
     ],
     defaultVariants: {
@@ -65,24 +72,25 @@ export interface ButtonProps
   fullWidth?: boolean
   iconOnly?: boolean
   shortText?: string // Prop for responsive text
+  compactText?: string // Even shorter text for compact views
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, fullWidth, iconOnly, asChild = false, shortText, children, ...props }, ref) => {
+  ({ className, variant, size, fullWidth, iconOnly, asChild = false, shortText, compactText, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
-    const [isMobile, setIsMobile] = React.useState(false)
+    const isMobile = useIsMobile()
     
-    // Check for mobile view on mount and window resize
-    React.useEffect(() => {
-      const checkMobile = () => setIsMobile(window.innerWidth < 768)
-      
-      checkMobile()
-      window.addEventListener("resize", checkMobile)
-      return () => window.removeEventListener("resize", checkMobile)
-    }, [])
+    // Select appropriate display text based on screen size
+    let displayContent = children
     
-    // Use shortText on mobile if provided
-    const displayContent = isMobile && shortText ? shortText : children
+    // For very small screens, use compactText if available
+    if (isMobile && compactText) {
+      displayContent = compactText
+    }
+    // For mobile, use shortText if available and compactText isn't
+    else if (isMobile && shortText) {
+      displayContent = shortText
+    }
     
     return (
       <Comp
