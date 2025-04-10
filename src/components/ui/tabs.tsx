@@ -10,7 +10,18 @@ import { ScrollArea } from "./scroll-area"
 
 const Tabs = TabsPrimitive.Root
 
-type TabsListVariant = "default" | "segment" | "outline" | "card" | "fitted" | "paginated" | "compact"
+const TabsListVariant = {
+  default: "default",
+  segment: "segment",
+  outline: "outline",
+  card: "card",
+  fitted: "fitted",
+  paginated: "paginated",
+  compact: "compact",
+} as const
+
+// Define the type using the object values
+type TabsListVariant = typeof TabsListVariant[keyof typeof TabsListVariant]
 
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
@@ -34,7 +45,7 @@ const TabsList = React.forwardRef<
 
   // Efeito para calcular páginas quando no modo paginated
   useEffect(() => {
-    if (variant === 'paginated' && listRef.current) {
+    if (variant === TabsListVariant.paginated && listRef.current) {
       const listEl = listRef.current
       const items = Array.from(listEl.querySelectorAll('[role="tab"]')) as HTMLElement[]
       
@@ -88,7 +99,7 @@ const TabsList = React.forwardRef<
 
   // Atualiza a visibilidade dos itens quando a página muda
   useEffect(() => {
-    if (variant === 'paginated' && visibleItems.length > 0 && listRef.current) {
+    if (variant === TabsListVariant.paginated && visibleItems.length > 0 && listRef.current) {
       const listEl = listRef.current
       const containerWidth = listEl.clientWidth - 80
       let currentWidth = 0
@@ -113,7 +124,7 @@ const TabsList = React.forwardRef<
     }
   }, [currentPage, variant, visibleItems])
 
-  if (variant === 'paginated') {
+  if (variant === TabsListVariant.paginated) {
     return (
       <div className="flex items-center">
         <Button 
@@ -136,14 +147,6 @@ const TabsList = React.forwardRef<
           }}
           className={cn(
             "flex items-center justify-center flex-1 px-1",
-            {
-              "h-10 rounded-md bg-muted p-1 text-muted-foreground": variant === "default",
-              "bg-transparent p-0 text-muted-foreground space-x-1": variant === "segment",
-              "h-9 border-b border-border text-muted-foreground": variant === "outline",
-              "w-full flex-wrap gap-2 bg-transparent p-0 text-muted-foreground": variant === "card",
-              "w-full flex-nowrap gap-0 bg-transparent p-0 text-muted-foreground": variant === "fitted",
-              "w-full flex-nowrap gap-1 bg-transparent p-0 text-muted-foreground overflow-hidden": variant === "paginated",
-            },
             className
           )}
           {...props}
@@ -164,21 +167,13 @@ const TabsList = React.forwardRef<
   }
   
   // Para variante compacta, usar ScrollArea
-  if (variant === 'compact') {
+  if (variant === TabsListVariant.compact) {
     return (
       <ScrollArea className="w-full">
         <TabsPrimitive.List
           ref={ref}
           className={cn(
             "min-w-max inline-flex items-center justify-start",
-            {
-              "h-10 rounded-md bg-muted p-1 text-muted-foreground": variant === "default",
-              "bg-transparent p-0 text-muted-foreground space-x-1": variant === "segment",
-              "h-9 border-b border-border text-muted-foreground": variant === "outline",
-              "w-full flex-nowrap gap-2 bg-transparent p-0 text-muted-foreground": variant === "card",
-              "w-full flex-nowrap gap-0 bg-transparent p-0 text-muted-foreground": variant === "fitted",
-              "flex-nowrap gap-0 bg-transparent p-0 text-muted-foreground": variant === "compact",
-            },
             className
           )}
           {...props}
@@ -193,11 +188,11 @@ const TabsList = React.forwardRef<
       className={cn(
         "inline-flex items-center justify-center",
         {
-          "h-10 rounded-md bg-muted p-1 text-muted-foreground": variant === "default",
-          "bg-transparent p-0 text-muted-foreground space-x-1": variant === "segment",
-          "h-9 border-b border-border text-muted-foreground": variant === "outline",
-          "w-full flex-wrap gap-2 bg-transparent p-0 text-muted-foreground": variant === "card",
-          "w-full flex-nowrap overflow-x-auto gap-0 bg-transparent p-0 text-muted-foreground": variant === "fitted",
+          "h-10 rounded-md bg-muted p-1 text-muted-foreground": variant === TabsListVariant.default,
+          "bg-transparent p-0 text-muted-foreground space-x-1": variant === TabsListVariant.segment,
+          "h-9 border-b border-border text-muted-foreground": variant === TabsListVariant.outline,
+          "w-full flex-wrap gap-2 bg-transparent p-0 text-muted-foreground": variant === TabsListVariant.card,
+          "w-full flex-nowrap overflow-x-auto gap-0 bg-transparent p-0 text-muted-foreground": variant === TabsListVariant.fitted,
         },
         className
       )}
@@ -207,7 +202,17 @@ const TabsList = React.forwardRef<
 })
 TabsList.displayName = TabsPrimitive.List.displayName
 
-type TabsTriggerVariant = "default" | "segment" | "outline" | "card" | "fitted" | "paginated" | "compact"
+const TabsTriggerVariant = {
+  default: "default",
+  segment: "segment",
+  outline: "outline", 
+  card: "card",
+  fitted: "fitted",
+  paginated: "paginated",
+  compact: "compact",
+} as const
+
+type TabsTriggerVariant = typeof TabsTriggerVariant[keyof typeof TabsTriggerVariant]
 
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
@@ -221,13 +226,13 @@ const TabsTrigger = React.forwardRef<
     className={cn(
       "inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
       {
-        "rounded-sm px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm": variant === "default",
-        "h-8 rounded-md px-2.5 py-1 text-xs data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm border border-transparent data-[state=active]:border-border": variant === "segment",
-        "rounded-none border-b-2 border-b-transparent px-4 pb-3 pt-2 data-[state=active]:border-b-primary data-[state=active]:text-foreground": variant === "outline",
-        "rounded-md border border-border bg-background px-3 py-1.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/50": variant === "card",
-        "flex-1 rounded-none border-b-2 border-b-transparent px-3 py-2 data-[state=active]:border-b-primary data-[state=active]:text-foreground": variant === "fitted",
-        "flex-1 rounded-md border border-border bg-background px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground": variant === "paginated",
-        "px-3 py-1.5 rounded-md data-[state=active]:text-primary data-[state=active]:bg-primary/10": variant === "compact",
+        "rounded-sm px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm": variant === TabsTriggerVariant.default,
+        "h-8 rounded-md px-2.5 py-1 text-xs data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm border border-transparent data-[state=active]:border-border": variant === TabsTriggerVariant.segment,
+        "rounded-none border-b-2 border-b-transparent px-4 pb-3 pt-2 data-[state=active]:border-b-primary data-[state=active]:text-foreground": variant === TabsTriggerVariant.outline,
+        "rounded-md border border-border bg-background px-3 py-1.5 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-primary/50": variant === TabsTriggerVariant.card,
+        "flex-1 rounded-none border-b-2 border-b-transparent px-3 py-2 data-[state=active]:border-b-primary data-[state=active]:text-foreground": variant === TabsTriggerVariant.fitted,
+        "flex-1 rounded-md border border-border bg-background px-3 py-1.5 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground": variant === TabsTriggerVariant.paginated,
+        "px-3 py-1.5 rounded-md data-[state=active]:text-primary data-[state=active]:bg-primary/10": variant === TabsTriggerVariant.compact,
       },
       fullWidth && "flex-1",
       className
