@@ -61,7 +61,7 @@ export default function Definicoes() {
       </div>
       
       <Tabs defaultValue="account">
-        <TabsList className="mb-6" variant={isMobile ? "scrollable" : "default"}>
+        <TabsList className="mb-6" variant={isMobile ? "fitted" : "default"}>
           <TabsTrigger value="account" fullWidth={isMobile}>Conta</TabsTrigger>
           <TabsTrigger value="notifications" fullWidth={isMobile}>Notificações</TabsTrigger>
           <TabsTrigger value="security" fullWidth={isMobile}>Segurança</TabsTrigger>
