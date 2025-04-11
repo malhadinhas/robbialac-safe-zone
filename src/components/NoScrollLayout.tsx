@@ -131,7 +131,6 @@ export function NoScrollLayout({
           {showPagination && sections.length > 1 && (
             <CarouselPagination 
               className={orientation === "landscape" ? "bottom-1" : "bottom-2"} 
-              dotClassName={orientation === "landscape" ? "size-1.5 sm:size-2" : "size-2 sm:size-2.5"}
             />
           )}
         </Carousel>

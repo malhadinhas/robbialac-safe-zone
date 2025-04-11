@@ -1,4 +1,3 @@
-
 import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
@@ -83,15 +82,11 @@ const Carousel = React.forwardRef<
     const isMobile = useIsMobile()
     const isTablet = useIsTablet()
 
-    // Calculate height for full-height carousels
     const containerStyle = React.useMemo(() => {
       if (fullHeight && viewportHeight && (isMobile || isTablet)) {
-        // Adjust height to fit content within viewport on mobile/tablet
-        // Subtract header, navigation, and other UI elements
-        const headerHeight = 60; // Approximate height of the header
-        const navigationHeight = 56; // Approximate height of bottom navigation
-        const paddingSpace = 32; // Account for padding
-        
+        const headerHeight = 60;
+        const navigationHeight = 56;
+        const paddingSpace = 32;
         return {
           height: `${viewportHeight - headerHeight - navigationHeight - paddingSpace}px`,
         };
@@ -306,10 +301,14 @@ const CarouselNext = React.forwardRef<
 })
 CarouselNext.displayName = "CarouselNext"
 
+type CarouselPaginationProps = React.HTMLAttributes<HTMLDivElement> & {
+  dotClassName?: string;
+}
+
 const CarouselPagination = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
+  CarouselPaginationProps
+>(({ className, dotClassName, ...props }, ref) => {
   const { currentIndex, totalSlides } = useCarousel();
   
   if (currentIndex === undefined || totalSlides === undefined) {
@@ -325,7 +324,7 @@ const CarouselPagination = React.forwardRef<
       )}
       {...props}
     >
-      <span className="text-xs bg-background/80 px-2 py-0.5 rounded-full">
+      <span className={cn("text-xs bg-background/80 px-2 py-0.5 rounded-full", dotClassName)}>
         {currentIndex + 1} / {totalSlides}
       </span>
     </div>
