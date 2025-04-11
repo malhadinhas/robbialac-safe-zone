@@ -14,10 +14,26 @@ import ImageUploader from "@/components/incidents/ImageUploader";
 import { Incident } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 
+interface FormIncidentData {
+  title: string;
+  description: string;
+  location: string;
+  date: string;
+  severity: "Baixo" | "Médio" | "Alto";
+  status: "Reportado" | "Em Análise" | "Resolvido" | "Arquivado";
+  department: string;
+  reportedBy: string;
+  reporterName: string;
+  pointsAwarded: number;
+  factoryArea?: string;
+  suggestionToFix?: string;
+  resolutionDeadline?: string;
+}
+
 const QuaseAcidentesNovo = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [formData, setFormData] = useState<Partial<Incident>>({
+  const [formData, setFormData] = useState<FormIncidentData>({
     title: "",
     description: "",
     location: "",
@@ -28,6 +44,8 @@ const QuaseAcidentesNovo = () => {
     reportedBy: user?.id || "",
     reporterName: user?.name || "",
     pointsAwarded: 5,
+    factoryArea: "",
+    suggestionToFix: "",
   });
   const [images, setImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,17 +59,8 @@ const QuaseAcidentesNovo = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleImagesChange = async (newImages: File[]) => {
-    try {
-      const base64Images = await Promise.all(
-        newImages.map(file => fileToBase64(file))
-      );
-      
-      setImages(prev => [...prev, ...base64Images]);
-    } catch (error) {
-      console.error("Error processing images:", error);
-      toast.error("Erro ao processar imagens");
-    }
+  const handleImagesChange = (newImages: string[]) => {
+    setImages(newImages);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,8 +75,8 @@ const QuaseAcidentesNovo = () => {
       
       const newIncident = {
         ...formData,
-        date: new Date(formData.date as string),
-        resolutionDeadline: formData.resolutionDeadline ? new Date(formData.resolutionDeadline as string) : undefined,
+        date: new Date(formData.date),
+        resolutionDeadline: formData.resolutionDeadline ? new Date(formData.resolutionDeadline) : undefined,
         images: images
       } as Omit<Incident, "id">;
       
@@ -80,10 +89,6 @@ const QuaseAcidentesNovo = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -160,7 +165,7 @@ const QuaseAcidentesNovo = () => {
                       id="date"
                       name="date"
                       type="date"
-                      value={formData.date || ""}
+                      value={formData.date}
                       onChange={handleInputChange}
                       required
                     />
@@ -245,7 +250,10 @@ const QuaseAcidentesNovo = () => {
                 <CardDescription>Adicione imagens que ajudem a entender o quase acidente</CardDescription>
               </CardHeader>
               <CardContent>
-                <ImageUploader onImagesSelected={handleImagesChange} />
+                <ImageUploader 
+                  onImagesSelected={() => {}} 
+                  onImagesChange={handleImagesChange}
+                />
                 
                 {images.length > 0 && (
                   <div className="mt-6">
@@ -262,7 +270,10 @@ const QuaseAcidentesNovo = () => {
                             <Button 
                               variant="destructive" 
                               size="sm"
-                              onClick={() => removeImage(index)}
+                              onClick={() => {
+                                const updatedImages = images.filter((_, i) => i !== index);
+                                setImages(updatedImages);
+                              }}
                             >
                               Remover
                             </Button>

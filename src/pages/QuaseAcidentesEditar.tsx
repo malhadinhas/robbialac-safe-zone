@@ -15,10 +15,29 @@ import ImageGallery from "@/components/incidents/ImageGallery";
 import ImageUploader from "@/components/incidents/ImageUploader";
 import { Incident } from "@/types";
 
+interface FormIncidentData {
+  id?: string;
+  title?: string;
+  description?: string;
+  location?: string;
+  date?: string;
+  severity?: "Baixo" | "Médio" | "Alto";
+  status?: "Reportado" | "Em Análise" | "Resolvido" | "Arquivado";
+  department?: string;
+  implementedAction?: string;
+  responsible?: string;
+  adminNotes?: string;
+  suggestionToFix?: string;
+  resolutionDeadline?: string;
+  reportedBy?: string;
+  pointsAwarded?: number;
+  factoryArea?: string;
+}
+
 const QuaseAcidentesEditar = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<Partial<Incident>>({});
+  const [formData, setFormData] = useState<FormIncidentData>({});
   const [images, setImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -64,17 +83,8 @@ const QuaseAcidentesEditar = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleImagesChange = async (newImages: File[]) => {
-    try {
-      const base64Images = await Promise.all(
-        newImages.map(file => fileToBase64(file))
-      );
-      
-      setImages(prev => [...prev, ...base64Images]);
-    } catch (error) {
-      console.error("Error processing images:", error);
-      toast.error("Erro ao processar imagens");
-    }
+  const handleImagesChange = (newImages: string[]) => {
+    setImages(newImages);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,9 +99,9 @@ const QuaseAcidentesEditar = () => {
       
       const updatedIncident: Incident = {
         ...incident!,
-        ...formData,
+        ...formData as any,
         date: new Date(formData.date as string),
-        resolutionDeadline: formData.resolutionDeadline ? new Date(formData.resolutionDeadline as string) : undefined,
+        resolutionDeadline: formData.resolutionDeadline ? new Date(formData.resolutionDeadline) : undefined,
         images: images
       } as Incident;
       
@@ -104,10 +114,6 @@ const QuaseAcidentesEditar = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
   };
 
   if (isLoading) {
@@ -356,7 +362,10 @@ const QuaseAcidentesEditar = () => {
                 <CardDescription>Adicione ou remova imagens do quase acidente</CardDescription>
               </CardHeader>
               <CardContent>
-                <ImageUploader onImagesSelected={handleImagesChange} />
+                <ImageUploader 
+                  onImagesSelected={() => {}} 
+                  onImagesChange={handleImagesChange}
+                />
                 
                 {images.length > 0 && (
                   <div className="mt-6">
@@ -373,7 +382,10 @@ const QuaseAcidentesEditar = () => {
                             <Button 
                               variant="destructive" 
                               size="sm"
-                              onClick={() => removeImage(index)}
+                              onClick={() => {
+                                const updatedImages = images.filter((_, i) => i !== index);
+                                setImages(updatedImages);
+                              }}
                             >
                               Remover
                             </Button>

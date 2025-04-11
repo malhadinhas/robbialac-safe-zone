@@ -7,13 +7,15 @@ import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import { fileToBase64, captureImage } from "@/services/incidentService";
 
 interface ImageUploaderProps {
-  onImagesChange: (images: string[]) => void;
+  onImagesSelected: (images: File[]) => void;
+  onImagesChange?: (images: string[]) => void;
   images?: string[];
   maxImages?: number;
 }
 
 export default function ImageUploader({ 
-  onImagesChange, 
+  onImagesSelected, 
+  onImagesChange,
   images = [], 
   maxImages = 3 
 }: ImageUploaderProps) {
@@ -32,6 +34,7 @@ export default function ImageUploader({
       }
       
       const newImages: string[] = [];
+      const fileArray = Array.from(files);
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -43,7 +46,12 @@ export default function ImageUploader({
       
       const updatedImages = [...uploadedImages, ...newImages];
       setUploadedImages(updatedImages);
-      onImagesChange(updatedImages);
+      
+      // Support both callback methods
+      if (onImagesChange) {
+        onImagesChange(updatedImages);
+      }
+      onImagesSelected(fileArray);
       
       // Reset the file input
       if (fileInputRef.current) {
@@ -71,7 +79,15 @@ export default function ImageUploader({
       if (base64Image) {
         const updatedImages = [...uploadedImages, base64Image];
         setUploadedImages(updatedImages);
-        onImagesChange(updatedImages);
+        
+        // Support both callback methods
+        if (onImagesChange) {
+          onImagesChange(updatedImages);
+        }
+        // For camera captures, we don't have actual File objects to pass
+        // But we need to call the function for API consistency
+        onImagesSelected([]);
+        
         toast.success("Imagem capturada com sucesso");
       }
     } catch (error) {
@@ -83,7 +99,14 @@ export default function ImageUploader({
   const removeImage = (index: number) => {
     const updatedImages = uploadedImages.filter((_, i) => i !== index);
     setUploadedImages(updatedImages);
-    onImagesChange(updatedImages);
+    
+    if (onImagesChange) {
+      onImagesChange(updatedImages);
+    }
+    // For image removal, we don't have actual File objects to pass
+    // But we need to call the function for API consistency
+    onImagesSelected([]);
+    
     toast.success("Imagem removida");
   };
   
