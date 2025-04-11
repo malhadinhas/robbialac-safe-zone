@@ -1,63 +1,100 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getIncidents } from "@/services/incidentService";
+import { getIncidents, updateIncident } from "@/services/incidentService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Search, Plus, Eye } from "lucide-react";
+import { Search, Plus, Eye, Edit, Trash2 } from "lucide-react";
 import { Incident } from "@/types";
 import { NoScrollLayout } from "@/components/NoScrollLayout";
 import ImageGallery from "@/components/incidents/ImageGallery";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const QuaseAcidentes = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const itemsPerPage = 10;
 
-  // Fetch incidents data
-  const { data: incidents, isLoading, error } = useQuery({
+  const isAdmin = user?.role === "admin_app" || user?.role === "admin_qa";
+
+  const { data: incidents, isLoading, error, refetch } = useQuery({
     queryKey: ["incidents"],
     queryFn: getIncidents
   });
 
-  // Filter incidents based on search query
   const filteredIncidents = incidents?.filter(incident =>
     incident.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     incident.description.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
-  // Calculate pagination
   const totalPages = Math.ceil(filteredIncidents.length / itemsPerPage);
   const paginatedIncidents = filteredIncidents.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Reset to page 1 when search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
 
-  // Handle incident selection
   const handleIncidentClick = (incident: Incident) => {
     setSelectedIncident(incident);
     setIsModalOpen(true);
   };
 
-  // Generate pagination numbers
+  const handleEditIncident = (event: React.MouseEvent, incidentId: string) => {
+    event.stopPropagation();
+    navigate(`/quase-acidentes/editar/${incidentId}`);
+  };
+
+  const handleDeleteClick = (event: React.MouseEvent, incident: Incident) => {
+    event.stopPropagation();
+    setSelectedIncident(incident);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedIncident) return;
+    
+    try {
+      await updateIncident({
+        ...selectedIncident,
+        status: "Arquivado"
+      });
+      
+      toast.success("Quase acidente arquivado com sucesso");
+      setIsDeleteDialogOpen(false);
+      refetch();
+    } catch (error) {
+      toast.error("Erro ao arquivar quase acidente");
+      console.error("Error archiving incident:", error);
+    }
+  };
+
   const paginationItems = () => {
     const items = [];
     const maxVisiblePages = 5;
     
     if (totalPages <= maxVisiblePages) {
-      // Show all pages if there are few
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
@@ -71,7 +108,6 @@ const QuaseAcidentes = () => {
         );
       }
     } else {
-      // Add first page
       items.push(
         <PaginationItem key={1}>
           <PaginationLink 
@@ -83,7 +119,6 @@ const QuaseAcidentes = () => {
         </PaginationItem>
       );
       
-      // Add ellipsis if current page is far from start
       if (currentPage > 3) {
         items.push(
           <PaginationItem key="ellipsis-start">
@@ -92,11 +127,9 @@ const QuaseAcidentes = () => {
         );
       }
       
-      // Calculate range around current page
       const startPage = Math.max(2, currentPage - 1);
       const endPage = Math.min(totalPages - 1, currentPage + 1);
       
-      // Add middle pages
       for (let i = startPage; i <= endPage; i++) {
         items.push(
           <PaginationItem key={i}>
@@ -110,7 +143,6 @@ const QuaseAcidentes = () => {
         );
       }
       
-      // Add ellipsis if current page is far from end
       if (currentPage < totalPages - 2) {
         items.push(
           <PaginationItem key="ellipsis-end">
@@ -119,7 +151,6 @@ const QuaseAcidentes = () => {
         );
       }
       
-      // Add last page
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
@@ -213,6 +244,27 @@ const QuaseAcidentes = () => {
                     <Button size="icon" variant="ghost" className="text-muted-foreground">
                       <Eye className="h-4 w-4" />
                     </Button>
+                    
+                    {isAdmin && incident.status !== "Arquivado" && (
+                      <>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="text-blue-500"
+                          onClick={(e) => handleEditIncident(e, incident.id)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="text-red-500"
+                          onClick={(e) => handleDeleteClick(e, incident)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -220,7 +272,6 @@ const QuaseAcidentes = () => {
           </div>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="mt-6">
             <Pagination>
@@ -247,7 +298,6 @@ const QuaseAcidentes = () => {
           </div>
         )}
 
-        {/* Detail Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             {selectedIncident && (
@@ -316,10 +366,50 @@ const QuaseAcidentes = () => {
                     </div>
                   )}
                 </div>
+
+                {isAdmin && selectedIncident.status !== "Arquivado" && (
+                  <DialogFooter className="flex justify-end space-x-2 mt-6">
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        navigate(`/quase-acidentes/editar/${selectedIncident.id}`);
+                      }}
+                    >
+                      <Edit className="h-4 w-4 mr-2" /> Editar
+                    </Button>
+                    <Button 
+                      variant="destructive"
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        setIsDeleteDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" /> Arquivar
+                    </Button>
+                  </DialogFooter>
+                )}
               </>
             )}
           </DialogContent>
         </Dialog>
+
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Arquivar quase acidente</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja arquivar este quase acidente? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete} className="bg-red-500 text-white hover:bg-red-600">
+                Arquivar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </NoScrollLayout>
   );
