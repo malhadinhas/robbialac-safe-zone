@@ -75,7 +75,7 @@ const Factory3DModelManager: React.FC<Factory3DModelManagerProps> = ({
         onPointerOut={handlePointerOut}
         position={getZonePosition(zone)}
         scale={[1, isHovered ? 1.1 : 1, 1]}
-        cursor="pointer"
+        // Remove the cursor property as it's not supported on GroupProps
       >
         {modelsLoaded ? (
           <GLTFModel 
