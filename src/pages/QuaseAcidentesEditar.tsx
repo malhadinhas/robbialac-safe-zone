@@ -205,7 +205,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[90vw] max-h-[90vh] p-4 overflow-auto" aria-describedby="dialog-description">
+      <DialogContent className="sm:max-w-[90vw] max-h-[90vh] p-4 overflow-auto bg-white" aria-describedby="dialog-description">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Editar Quase Acidente</DialogTitle>
         </DialogHeader>
@@ -292,7 +292,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                           <SelectTrigger id="frequency" className="h-8">
                             <SelectValue placeholder="Selecione a frequência" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-white">
                             <SelectItem value="Baixa">Baixa (2)</SelectItem>
                             <SelectItem value="Moderada">Moderada (6)</SelectItem>
                             <SelectItem value="Alta">Alta (8)</SelectItem>
@@ -310,7 +310,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                           <SelectTrigger id="resolutionDays" className="h-8">
                             <SelectValue placeholder="Selecione os dias" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-white">
                             {RESOLUTION_DAYS_OPTIONS.map((days) => (
                               <SelectItem key={days} value={days.toString()}>
                                 {days} dias
@@ -357,7 +357,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                       <SelectTrigger id="department" className="h-8">
                         <SelectValue placeholder="Selecione um departamento" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white">
                         {DEPARTMENTS.map((dept) => (
                           <SelectItem key={dept} value={dept}>
                             {dept}
@@ -458,7 +458,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                       <SelectTrigger id="severity" className="h-8">
                         <SelectValue placeholder="Gravidade" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white">
                         <SelectItem value="Baixo">Baixo (1)</SelectItem>
                         <SelectItem value="Médio">Médio (4)</SelectItem>
                         <SelectItem value="Alto">Alto (7)</SelectItem>
@@ -476,7 +476,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                       <SelectTrigger id="status" className="h-8">
                         <SelectValue placeholder="Status" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-white">
                         <SelectItem value="Reportado">Reportado</SelectItem>
                         <SelectItem value="Em Análise">Em Análise</SelectItem>
                         <SelectItem value="Resolvido">Resolvido</SelectItem>
