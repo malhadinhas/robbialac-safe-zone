@@ -9,13 +9,21 @@ import {
   CarouselPagination
 } from "@/components/ui/carousel";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useIsCompactView, useViewportHeight, useIsMobile, useIsTablet } from "@/hooks/use-mobile";
+import { 
+  useIsCompactView, 
+  useViewportHeight, 
+  useIsMobile, 
+  useIsTablet,
+  useOrientation,
+  useAdaptiveSpacing
+} from "@/hooks/use-mobile";
 
 interface NoScrollLayoutProps {
-  children?: React.ReactNode; // Making children optional
+  children?: React.ReactNode;
   sections?: React.ReactNode[];
   showNavigation?: boolean;
   showPagination?: boolean;
+  maxContentHeight?: string | number;
 }
 
 /**
@@ -30,29 +38,52 @@ export function NoScrollLayout({
   sections = [],
   showNavigation = true,
   showPagination = true,
+  maxContentHeight,
 }: NoScrollLayoutProps) {
   const isCompactView = useIsCompactView();
   const viewportHeight = useViewportHeight();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
+  const orientation = useOrientation();
+  const spacing = useAdaptiveSpacing();
   const [currentSection, setCurrentSection] = React.useState(0);
   
-  // Para calcular a altura do container em mobile/tablet
+  // Para calcular a altura do container adaptável
   const containerStyle = React.useMemo(() => {
     if (isCompactView && viewportHeight) {
-      // Ajustar para header, tabs, navigation
-      const headerHeight = 60; // Header
-      const navigationHeight = 60; // Bottom navigation
+      // Ajustes dinâmicos com base no dispositivo e orientação
+      const headerHeight = 60; // Header fixo
+      const navigationHeight = orientation === "portrait" ? 60 : 40; // Navigation bar (menor em landscape)
       const paddingSpace = isMobile ? 32 : 48; // Padding maior para tablet
+      const bottomSafeArea = 16; // Área segura para notches e barras de sistema
       
-      // Calcular altura disponível
+      // Em modo retrato vs paisagem
+      const heightAdjustment = orientation === "landscape" ? 20 : 0;
+      
+      // Altura calculada adaptável
+      const calculatedHeight = viewportHeight - headerHeight - navigationHeight - paddingSpace - bottomSafeArea - heightAdjustment;
+      
+      // Se temos uma altura máxima definida, use o menor valor
+      const finalHeight = maxContentHeight 
+        ? `min(${calculatedHeight}px, ${typeof maxContentHeight === 'number' ? `${maxContentHeight}px` : maxContentHeight})`
+        : `${calculatedHeight}px`;
+        
       return {
-        height: `${viewportHeight - headerHeight - navigationHeight - paddingSpace}px`,
-        overflow: 'hidden'
+        height: finalHeight,
+        overflow: 'hidden',
+        padding: spacing.sm
       };
     }
+    
+    // Para desktop
+    if (maxContentHeight) {
+      return {
+        maxHeight: maxContentHeight
+      };
+    }
+    
     return {};
-  }, [isCompactView, viewportHeight, isMobile]);
+  }, [isCompactView, viewportHeight, isMobile, orientation, maxContentHeight, spacing]);
   
   // Se temos seções explícitas, renderizar como carousel em compact view
   if (sections.length > 0 && isCompactView) {
@@ -60,23 +91,29 @@ export function NoScrollLayout({
       <div style={containerStyle} className="w-full">
         <Carousel 
           fullHeight 
-          compactControls={true}
+          compactControls={orientation === "landscape" || isMobile}
           currentIndex={currentSection}
           totalSlides={sections.length}
           opts={{
             loop: false,
+            align: "start"
           }}
           setApi={(api) => {
             api?.on("select", () => {
               setCurrentSection(api.selectedScrollSnap());
             });
           }}
+          className="w-full h-full"
         >
-          <CarouselContent>
+          <CarouselContent className="h-full">
             {sections.map((section, index) => (
-              <CarouselItem key={index} className="relative">
+              <CarouselItem key={index} className="relative h-full">
                 <ScrollArea className="h-full rounded-md">
-                  <div className={cn("p-4", isTablet && "p-6")}>
+                  <div className={cn(
+                    "p-2",
+                    isTablet && orientation === "portrait" && "p-3",
+                    !isMobile && orientation === "landscape" && "p-4"
+                  )}>
                     {section}
                   </div>
                 </ScrollArea>
@@ -84,14 +121,19 @@ export function NoScrollLayout({
             ))}
           </CarouselContent>
           
-          {showNavigation && sections.length > 1 && (
+          {showNavigation && sections.length > 1 && orientation === "portrait" && (
             <>
-              <CarouselPrevious />
-              <CarouselNext />
+              <CarouselPrevious className="left-2 size-8 sm:size-10" />
+              <CarouselNext className="right-2 size-8 sm:size-10" />
             </>
           )}
           
-          {showPagination && sections.length > 1 && <CarouselPagination />}
+          {showPagination && sections.length > 1 && (
+            <CarouselPagination 
+              className={orientation === "landscape" ? "bottom-1" : "bottom-2"} 
+              dotClassName={orientation === "landscape" ? "size-1.5 sm:size-2" : "size-2 sm:size-2.5"}
+            />
+          )}
         </Carousel>
       </div>
     );
@@ -102,7 +144,11 @@ export function NoScrollLayout({
     return (
       <div style={containerStyle} className="w-full">
         <ScrollArea className="h-full w-full rounded-md">
-          <div className={cn("p-4", isTablet && "p-6")}>
+          <div className={cn(
+            "p-2",
+            isTablet && orientation === "portrait" && "p-3",
+            !isMobile && orientation === "landscape" && "p-4"
+          )}>
             {children}
           </div>
         </ScrollArea>
@@ -110,8 +156,12 @@ export function NoScrollLayout({
     );
   }
   
-  // Desktop view - conteúdo normal
-  return <>{children}</>;
+  // Desktop view - conteúdo em container com max-height se especificado
+  return (
+    <div style={containerStyle} className="w-full">
+      {children}
+    </div>
+  );
 }
 
 // Utilitário para combinar classes condicionalmente
