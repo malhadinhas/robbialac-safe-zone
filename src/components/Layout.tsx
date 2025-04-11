@@ -70,6 +70,10 @@ export function Layout({ children }: LayoutProps) {
     ? `${viewportHeight}px` 
     : "100vh";
   
+  // Reduzir a largura do menu expandido para economizar espaço
+  const expandedMenuWidth = "16rem"; // Reduzido de 18rem ou 72 para 16rem (64px)
+  const collapsedMenuWidth = "4rem"; // Mantido em 4rem (64px)
+  
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Header para dispositivos compactos */}
@@ -110,8 +114,8 @@ export function Layout({ children }: LayoutProps) {
                 menuOpen ? "translate-x-0" : "-translate-x-full",
                 orientation === "landscape" ? "w-3/5 sm:w-1/2 md:w-2/5" : "w-full",
                 "pt-16") // Add padding top to avoid overlapping with header
-            : cn("w-72 min-h-screen sticky top-0", // Aumentado de 64 para 72 para acomodar textos longos
-                menuOpen ? "block" : "hidden lg:block lg:w-20 xl:w-72", 
+            : cn(`w-${menuOpen ? expandedMenuWidth : collapsedMenuWidth} min-h-screen sticky top-0`, // Usar variáveis para largura
+                menuOpen ? "block" : "hidden lg:block lg:w-[4rem] xl:w-[16rem]", 
                 "transition-[width]")
         )}
       >
@@ -227,7 +231,7 @@ export function Layout({ children }: LayoutProps) {
             size="icon"
             className={cn(
               "bg-white shadow-md border-robbialac/20 transition-all",
-              menuOpen ? "left-[19.5rem]" : "left-[4rem]" // Ajustado para a nova largura do menu expandido
+              menuOpen ? "left-[16.5rem]" : "left-[4rem]" // Ajustado para a nova largura do menu expandido
             )}
             onClick={toggleMenu}
           >
@@ -240,10 +244,10 @@ export function Layout({ children }: LayoutProps) {
       <main 
         style={{ 
           minHeight: mainHeight,
-          paddingTop: isCompactView ? "calc(60px + " + adaptiveSpacing.sm + ")" : adaptiveSpacing.sm, // Reduzido de lg para sm
-          paddingLeft: !isCompactView ? (menuOpen ? "calc(18rem + " + adaptiveSpacing.sm + ")" : "calc(5rem + " + adaptiveSpacing.sm + ")") : adaptiveSpacing.sm, // Reduzido para sm
-          paddingRight: isCompactView ? adaptiveSpacing.sm : adaptiveSpacing.md, // Reduzido de xl para md
-          paddingBottom: adaptiveSpacing.sm // Reduzido de lg para sm
+          paddingTop: isCompactView ? "calc(60px + " + adaptiveSpacing.sm + ")" : adaptiveSpacing.sm,
+          paddingLeft: !isCompactView ? (menuOpen ? "calc(16rem + " + adaptiveSpacing.xs + ")" : "calc(4rem + " + adaptiveSpacing.xs + ")") : adaptiveSpacing.xs, // Reduzido significativamente
+          paddingRight: adaptiveSpacing.xs, // Reduzido para xs
+          paddingBottom: adaptiveSpacing.xs // Reduzido para xs
         }}
         className={cn(
           "flex-1 transition-all w-full overflow-x-hidden",
