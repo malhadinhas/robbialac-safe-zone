@@ -1,6 +1,8 @@
+
 import { Video } from "@/types";
 import { getCollection, initializeMockCollection } from "./database";
 import { mockVideos } from "./mockData";
+import { generateSignedUrl } from "./cloudflareR2Service";
 
 export async function getVideos(): Promise<Video[]> {
   try {
@@ -91,3 +93,25 @@ export async function getNextVideoToWatch(category: string, viewedVideoIds: stri
     return null;
   }
 }
+
+/**
+ * Obtém uma URL assinada para visualização do vídeo
+ */
+export async function getVideoStreamUrl(videoId: string): Promise<string> {
+  try {
+    // Em produção, esta função faria uma chamada à API para obter uma URL assinada
+    const signedUrl = await generateSignedUrl(videoId, 120); // URL válida por 2 horas
+    return signedUrl;
+  } catch (error) {
+    console.error("Erro ao obter URL de streaming para o vídeo:", error);
+    
+    // Em caso de erro, retorna a URL do vídeo do mock como fallback
+    const mockVideo = mockVideos.find(v => v.id === videoId);
+    if (mockVideo) {
+      return mockVideo.url;
+    }
+    
+    throw new Error("Não foi possível obter a URL do vídeo");
+  }
+}
+

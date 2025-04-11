@@ -1,11 +1,10 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
-import { mockVideos } from "@/services/mockData";
 import { Video } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -20,6 +19,8 @@ import {
   SkipForward, 
   Share2
 } from "lucide-react";
+import { getVideoById, incrementVideoViews, getVideoStreamUrl } from "@/services/videoService";
+import HLSVideoPlayer from "@/components/video/HLSVideoPlayer";
 
 export default function VideosVisualizar() {
   const navigate = useNavigate();
@@ -32,51 +33,46 @@ export default function VideosVisualizar() {
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const videoControlsRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
-    if (id) {
-      const foundVideo = mockVideos.find(v => v.id === id);
-      if (foundVideo) {
-        setVideo(foundVideo);
-        setDuration(foundVideo.duration);
-        
-        // Simular que o usuário assistiu ao vídeo após carregar
-        const timer = setTimeout(() => {
-          if (user && !user.viewedVideos.includes(id)) {
-            // Adicionar pontos pela visualização
-            toast.success(`+${foundVideo.pointsForWatching} pontos por assistir este vídeo!`);
-          }
-        }, 3000);
-        
-        return () => clearTimeout(timer);
-      } else {
-        toast.error("Vídeo não encontrado!");
-        navigate("/formacoes");
-      }
-    }
-  }, [id, navigate, user]);
-  
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (isPlaying && progress < 100) {
-      interval = setInterval(() => {
-        const newProgress = progress + (100 / (duration || 1)) * 0.5;
-        const newTime = currentTime + 0.5;
-        
-        setProgress(Math.min(newProgress, 100));
-        setCurrentTime(Math.min(newTime, duration));
-        
-        if (newProgress >= 100) {
-          setIsPlaying(false);
+    const fetchVideo = async () => {
+      if (!id) return;
+      
+      try {
+        const foundVideo = await getVideoById(id);
+        if (foundVideo) {
+          setVideo(foundVideo);
+          setDuration(foundVideo.duration);
+          
+          // Obter URL de streaming
+          const videoUrl = await getVideoStreamUrl(id);
+          setStreamUrl(videoUrl);
+          
+          // Incrementar visualizações
+          await incrementVideoViews(id);
+          
+          // Simulando que o usuário assistiu ao vídeo
+          const timer = setTimeout(() => {
+            if (user && !user.viewedVideos.includes(id)) {
+              toast.success(`+${foundVideo.pointsForWatching} pontos por assistir este vídeo!`);
+            }
+          }, 3000);
+          
+          return () => clearTimeout(timer);
+        } else {
+          toast.error("Vídeo não encontrado!");
+          navigate("/formacoes");
         }
-      }, 500);
-    }
-    
-    return () => {
-      if (interval) clearInterval(interval);
+      } catch (error) {
+        console.error("Erro ao carregar o vídeo:", error);
+        toast.error("Erro ao carregar o vídeo");
+      }
     };
-  }, [isPlaying, progress, duration, currentTime]);
+    
+    fetchVideo();
+  }, [id, navigate, user]);
   
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -101,6 +97,16 @@ export default function VideosVisualizar() {
     
     setProgress(newProgress);
     setCurrentTime(newTime);
+  };
+  
+  const handleVideoProgress = (progressPercent: number, time: number) => {
+    setProgress(progressPercent);
+    setCurrentTime(time);
+  };
+  
+  const handleVideoEnded = () => {
+    setIsPlaying(false);
+    setProgress(100);
   };
   
   const formatTime = (seconds: number) => {
@@ -130,17 +136,32 @@ export default function VideosVisualizar() {
       </div>
       
       <div className="bg-black relative rounded-lg overflow-hidden aspect-video max-h-[70vh]">
-        {/* Placeholder para o vídeo */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <img 
-            src={video?.thumbnail || "/placeholder.svg"} 
-            alt={video?.title} 
+        {streamUrl ? (
+          <HLSVideoPlayer 
+            videoUrl={streamUrl}
+            autoPlay={isPlaying}
+            controls={false} // Usamos nossos próprios controles
+            muted={isMuted}
+            startAt={currentTime}
+            onProgress={handleVideoProgress}
+            onEnd={handleVideoEnded}
             className="w-full h-full object-contain"
           />
-        </div>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <img 
+              src={video?.thumbnail || "/placeholder.svg"} 
+              alt={video?.title} 
+              className="w-full h-full object-contain"
+            />
+          </div>
+        )}
         
         {/* Overlay de controles */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+        <div 
+          ref={videoControlsRef}
+          className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 hover:opacity-100 transition-opacity flex flex-col justify-end p-4"
+        >
           {/* Barra de progresso */}
           <div className="pb-2">
             <Slider
@@ -235,3 +256,4 @@ export default function VideosVisualizar() {
     </Layout>
   );
 }
+
