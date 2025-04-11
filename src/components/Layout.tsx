@@ -11,7 +11,8 @@ import {
   useIsCompactView,
   useOrientation,
   useAdaptiveSpacing,
-  useViewportHeight
+  useViewportHeight,
+  TABLET_BREAKPOINT
 } from "@/hooks/use-mobile";
 
 interface LayoutProps {
@@ -28,8 +29,13 @@ export function Layout({ children }: LayoutProps) {
   const adaptiveSpacing = useAdaptiveSpacing();
   const viewportHeight = useViewportHeight();
   
-  // Menu sempre fechado por padrão para mobile e tablet
-  const [menuOpen, setMenuOpen] = useState(false); 
+  // Menu expandido por padrão para desktop (≥ 1024px), fechado para tablet e mobile
+  const [menuOpen, setMenuOpen] = useState(!isCompactView);
+  
+  // Atualiza estado do menu quando muda o tamanho da tela
+  useEffect(() => {
+    setMenuOpen(!isCompactView);
+  }, [isCompactView]);
   
   const toggleMenu = () => setMenuOpen(!menuOpen);
   
@@ -104,8 +110,8 @@ export function Layout({ children }: LayoutProps) {
                 menuOpen ? "translate-x-0" : "-translate-x-full",
                 orientation === "landscape" ? "w-3/5 sm:w-1/2 md:w-2/5" : "w-full",
                 "pt-16") // Add padding top to avoid overlapping with header
-            : cn("w-64 min-h-screen sticky top-0", 
-                menuOpen ? "block" : "hidden lg:block lg:w-20 xl:w-64", 
+            : cn("w-72 min-h-screen sticky top-0", // Aumentado de 64 para 72 para acomodar textos longos
+                menuOpen ? "block" : "hidden lg:block lg:w-20 xl:w-72", 
                 "transition-[width]")
         )}
       >
@@ -117,12 +123,12 @@ export function Layout({ children }: LayoutProps) {
               menuOpen ? "space-x-3" : "justify-center"
             )}>
               <img src="/placeholder.svg" alt="Logo" className="w-8 h-8 rounded-full bg-white" />
-              {menuOpen && <h1 className="font-bold transition-opacity truncate">RobbialacSegurança</h1>}
+              {menuOpen && <h1 className="font-bold transition-opacity whitespace-normal pr-2">RobbialacSegurança</h1>}
             </div>
           </div>
         )}
         
-        {/* User info com layout adaptativo - modificado para empilhar verticalmente em mobile */}
+        {/* User info com layout adaptativo - empilhar verticalmente em mobile */}
         <div className={cn(
           "border-b border-white/20",
           isCompactView || menuOpen ? "p-4" : "p-2 flex justify-center"
@@ -130,16 +136,16 @@ export function Layout({ children }: LayoutProps) {
           <div className={cn(
             "flex", 
             isCompactView || menuOpen 
-              ? "flex-col items-center space-y-2" // Alterado: agora empilha verticalmente
+              ? "flex-col items-center space-y-2" // Empilha verticalmente
               : "flex-col space-y-2 items-center"
           )}>
             <div className="bg-white text-robbialac rounded-full w-10 h-10 flex items-center justify-center font-bold shrink-0">
               {user?.name.substring(0, 1)}
             </div>
             {(isCompactView || menuOpen) && (
-              <div className="overflow-hidden text-center"> {/* Alterado: texto centralizado */}
-                <p className="font-medium truncate text-sm sm:text-base">{user?.name}</p>
-                <p className="text-xs text-white/70 truncate">{user?.email}</p>
+              <div className="overflow-hidden text-center">
+                <p className="font-medium text-sm sm:text-base whitespace-normal break-words">{user?.name}</p>
+                <p className="text-xs text-white/70 whitespace-normal break-words">{user?.email}</p>
               </div>
             )}
           </div>
@@ -171,9 +177,9 @@ export function Layout({ children }: LayoutProps) {
                 >
                   <item.icon size={isCompactView ? 20 : menuOpen ? 20 : 18} />
                   {(isCompactView || menuOpen) ? (
-                    <span className="text-sm sm:text-base truncate">{item.label}</span>
+                    <span className="text-sm sm:text-base whitespace-normal">{item.label}</span>
                   ) : (
-                    <span className="text-xs font-light hidden lg:block truncate">{item.label}</span>
+                    <span className="text-xs font-light hidden lg:block">{item.label}</span>
                   )}
                 </Link>
               </li>
@@ -221,7 +227,7 @@ export function Layout({ children }: LayoutProps) {
             size="icon"
             className={cn(
               "bg-white shadow-md border-robbialac/20 transition-all",
-              menuOpen ? "left-[17rem]" : "left-[4rem]"
+              menuOpen ? "left-[19.5rem]" : "left-[4rem]" // Ajustado para a nova largura do menu expandido
             )}
             onClick={toggleMenu}
           >
@@ -235,7 +241,7 @@ export function Layout({ children }: LayoutProps) {
         style={{ 
           minHeight: mainHeight,
           paddingTop: isCompactView ? "calc(60px + " + adaptiveSpacing.md + ")" : adaptiveSpacing.lg,
-          paddingLeft: !isCompactView ? (menuOpen ? "calc(16rem + " + adaptiveSpacing.md + ")" : "calc(5rem + " + adaptiveSpacing.md + ")") : adaptiveSpacing.md,
+          paddingLeft: !isCompactView ? (menuOpen ? "calc(18rem + " + adaptiveSpacing.md + ")" : "calc(5rem + " + adaptiveSpacing.md + ")") : adaptiveSpacing.md,
           paddingRight: isCompactView ? adaptiveSpacing.md : adaptiveSpacing.xl,
           paddingBottom: adaptiveSpacing.lg
         }}
