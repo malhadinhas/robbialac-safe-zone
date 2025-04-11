@@ -113,8 +113,8 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
         factoryArea: incident.factoryArea || "",
         frequency: incident.frequency || "Baixa",
         frequencyValue: incident.frequencyValue || FREQUENCY_VALUES["Baixa"],
-        gravityValue: incident.gravityValue || GRAVITY_VALUES["Baixo"],
-        risk: incident.risk || 0,
+        gravityValue: incident.gravityValue || GRAVITY_VALUES[incident.severity as keyof typeof GRAVITY_VALUES] || 1,
+        risk: incident.risk || (incident.frequencyValue || 2) * (incident.gravityValue || 1),
         qaQuality: incident.qaQuality || "Baixa",
         resolutionDays: incident.resolutionDays || 30
       });
@@ -163,6 +163,13 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
       setFormData(prev => ({ 
         ...prev, 
         gravityValue: GRAVITY_VALUES[value as keyof typeof GRAVITY_VALUES] || 1
+      }));
+    }
+
+    if (name === "resolutionDays") {
+      setFormData(prev => ({ 
+        ...prev, 
+        resolutionDays: parseInt(value, 10)
       }));
     }
   };
@@ -272,46 +279,67 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                 </div>
                 
                 {isAdmin && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div>
-                      <label htmlFor="frequency" className="block text-sm font-medium mb-0.5">
-                        Frequência
-                      </label>
-                      <Select
-                        value={formData.frequency}
-                        onValueChange={(value) => handleSelectChange("frequency", value)}
-                      >
-                        <SelectTrigger id="frequency" className="h-8">
-                          <SelectValue placeholder="Selecione a frequência" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Baixa">Baixa (2)</SelectItem>
-                          <SelectItem value="Moderada">Moderada (6)</SelectItem>
-                          <SelectItem value="Alta">Alta (8)</SelectItem>
-                        </SelectContent>
-                      </Select>
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label htmlFor="frequency" className="block text-sm font-medium mb-0.5">
+                          Frequência
+                        </label>
+                        <Select
+                          value={formData.frequency}
+                          onValueChange={(value) => handleSelectChange("frequency", value)}
+                        >
+                          <SelectTrigger id="frequency" className="h-8">
+                            <SelectValue placeholder="Selecione a frequência" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Baixa">Baixa (2)</SelectItem>
+                            <SelectItem value="Moderada">Moderada (6)</SelectItem>
+                            <SelectItem value="Alta">Alta (8)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label htmlFor="resolutionDays" className="block text-sm font-medium mb-0.5">
+                          Dias para Resolução
+                        </label>
+                        <Select
+                          value={formData.resolutionDays?.toString()}
+                          onValueChange={(value) => handleSelectChange("resolutionDays", value)}
+                        >
+                          <SelectTrigger id="resolutionDays" className="h-8">
+                            <SelectValue placeholder="Selecione os dias" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {RESOLUTION_DAYS_OPTIONS.map((days) => (
+                              <SelectItem key={days} value={days.toString()}>
+                                {days} dias
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                    <div>
-                      <label htmlFor="resolutionDays" className="block text-sm font-medium mb-0.5">
-                        Dias para Resolução
-                      </label>
-                      <Select
-                        value={formData.resolutionDays?.toString()}
-                        onValueChange={(value) => handleSelectChange("resolutionDays", value)}
-                      >
-                        <SelectTrigger id="resolutionDays" className="h-8">
-                          <SelectValue placeholder="Selecione os dias" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {RESOLUTION_DAYS_OPTIONS.map((days) => (
-                            <SelectItem key={days} value={days.toString()}>
-                              {days} dias
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-sm font-medium mb-0.5">
+                          Valor da Frequência
+                        </label>
+                        <div className="h-8 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
+                          <span>{formData.frequencyValue || 0}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-0.5">
+                          Valor da Gravidade
+                        </label>
+                        <div className="h-8 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
+                          <span>{formData.gravityValue || 0}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
               
