@@ -58,6 +58,27 @@ export default function Dashboard() {
   const currentLevel = user?.level || 1;
   const pointsToNextLevel = 500 - ((user?.points || 0) % 500);
 
+  // Custom label renderer for PieChart that shows only percentages
+  const renderCustomPieChartLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
+    const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+  
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor="middle" 
+        dominantBaseline="central"
+        fontSize={12}
+        fontWeight="bold"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
+
   // Define dashboard sections for mobile/tablet view
   const dashboardSections = [
     // Section 1: User Stats
@@ -142,7 +163,7 @@ export default function Dashboard() {
                   fill="#8884d8"
                   dataKey="count"
                   nameKey="category"
-                  label={({ category, percent }) => `${category}: ${(percent * 100).toFixed(0)}%`}
+                  label={renderCustomPieChartLabel}
                 >
                   {mockStatsByCategory.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -407,7 +428,7 @@ export default function Dashboard() {
                       fill="#8884d8"
                       dataKey="count"
                       nameKey="category"
-                      label={({ category, percent }) => `${category}: ${(percent * 100).toFixed(0)}%`}
+                      label={renderCustomPieChartLabel}
                     >
                       {mockStatsByCategory.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />

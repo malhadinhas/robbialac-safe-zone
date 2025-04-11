@@ -74,7 +74,14 @@ export function Layout({ children }: LayoutProps) {
         >
           <div className="flex items-center space-x-2 max-w-[75%]">
             <img src="/placeholder.svg" alt="Logo" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white shrink-0" />
-            <h1 className="font-bold text-sm sm:text-base truncate">RobbialacSegurança</h1>
+            {/* Substitui o texto por uma imagem em tela pequena */}
+            <div className="flex items-center">
+              <img 
+                src="/lovable-uploads/01973b68-ea11-48fd-b8e4-c72012f7cde3.png" 
+                alt="RobbialacSegurança" 
+                className="h-8 object-contain"
+              />
+            </div>
           </div>
           <Button 
             variant="ghost" 
@@ -240,4 +247,3 @@ export function Layout({ children }: LayoutProps) {
     </div>
   );
 }
-
