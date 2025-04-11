@@ -39,6 +39,18 @@ interface EditModalProps {
   incidentId: string | null;
 }
 
+// Define the list of available departments
+const DEPARTMENTS = [
+  "Operações",
+  "Qualidade",
+  "Manutenção",
+  "Logística",
+  "Produção",
+  "Administrativo",
+  "Engenharia",
+  "Segurança"
+];
+
 export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditModalProps) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormIncidentData>({});
@@ -199,14 +211,21 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                     <label htmlFor="department" className="block text-sm font-medium mb-0.5">
                       Departamento <span className="text-red-500">*</span>
                     </label>
-                    <Input
-                      id="department"
-                      name="department"
-                      value={formData.department || ""}
-                      onChange={handleInputChange}
-                      required
-                      className="h-8"
-                    />
+                    <Select
+                      value={formData.department}
+                      onValueChange={(value) => handleSelectChange("department", value)}
+                    >
+                      <SelectTrigger id="department" className="h-8">
+                        <SelectValue placeholder="Selecione um departamento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DEPARTMENTS.map((dept) => (
+                          <SelectItem key={dept} value={dept}>
+                            {dept}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <label htmlFor="factoryArea" className="block text-sm font-medium mb-0.5">
