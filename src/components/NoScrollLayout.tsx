@@ -24,6 +24,7 @@ interface NoScrollLayoutProps {
   showNavigation?: boolean;
   showPagination?: boolean;
   maxContentHeight?: string | number;
+  className?: string; // Add className prop for additional styling
 }
 
 /**
@@ -39,6 +40,7 @@ export function NoScrollLayout({
   showNavigation = true,
   showPagination = true,
   maxContentHeight,
+  className,
 }: NoScrollLayoutProps) {
   const isCompactView = useIsCompactView();
   const viewportHeight = useViewportHeight();
@@ -88,7 +90,7 @@ export function NoScrollLayout({
   // Se temos seções explícitas, renderizar como carousel em compact view
   if (sections.length > 0 && isCompactView) {
     return (
-      <div style={containerStyle} className="w-full">
+      <div style={containerStyle} className={cn("w-full", className)}>
         <Carousel 
           fullHeight 
           compactControls={orientation === "landscape" || isMobile}
@@ -130,7 +132,7 @@ export function NoScrollLayout({
           
           {showPagination && sections.length > 1 && (
             <CarouselPagination 
-              className={orientation === "landscape" ? "bottom-1" : "bottom-2"} 
+              className={orientation === "landscape" ? "bottom-1" : "bottom-2"}
             />
           )}
         </Carousel>
@@ -141,7 +143,7 @@ export function NoScrollLayout({
   // Se não temos seções mas ainda estamos em compact view, conter scrolling
   if (isCompactView) {
     return (
-      <div style={containerStyle} className="w-full">
+      <div style={containerStyle} className={cn("w-full", className)}>
         <ScrollArea className="h-full w-full rounded-md">
           <div className={cn(
             "p-2",
@@ -157,7 +159,7 @@ export function NoScrollLayout({
   
   // Desktop view - conteúdo em container com max-height se especificado
   return (
-    <div style={containerStyle} className="w-full">
+    <div style={containerStyle} className={cn("w-full", className)}>
       {children}
     </div>
   );
