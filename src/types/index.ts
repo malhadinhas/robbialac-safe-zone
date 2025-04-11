@@ -61,7 +61,7 @@ export interface Incident {
   reporterName?: string;
   factoryArea?: string;
   suggestionToFix?: string;
-  images?: string[]; // Add images property to the interface
+  images?: string[];
 }
 
 export interface StatsByCategory {
