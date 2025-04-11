@@ -6,9 +6,10 @@ import { X } from "lucide-react";
 
 interface ImageGalleryProps {
   images: string[];
+  showOnlyFirstImage?: boolean;
 }
 
-export default function ImageGallery({ images }: ImageGalleryProps) {
+export default function ImageGallery({ images, showOnlyFirstImage = false }: ImageGalleryProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   if (!images || images.length === 0) {
@@ -18,9 +19,9 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
   return (
     <>
       <div className="mt-4">
-        <p className="text-sm font-medium mb-2">Imagens ({images.length})</p>
+        {!showOnlyFirstImage && <p className="text-sm font-medium mb-2">Imagens ({images.length})</p>}
         <div className="flex flex-wrap gap-2">
-          {images.map((image, index) => (
+          {(showOnlyFirstImage ? [images[0]] : images).map((image, index) => (
             <div 
               key={index} 
               className="cursor-pointer"
@@ -29,10 +30,17 @@ export default function ImageGallery({ images }: ImageGalleryProps) {
               <img 
                 src={image} 
                 alt={`Imagem ${index + 1}`} 
-                className="w-20 h-20 object-cover rounded-md border border-gray-200"
+                className={`object-cover rounded-md border border-gray-200 ${
+                  showOnlyFirstImage ? 'w-16 h-16' : 'w-20 h-20'
+                }`}
               />
             </div>
           ))}
+          {showOnlyFirstImage && images.length > 1 && (
+            <div className="flex items-center justify-center w-8 h-16 text-sm text-gray-500 font-medium">
+              +{images.length - 1}
+            </div>
+          )}
         </div>
       </div>
       
