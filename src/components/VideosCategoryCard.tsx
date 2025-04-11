@@ -62,7 +62,7 @@ const VideosCategoryCard = ({ category, description }: VideosCategoryCardProps) 
         <CardTitle className="text-lg">{category}</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow">
-        <p className="text-gray-600 mb-4">{description}</p>
+        <p className="text-gray-600 mb-4 break-words">{description}</p>
         
         {loading ? (
           <div className="animate-pulse space-y-2">
@@ -77,11 +77,11 @@ const VideosCategoryCard = ({ category, description }: VideosCategoryCardProps) 
                   onClick={() => handleWatchVideo(lastViewedVideo)}
                   className="p-3 border rounded flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex-grow">
+                  <div className="flex-grow overflow-hidden">
                     <h4 className="font-medium text-sm line-clamp-1">{lastViewedVideo.title}</h4>
                     <p className="text-xs text-gray-500">{Math.floor(lastViewedVideo.duration / 60)}:{(lastViewedVideo.duration % 60).toString().padStart(2, '0')}</p>
                   </div>
-                  <div className="bg-robbialac text-white rounded-full p-1.5 opacity-80 group-hover:opacity-100">
+                  <div className="bg-robbialac text-white rounded-full p-1.5 opacity-80 group-hover:opacity-100 flex-shrink-0 ml-2">
                     <Play size={16} />
                   </div>
                 </div>
@@ -95,11 +95,11 @@ const VideosCategoryCard = ({ category, description }: VideosCategoryCardProps) 
                   onClick={() => handleWatchVideo(nextVideo)}
                   className="p-3 border rounded flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex-grow">
+                  <div className="flex-grow overflow-hidden">
                     <h4 className="font-medium text-sm line-clamp-1">{nextVideo.title}</h4>
                     <p className="text-xs text-gray-500">{Math.floor(nextVideo.duration / 60)}:{(nextVideo.duration % 60).toString().padStart(2, '0')}</p>
                   </div>
-                  <div className="bg-robbialac text-white rounded-full p-1.5 opacity-80 group-hover:opacity-100">
+                  <div className="bg-robbialac text-white rounded-full p-1.5 opacity-80 group-hover:opacity-100 flex-shrink-0 ml-2">
                     <Play size={16} />
                   </div>
                 </div>

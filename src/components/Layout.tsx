@@ -72,9 +72,9 @@ export function Layout({ children }: LayoutProps) {
           className="bg-robbialac text-white p-3 flex items-center justify-between fixed top-0 left-0 right-0 z-30"
           style={{ paddingLeft: adaptiveSpacing.md, paddingRight: adaptiveSpacing.md }}
         >
-          <div className="flex items-center space-x-2">
-            <img src="/placeholder.svg" alt="Logo" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white" />
-            <h1 className="font-bold text-sm sm:text-base">RobbialacSegurança</h1>
+          <div className="flex items-center space-x-2 max-w-[75%]">
+            <img src="/placeholder.svg" alt="Logo" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white shrink-0" />
+            <h1 className="font-bold text-sm sm:text-base truncate">RobbialacSegurança</h1>
           </div>
           <Button 
             variant="ghost" 
@@ -110,7 +110,7 @@ export function Layout({ children }: LayoutProps) {
               menuOpen ? "space-x-3" : "justify-center"
             )}>
               <img src="/placeholder.svg" alt="Logo" className="w-8 h-8 rounded-full bg-white" />
-              {menuOpen && <h1 className="font-bold transition-opacity">RobbialacSegurança</h1>}
+              {menuOpen && <h1 className="font-bold transition-opacity truncate">RobbialacSegurança</h1>}
             </div>
           </div>
         )}
@@ -122,13 +122,13 @@ export function Layout({ children }: LayoutProps) {
         )}>
           <div className={cn(
             "flex items-center", 
-            isCompactView || menuOpen ? "space-x-3" : "flex-col space-y-2"
+            isCompactView || menuOpen ? "space-x-3 w-full" : "flex-col space-y-2"
           )}>
             <div className="bg-white text-robbialac rounded-full w-10 h-10 flex items-center justify-center font-bold shrink-0">
               {user?.name.substring(0, 1)}
             </div>
             {(isCompactView || menuOpen) && (
-              <div className="overflow-hidden">
+              <div className="overflow-hidden max-w-[calc(100%-3rem)]">
                 <p className="font-medium truncate text-sm sm:text-base">{user?.name}</p>
                 <p className="text-xs text-white/70 truncate">{user?.email}</p>
               </div>
@@ -162,9 +162,9 @@ export function Layout({ children }: LayoutProps) {
                 >
                   <item.icon size={isCompactView ? 20 : menuOpen ? 20 : 18} />
                   {(isCompactView || menuOpen) ? (
-                    <span className="text-sm sm:text-base">{item.label}</span>
+                    <span className="text-sm sm:text-base truncate">{item.label}</span>
                   ) : (
-                    <span className="text-xs font-light hidden lg:block">{item.label}</span>
+                    <span className="text-xs font-light hidden lg:block truncate">{item.label}</span>
                   )}
                 </Link>
               </li>
@@ -240,3 +240,4 @@ export function Layout({ children }: LayoutProps) {
     </div>
   );
 }
+
