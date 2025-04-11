@@ -1,18 +1,25 @@
 
 # 3D Models
 
-This folder contains 3D models used in the application.
+This folder is for storing 3D model files (.glb or .gltf) for the factory visualization.
 
-Place your GLB/GLTF models here and they will be accessible via the `/models/` path in the application.
+## Required Models
 
-## Naming Convention
+For the factory visualization to work with real models instead of primitive shapes, you need to add the following files to this directory:
 
-Follow this naming convention for models:
-- `{area_name}_zone.glb` - e.g., `enchimento_zone.glb`
+- `enchimento_zone.glb` - 3D model for the Enchimento (Filling) zone
+- `fabrico_zone.glb` - 3D model for the Fabrico (Manufacturing) zone
+- `expedicao_zone.glb` - 3D model for the Expedição (Shipping) zone
+- `armazem_zone.glb` - 3D model for the Armazém (Warehouse) zone
 
 ## Model Requirements
 
-- Format: GLB (preferred) or GLTF
-- Size: Keep under 5MB when possible
+For best performance:
+- Keep file sizes under 5MB when possible
+- Use optimized models with appropriate polygon count for web
 - Include textures within the GLB file
-- Optimize for web performance
+- Use the GLB format (binary GLTF) rather than separate GLTF + assets
+
+## Testing
+
+Once you've added these files, the application will automatically load them instead of showing primitive shapes.

@@ -34,22 +34,14 @@ const Factory3DModelManager: React.FC<Factory3DModelManagerProps> = ({
   className = "w-full h-[500px] bg-gray-100 rounded-md" 
 }) => {
   const [hoveredZone, setHoveredZone] = useState<FactoryZone | null>(null);
+  // Always use primitive shapes until we have actual models
   const [modelsLoaded, setModelsLoaded] = useState(false);
 
-  // Check if 3D models are available (fall back to primitive shapes if not)
+  // We won't actually try to load models since they don't exist yet
+  // This can be re-enabled once real model files are added to public/models/
   useEffect(() => {
-    const checkIfModelsExist = async () => {
-      try {
-        // Try to fetch one model as a test
-        const response = await fetch(zoneModelPaths.Enchimento);
-        setModelsLoaded(response.ok);
-      } catch (error) {
-        console.log('3D models not available, using primitive shapes');
-        setModelsLoaded(false);
-      }
-    };
-
-    checkIfModelsExist();
+    // Default to primitive shapes for now
+    setModelsLoaded(false);
   }, []);
 
   // Factory zone component that uses GLTFModel if available
@@ -75,25 +67,16 @@ const Factory3DModelManager: React.FC<Factory3DModelManagerProps> = ({
         onPointerOut={handlePointerOut}
         position={getZonePosition(zone)}
         scale={[1, isHovered ? 1.1 : 1, 1]}
-        // Remove the cursor property as it's not supported on GroupProps
       >
-        {modelsLoaded ? (
-          <GLTFModel 
-            modelPath={zoneModelPaths[zone]}
-            scale={[1, 1, 1]}
-            position={[0, 0, 0]}
+        {/* For now, always use primitive shapes since the models don't exist yet */}
+        <mesh>
+          <boxGeometry args={[1.5, 1, 1.5]} />
+          <meshStandardMaterial 
+            color={isHovered ? '#ffffff' : zoneColors[zone]} 
+            emissive={isHovered ? zoneColors[zone] : 'black'}
+            emissiveIntensity={isHovered ? 0.5 : 0}
           />
-        ) : (
-          // Fallback to colored box if model not available
-          <mesh>
-            <boxGeometry args={[1.5, 1, 1.5]} />
-            <meshStandardMaterial 
-              color={isHovered ? '#ffffff' : zoneColors[zone]} 
-              emissive={isHovered ? zoneColors[zone] : 'black'}
-              emissiveIntensity={isHovered ? 0.5 : 0}
-            />
-          </mesh>
-        )}
+        </mesh>
         {/* Zone label - Using proper Html from @react-three/drei */}
         <Html position={[0, 1.5, 0]} center>
           <div className="bg-white/80 px-2 py-1 rounded shadow text-sm">{zone}</div>
@@ -153,7 +136,9 @@ const Factory3DModelManager: React.FC<Factory3DModelManagerProps> = ({
   );
 };
 
-// Preload models
+// Removing the preload attempts since files don't exist yet
+// This can be re-enabled once actual model files are available
+/*
 Object.values(zoneModelPaths).forEach(path => {
   try {
     useGLTF.preload(path);
@@ -161,5 +146,6 @@ Object.values(zoneModelPaths).forEach(path => {
     console.log(`Could not preload model: ${path}`);
   }
 });
+*/
 
 export default Factory3DModelManager;
