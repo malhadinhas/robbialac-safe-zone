@@ -7,13 +7,11 @@ import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ChevronLeft, Save } from "lucide-react";
 import { Incident } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface FormIncidentData {
@@ -208,7 +206,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[90vw] max-h-[90vh] p-6 overflow-auto bg-white text-black" style={{zIndex: 9999}}>
+      <DialogContent className="sm:max-w-[90vw] max-h-[90vh] p-6 overflow-auto bg-white text-black" style={{width: '90%', maxHeight: '90vh', zIndex: 99999}}>
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Editar Quase Acidente</DialogTitle>
         </DialogHeader>
@@ -277,6 +275,40 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                     />
                   </div>
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="department" className="block text-sm font-medium mb-1">
+                      Departamento <span className="text-red-500">*</span>
+                    </label>
+                    <Select
+                      value={formData.department}
+                      onValueChange={(value) => handleSelectChange("department", value)}
+                    >
+                      <SelectTrigger id="department">
+                        <SelectValue placeholder="Selecione um departamento" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white z-[99999]">
+                        {DEPARTMENTS.map((dept) => (
+                          <SelectItem key={dept} value={dept}>
+                            {dept}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label htmlFor="factoryArea" className="block text-sm font-medium mb-1">
+                      Área da Fábrica
+                    </label>
+                    <Input
+                      id="factoryArea"
+                      name="factoryArea"
+                      value={formData.factoryArea || ""}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
                 
                 {isAdmin && (
                   <>
@@ -292,7 +324,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                           <SelectTrigger id="frequency">
                             <SelectValue placeholder="Selecione a frequência" />
                           </SelectTrigger>
-                          <SelectContent className="bg-white z-[9999]">
+                          <SelectContent className="bg-white z-[99999]">
                             <SelectItem value="Baixa">Baixa (2)</SelectItem>
                             <SelectItem value="Moderada">Moderada (6)</SelectItem>
                             <SelectItem value="Alta">Alta (8)</SelectItem>
@@ -310,7 +342,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                           <SelectTrigger id="resolutionDays">
                             <SelectValue placeholder="Selecione os dias" />
                           </SelectTrigger>
-                          <SelectContent className="bg-white z-[9999]">
+                          <SelectContent className="bg-white z-[99999]">
                             {RESOLUTION_DAYS_OPTIONS.map((days) => (
                               <SelectItem key={days} value={days.toString()}>
                                 {days} dias
@@ -339,46 +371,31 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                         </div>
                       </div>
                     </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Risco Calculado
+                        </label>
+                        <div className="h-10 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
+                          <span>{formData.risk || 0}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Qualidade QA
+                        </label>
+                        <div className="h-10 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
+                          <span>{formData.qaQuality || "Baixa"}</span>
+                        </div>
+                      </div>
+                    </div>
                   </>
                 )}
               </div>
               
               {/* Coluna 2: Informações adicionais */}
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="department" className="block text-sm font-medium mb-1">
-                      Departamento <span className="text-red-500">*</span>
-                    </label>
-                    <Select
-                      value={formData.department}
-                      onValueChange={(value) => handleSelectChange("department", value)}
-                    >
-                      <SelectTrigger id="department">
-                        <SelectValue placeholder="Selecione um departamento" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white z-[9999]">
-                        {DEPARTMENTS.map((dept) => (
-                          <SelectItem key={dept} value={dept}>
-                            {dept}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label htmlFor="factoryArea" className="block text-sm font-medium mb-1">
-                      Área da Fábrica
-                    </label>
-                    <Input
-                      id="factoryArea"
-                      name="factoryArea"
-                      value={formData.factoryArea || ""}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-                
                 <div>
                   <label htmlFor="suggestionToFix" className="block text-sm font-medium mb-1">
                     Sugestão de Correção
@@ -418,27 +435,6 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                     />
                   </div>
                 </div>
-                
-                {isAdmin && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Risco Calculado
-                      </label>
-                      <div className="h-10 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
-                        <span>{formData.risk || 0}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Qualidade QA
-                      </label>
-                      <div className="h-10 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
-                        <span>{formData.qaQuality || "Baixa"}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
               
               {/* Coluna 3: Status e notas */}
@@ -455,7 +451,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                       <SelectTrigger id="severity">
                         <SelectValue placeholder="Gravidade" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white z-[9999]">
+                      <SelectContent className="bg-white z-[99999]">
                         <SelectItem value="Baixo">Baixo (1)</SelectItem>
                         <SelectItem value="Médio">Médio (4)</SelectItem>
                         <SelectItem value="Alto">Alto (7)</SelectItem>
@@ -473,7 +469,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                       <SelectTrigger id="status">
                         <SelectValue placeholder="Status" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white z-[9999]">
+                      <SelectContent className="bg-white z-[99999]">
                         <SelectItem value="Reportado">Reportado</SelectItem>
                         <SelectItem value="Em Análise">Em Análise</SelectItem>
                         <SelectItem value="Resolvido">Resolvido</SelectItem>
