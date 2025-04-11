@@ -1,4 +1,3 @@
-
 import { Video, Incident, Medal, StatsByCategory, StatsByZone, StatsBySeverity, Department, SystemConfig } from "@/types";
 
 export const mockVideos: Video[] = [
@@ -201,12 +200,12 @@ export const mockStatsBySeverity: StatsBySeverity[] = [
 ];
 
 export const mockDepartments: Department[] = [
-  { name: "Comercial", employeeCount: 185, color: "#4e79a7" },
-  { name: "Financeira", employeeCount: 19, color: "#f28e2c" },
   { name: "Marketing", employeeCount: 16, color: "#e15759" },
-  { name: "Operações", employeeCount: 66, color: "#76b7b2" },
   { name: "Recursos Humanos", employeeCount: 5, color: "#59a14f" },
-  { name: "Direção", employeeCount: 2, color: "#edc949" }
+  { name: "Direção", employeeCount: 2, color: "#edc949" },
+  { name: "Operações", employeeCount: 66, color: "#76b7b2" },
+  { name: "Comercial", employeeCount: 185, color: "#4e79a7" },
+  { name: "Financeira", employeeCount: 19, color: "#f28e2c" }
 ];
 
 export const mockSystemConfig: SystemConfig = {
