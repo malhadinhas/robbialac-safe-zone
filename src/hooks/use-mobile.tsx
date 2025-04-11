@@ -112,7 +112,7 @@ export function useScreenWidth() {
 }
 
 /**
- * Hook to check if current viewport requires no-scroll layout
+ * Hook to check if current viewport requires collapsed sidebar layout
  * Returns true for mobile and tablet views
  */
 export function useIsCompactView() {
@@ -134,6 +134,17 @@ export function useIsCompactView() {
   }, [])
   
   return isCompactView
+}
+
+/**
+ * Hook to check if the sidebar should be collapsed by default
+ * Returns true for tablet view
+ */
+export function useShouldCollapseMenu() {
+  const isTablet = useIsTablet()
+  const isMobile = useIsMobile()
+  
+  return isTablet || isMobile
 }
 
 /**

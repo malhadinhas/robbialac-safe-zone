@@ -3,10 +3,10 @@ import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { Home, BookOpen, AlertTriangle, Medal, Settings, LogOut } from "lucide-react";
+import { Home, BookOpen, AlertTriangle, Medal, Settings, LogOut, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useState } from "react";
+import { useIsMobile, useIsTablet, useShouldCollapseMenu } from "@/hooks/use-mobile";
+import { useState, useEffect } from "react";
 
 interface LayoutProps {
   children: ReactNode;
@@ -16,7 +16,14 @@ export function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const isMobile = useIsMobile();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const isTablet = useIsTablet();
+  const shouldCollapseByDefault = useShouldCollapseMenu();
+  const [menuOpen, setMenuOpen] = useState(!shouldCollapseByDefault);
+  
+  // Update menu state when screen size changes
+  useEffect(() => {
+    setMenuOpen(!shouldCollapseByDefault);
+  }, [shouldCollapseByDefault]);
   
   const toggleMenu = () => setMenuOpen(!menuOpen);
   
@@ -37,47 +44,32 @@ export function Layout({ children }: LayoutProps) {
   
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Mobile header */}
-      {isMobile && (
+      {/* Header para mobile e tablet */}
+      {(isMobile || isTablet) && (
         <header className="bg-robbialac text-white p-4 flex items-center justify-between fixed top-0 left-0 right-0 z-30">
           <div className="flex items-center space-x-2">
             <img src="/placeholder.svg" alt="Logo" className="w-8 h-8 rounded-full bg-white" />
             <h1 className="font-bold">RobbialacSegurança</h1>
           </div>
           <Button variant="ghost" size="icon" onClick={toggleMenu} className="text-white">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" 
-                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
-                 className={cn("transition-transform", menuOpen ? "rotate-90" : "")}>
-              {menuOpen ? (
-                <>
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </>
-              ) : (
-                <>
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </>
-              )}
-            </svg>
+            {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </Button>
         </header>
       )}
       
-      {/* Sidebar for desktop / Mobile menu */}
+      {/* Sidebar para desktop / Menu para mobile e tablet */}
       <aside 
         className={cn(
           "bg-robbialac text-white",
-          isMobile 
+          (isMobile || isTablet)
             ? cn("fixed inset-0 z-50 transition-transform transform", 
                 menuOpen ? "translate-x-0" : "-translate-x-full",
                 "pt-16") // Add padding top to avoid overlapping with header
-            : "w-64 min-h-screen sticky top-0"
+            : cn("w-64 min-h-screen sticky top-0", menuOpen ? "block" : "hidden")
         )}
       >
-        {/* Desktop logo */}
-        {!isMobile && (
+        {/* Logo para desktop */}
+        {!isMobile && !isTablet && (
           <div className="p-4 border-b border-white/20">
             <div className="flex items-center space-x-2">
               <img src="/placeholder.svg" alt="Logo" className="w-8 h-8 rounded-full bg-white" />
@@ -106,7 +98,7 @@ export function Layout({ children }: LayoutProps) {
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  onClick={() => isMobile && setMenuOpen(false)}
+                  onClick={() => (isMobile || isTablet) && setMenuOpen(false)}
                   className={cn(
                     "flex items-center space-x-3 px-3 py-2 rounded-md transition-colors",
                     isActive(item.path)
@@ -135,16 +127,38 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </aside>
       
-      {/* Backdrop for mobile menu */}
-      {isMobile && menuOpen && (
+      {/* Backdrop para menu em mobile e tablet quando aberto */}
+      {(isMobile || isTablet) && menuOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40"
           onClick={() => setMenuOpen(false)}
         />
       )}
       
+      {/* Botão toggle para desktop */}
+      {!isMobile && !isTablet && (
+        <div className="fixed top-4 left-4 z-30">
+          <Button 
+            variant="outline" 
+            size="icon"
+            className={cn(
+              "bg-white shadow-md border-robbialac/20",
+              menuOpen ? "left-[17rem]" : "left-4"
+            )}
+            onClick={toggleMenu}
+          >
+            <Menu size={18} />
+          </Button>
+        </div>
+      )}
+      
       {/* Main content */}
-      <main className={cn("flex-1 p-4 md:p-6", isMobile && "pt-20")}>
+      <main className={cn(
+        "flex-1 transition-all",
+        (isMobile || isTablet) && "pt-20 p-4",
+        !isMobile && !isTablet && (menuOpen ? "ml-64" : "ml-0 px-16"),
+        !isMobile && !isTablet && "p-6"
+      )}>
         {children}
       </main>
     </div>
