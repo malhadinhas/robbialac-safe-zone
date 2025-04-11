@@ -495,7 +495,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                     name="implementedAction"
                     value={formData.implementedAction || ""}
                     onChange={handleInputChange}
-                    rows={2}
+                    rows={3}
                     className="resize-none"
                   />
                 </div>
@@ -509,7 +509,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                     name="adminNotes"
                     value={formData.adminNotes || ""}
                     onChange={handleInputChange}
-                    rows={2}
+                    rows={3}
                     className="resize-none"
                   />
                 </div>
