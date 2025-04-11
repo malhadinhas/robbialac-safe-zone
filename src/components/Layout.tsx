@@ -122,20 +122,22 @@ export function Layout({ children }: LayoutProps) {
           </div>
         )}
         
-        {/* User info com layout adaptativo */}
+        {/* User info com layout adaptativo - modificado para empilhar verticalmente em mobile */}
         <div className={cn(
           "border-b border-white/20",
           isCompactView || menuOpen ? "p-4" : "p-2 flex justify-center"
         )}>
           <div className={cn(
-            "flex items-center", 
-            isCompactView || menuOpen ? "space-x-3 w-full" : "flex-col space-y-2"
+            "flex", 
+            isCompactView || menuOpen 
+              ? "flex-col items-center space-y-2" // Alterado: agora empilha verticalmente
+              : "flex-col space-y-2 items-center"
           )}>
             <div className="bg-white text-robbialac rounded-full w-10 h-10 flex items-center justify-center font-bold shrink-0">
               {user?.name.substring(0, 1)}
             </div>
             {(isCompactView || menuOpen) && (
-              <div className="overflow-hidden max-w-[calc(100%-3rem)]">
+              <div className="overflow-hidden text-center"> {/* Alterado: texto centralizado */}
                 <p className="font-medium truncate text-sm sm:text-base">{user?.name}</p>
                 <p className="text-xs text-white/70 truncate">{user?.email}</p>
               </div>

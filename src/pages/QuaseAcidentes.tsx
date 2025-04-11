@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getIncidents, updateIncident } from "@/services/incidentService";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
@@ -28,7 +29,8 @@ import {
 const QuaseAcidentes = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,12 +61,19 @@ const QuaseAcidentes = () => {
 
   const handleIncidentClick = (incident: Incident) => {
     setSelectedIncident(incident);
-    setIsModalOpen(true);
+    setIsViewModalOpen(true);
   };
 
-  const handleEditIncident = (event: React.MouseEvent, incidentId: string) => {
+  const handleEditIncident = (event: React.MouseEvent, incident: Incident) => {
     event.stopPropagation();
-    navigate(`/quase-acidentes/editar/${incidentId}`);
+    setSelectedIncident(incident);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditNavigate = () => {
+    if (selectedIncident) {
+      navigate(`/quase-acidentes/editar/${selectedIncident.id}`);
+    }
   };
 
   const handleDeleteClick = (event: React.MouseEvent, incident: Incident) => {
@@ -253,7 +262,7 @@ const QuaseAcidentes = () => {
                             size="icon" 
                             variant="ghost" 
                             className="text-blue-500"
-                            onClick={(e) => handleEditIncident(e, incident.id)}
+                            onClick={(e) => handleEditIncident(e, incident)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -300,98 +309,125 @@ const QuaseAcidentes = () => {
             </div>
           )}
 
-          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-            {selectedIncident && (
-              <>
-                <DialogHeader>
-                  <DialogTitle>{selectedIncident.title}</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Local</h3>
-                      <p className="text-sm">{selectedIncident.location}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Data</h3>
-                      <p className="text-sm">{new Date(selectedIncident.date).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Departamento</h3>
-                      <p className="text-sm">{selectedIncident.department}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Gravidade</h3>
-                      <p className="text-sm">{selectedIncident.severity}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Status</h3>
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
-                        selectedIncident.status === "Resolvido" ? "bg-green-100 text-green-800" :
-                        selectedIncident.status === "Em Análise" ? "bg-blue-100 text-blue-800" :
-                        selectedIncident.status === "Arquivado" ? "bg-gray-100 text-gray-800" :
-                        "bg-yellow-100 text-yellow-800"
-                      }`}>
-                        {selectedIncident.status}
+          {/* Modal de Visualização */}
+          <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              {selectedIncident && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle>{selectedIncident.title}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h3 className="text-sm font-medium mb-1">Local</h3>
+                        <p className="text-sm">{selectedIncident.location}</p>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium mb-1">Data</h3>
+                        <p className="text-sm">{new Date(selectedIncident.date).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium mb-1">Departamento</h3>
+                        <p className="text-sm">{selectedIncident.department}</p>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium mb-1">Gravidade</h3>
+                        <p className="text-sm">{selectedIncident.severity}</p>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium mb-1">Status</h3>
+                        <div className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
+                          selectedIncident.status === "Resolvido" ? "bg-green-100 text-green-800" :
+                          selectedIncident.status === "Em Análise" ? "bg-blue-100 text-blue-800" :
+                          selectedIncident.status === "Arquivado" ? "bg-gray-100 text-gray-800" :
+                          "bg-yellow-100 text-yellow-800"
+                        }`}>
+                          {selectedIncident.status}
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium mb-1">Reportado por</h3>
+                        <p className="text-sm">{selectedIncident.reporterName || selectedIncident.reportedBy}</p>
                       </div>
                     </div>
+                    
                     <div>
-                      <h3 className="text-sm font-medium mb-1">Reportado por</h3>
-                      <p className="text-sm">{selectedIncident.reporterName || selectedIncident.reportedBy}</p>
+                      <h3 className="text-sm font-medium mb-1">Descrição</h3>
+                      <p className="text-sm whitespace-pre-line">{selectedIncident.description}</p>
                     </div>
+                    
+                    {selectedIncident.suggestionToFix && (
+                      <div>
+                        <h3 className="text-sm font-medium mb-1">Sugestão de Correção</h3>
+                        <p className="text-sm">{selectedIncident.suggestionToFix}</p>
+                      </div>
+                    )}
+                    
+                    {selectedIncident.implementedAction && (
+                      <div>
+                        <h3 className="text-sm font-medium mb-1">Ação Implementada</h3>
+                        <p className="text-sm">{selectedIncident.implementedAction}</p>
+                      </div>
+                    )}
+                    
+                    {selectedIncident.images && selectedIncident.images.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-medium mb-1">Imagens</h3>
+                        <ImageGallery images={selectedIncident.images} />
+                      </div>
+                    )}
                   </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium mb-1">Descrição</h3>
-                    <p className="text-sm whitespace-pre-line">{selectedIncident.description}</p>
-                  </div>
-                  
-                  {selectedIncident.suggestionToFix && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Sugestão de Correção</h3>
-                      <p className="text-sm">{selectedIncident.suggestionToFix}</p>
-                    </div>
-                  )}
-                  
-                  {selectedIncident.implementedAction && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Ação Implementada</h3>
-                      <p className="text-sm">{selectedIncident.implementedAction}</p>
-                    </div>
-                  )}
-                  
-                  {selectedIncident.images && selectedIncident.images.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Imagens</h3>
-                      <ImageGallery images={selectedIncident.images} />
-                    </div>
-                  )}
-                </div>
 
-                {isAdmin && selectedIncident.status !== "Arquivado" && (
-                  <DialogFooter className="flex justify-end space-x-2 mt-6">
-                    <Button 
-                      variant="outline"
-                      onClick={() => {
-                        setIsModalOpen(false);
-                        navigate(`/quase-acidentes/editar/${selectedIncident.id}`);
-                      }}
-                    >
-                      <Edit className="h-4 w-4 mr-2" /> Editar
-                    </Button>
-                    <Button 
-                      variant="destructive"
-                      onClick={() => {
-                        setIsModalOpen(false);
-                        setIsDeleteDialogOpen(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" /> Arquivar
-                    </Button>
-                  </DialogFooter>
-                )}
-              </>
-            )}
+                  {isAdmin && selectedIncident.status !== "Arquivado" && (
+                    <DialogFooter className="flex justify-end space-x-2 mt-6">
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          setIsViewModalOpen(false);
+                          setIsEditModalOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4 mr-2" /> Editar
+                      </Button>
+                      <Button 
+                        variant="destructive"
+                        onClick={() => {
+                          setIsViewModalOpen(false);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" /> Arquivar
+                      </Button>
+                    </DialogFooter>
+                  )}
+                </>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Modal de Edição */}
+          <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              {selectedIncident && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle>Editar Quase Acidente</DialogTitle>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <p className="mb-6">Você será redirecionado para a página de edição deste quase acidente.</p>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={handleEditNavigate} className="bg-robbialac hover:bg-robbialac/90">
+                        <Edit className="h-4 w-4 mr-2" /> Continuar para Edição
+                      </Button>
+                    </DialogFooter>
+                  </div>
+                </>
+              )}
+            </DialogContent>
           </Dialog>
 
           <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
