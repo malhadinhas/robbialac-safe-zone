@@ -11,14 +11,24 @@ export interface MongoDBConfig {
   };
 }
 
-// Configuração para MongoDB Atlas (a ser preenchida)
-let mongoConfig: MongoDBConfig | null = null;
+// Configuração padrão para MongoDB Atlas 
+const defaultConfig: MongoDBConfig = {
+  uri: import.meta.env.VITE_MONGODB_URI || '',
+  dbName: import.meta.env.VITE_MONGODB_DB_NAME || 'robbialac_security',
+  options: {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  }
+};
+
+// Armazena a configuração atual
+let mongoConfig: MongoDBConfig = { ...defaultConfig };
 
 /**
  * Inicializa a configuração do MongoDB Atlas
  */
 export function initializeMongoConfig(config: MongoDBConfig): void {
-  mongoConfig = config;
+  mongoConfig = { ...config };
   console.log("Configuração MongoDB inicializada com sucesso");
 }
 
@@ -26,9 +36,5 @@ export function initializeMongoConfig(config: MongoDBConfig): void {
  * Obtém a configuração do MongoDB Atlas
  */
 export function getMongoConfig(): MongoDBConfig {
-  if (!mongoConfig) {
-    throw new Error("Configuração MongoDB não inicializada. Chame initializeMongoConfig primeiro.");
-  }
   return mongoConfig;
 }
-

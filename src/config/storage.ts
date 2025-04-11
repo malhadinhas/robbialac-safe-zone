@@ -36,8 +36,17 @@ export const defaultTranscodingConfig: VideoTranscodingConfig = {
   ]
 };
 
-// Configuração para Cloudflare R2 (a ser preenchida)
-let r2Config: CloudflareR2Config | null = null;
+// Configuração padrão para Cloudflare R2
+const defaultConfig: CloudflareR2Config = {
+  accountId: import.meta.env.VITE_CF_ACCOUNT_ID || '',
+  accessKeyId: import.meta.env.VITE_CF_ACCESS_KEY_ID || '',
+  secretAccessKey: import.meta.env.VITE_CF_SECRET_ACCESS_KEY || '',
+  bucketName: import.meta.env.VITE_CF_BUCKET_NAME || '',
+  publicUrl: import.meta.env.VITE_CF_PUBLIC_URL || ''
+};
+
+// Configuração atual para Cloudflare R2
+let r2Config: CloudflareR2Config = { ...defaultConfig };
 
 /**
  * Inicializa a configuração do Cloudflare R2
@@ -51,9 +60,5 @@ export function initializeR2Config(config: CloudflareR2Config): void {
  * Obtém a configuração do Cloudflare R2
  */
 export function getR2Config(): CloudflareR2Config {
-  if (!r2Config) {
-    throw new Error("Configuração R2 não inicializada. Chame initializeR2Config primeiro.");
-  }
   return r2Config;
 }
-
