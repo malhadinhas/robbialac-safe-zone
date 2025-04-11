@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { Home, BookOpen, AlertTriangle, Medal, Settings, LogOut, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useIsMobile, useIsTablet, useShouldCollapseMenu } from "@/hooks/use-mobile";
+import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import { useState, useEffect } from "react";
 
 interface LayoutProps {
@@ -17,13 +17,8 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
-  const shouldCollapseByDefault = useShouldCollapseMenu();
-  const [menuOpen, setMenuOpen] = useState(!shouldCollapseByDefault);
-  
-  // Update menu state when screen size changes
-  useEffect(() => {
-    setMenuOpen(!shouldCollapseByDefault);
-  }, [shouldCollapseByDefault]);
+  const isCompactView = isMobile || isTablet; // Simplifique a lógica para dispositivos compactos
+  const [menuOpen, setMenuOpen] = useState(false); // Sempre fechado por padrão para mobile e tablet
   
   const toggleMenu = () => setMenuOpen(!menuOpen);
   
@@ -45,7 +40,7 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Header para mobile e tablet */}
-      {(isMobile || isTablet) && (
+      {isCompactView && (
         <header className="bg-robbialac text-white p-4 flex items-center justify-between fixed top-0 left-0 right-0 z-30">
           <div className="flex items-center space-x-2">
             <img src="/placeholder.svg" alt="Logo" className="w-8 h-8 rounded-full bg-white" />
@@ -61,7 +56,7 @@ export function Layout({ children }: LayoutProps) {
       <aside 
         className={cn(
           "bg-robbialac text-white",
-          (isMobile || isTablet)
+          isCompactView
             ? cn("fixed inset-0 z-50 transition-transform transform", 
                 menuOpen ? "translate-x-0" : "-translate-x-full",
                 "pt-16") // Add padding top to avoid overlapping with header
@@ -69,7 +64,7 @@ export function Layout({ children }: LayoutProps) {
         )}
       >
         {/* Logo para desktop */}
-        {!isMobile && !isTablet && (
+        {!isCompactView && (
           <div className="p-4 border-b border-white/20">
             <div className="flex items-center space-x-2">
               <img src="/placeholder.svg" alt="Logo" className="w-8 h-8 rounded-full bg-white" />
@@ -98,7 +93,7 @@ export function Layout({ children }: LayoutProps) {
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  onClick={() => (isMobile || isTablet) && setMenuOpen(false)}
+                  onClick={() => isCompactView && setMenuOpen(false)}
                   className={cn(
                     "flex items-center space-x-3 px-3 py-2 rounded-md transition-colors",
                     isActive(item.path)
@@ -128,7 +123,7 @@ export function Layout({ children }: LayoutProps) {
       </aside>
       
       {/* Backdrop para menu em mobile e tablet quando aberto */}
-      {(isMobile || isTablet) && menuOpen && (
+      {isCompactView && menuOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40"
           onClick={() => setMenuOpen(false)}
@@ -136,7 +131,7 @@ export function Layout({ children }: LayoutProps) {
       )}
       
       {/* Botão toggle para desktop */}
-      {!isMobile && !isTablet && (
+      {!isCompactView && (
         <div className="fixed top-4 left-4 z-30">
           <Button 
             variant="outline" 
@@ -155,9 +150,9 @@ export function Layout({ children }: LayoutProps) {
       {/* Main content */}
       <main className={cn(
         "flex-1 transition-all",
-        (isMobile || isTablet) && "pt-20 p-4",
-        !isMobile && !isTablet && (menuOpen ? "ml-64" : "ml-0 px-16"),
-        !isMobile && !isTablet && "p-6"
+        isCompactView && "pt-20 p-4",
+        !isCompactView && (menuOpen ? "ml-64" : "ml-0 px-16"),
+        !isCompactView && "p-6"
       )}>
         {children}
       </main>

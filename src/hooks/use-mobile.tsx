@@ -138,11 +138,11 @@ export function useIsCompactView() {
 
 /**
  * Hook to check if the sidebar should be collapsed by default
- * Returns true for tablet view
+ * Returns true for tablet and mobile views (always collapsed by default)
  */
 export function useShouldCollapseMenu() {
-  const isTablet = useIsTablet()
   const isMobile = useIsMobile()
+  const isTablet = useIsTablet()
   
   return isTablet || isMobile
 }
