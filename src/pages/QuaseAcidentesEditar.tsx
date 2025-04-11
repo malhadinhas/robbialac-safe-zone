@@ -217,8 +217,8 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Coluna 1: Informações principais */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Coluna 1: Informações básicas */}
               <div className="space-y-4">
                 <div>
                   <label htmlFor="title" className="block text-sm font-medium mb-1">
@@ -285,7 +285,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                       value={formData.department}
                       onValueChange={(value) => handleSelectChange("department", value)}
                     >
-                      <SelectTrigger id="department">
+                      <SelectTrigger id="department" className="bg-white">
                         <SelectValue placeholder="Selecione um departamento" />
                       </SelectTrigger>
                       <SelectContent className="bg-white z-[99999]">
@@ -309,7 +309,50 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                     />
                   </div>
                 </div>
-                
+              </div>
+              
+              {/* Coluna 2: Status e detalhes  */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="severity" className="block text-sm font-medium mb-1">
+                      Gravidade <span className="text-red-500">*</span>
+                    </label>
+                    <Select
+                      value={formData.severity}
+                      onValueChange={(value) => handleSelectChange("severity", value)}
+                    >
+                      <SelectTrigger id="severity" className="bg-white">
+                        <SelectValue placeholder="Gravidade" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white z-[99999]">
+                        <SelectItem value="Baixo">Baixo (1)</SelectItem>
+                        <SelectItem value="Médio">Médio (4)</SelectItem>
+                        <SelectItem value="Alto">Alto (7)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label htmlFor="status" className="block text-sm font-medium mb-1">
+                      Status <span className="text-red-500">*</span>
+                    </label>
+                    <Select
+                      value={formData.status}
+                      onValueChange={(value) => handleSelectChange("status", value)}
+                    >
+                      <SelectTrigger id="status" className="bg-white">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white z-[99999]">
+                        <SelectItem value="Reportado">Reportado</SelectItem>
+                        <SelectItem value="Em Análise">Em Análise</SelectItem>
+                        <SelectItem value="Resolvido">Resolvido</SelectItem>
+                        <SelectItem value="Arquivado">Arquivado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 {isAdmin && (
                   <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -321,7 +364,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                           value={formData.frequency}
                           onValueChange={(value) => handleSelectChange("frequency", value)}
                         >
-                          <SelectTrigger id="frequency">
+                          <SelectTrigger id="frequency" className="bg-white">
                             <SelectValue placeholder="Selecione a frequência" />
                           </SelectTrigger>
                           <SelectContent className="bg-white z-[99999]">
@@ -339,7 +382,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                           value={formData.resolutionDays?.toString()}
                           onValueChange={(value) => handleSelectChange("resolutionDays", value)}
                         >
-                          <SelectTrigger id="resolutionDays">
+                          <SelectTrigger id="resolutionDays" className="bg-white">
                             <SelectValue placeholder="Selecione os dias" />
                           </SelectTrigger>
                           <SelectContent className="bg-white z-[99999]">
@@ -392,10 +435,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                     </div>
                   </>
                 )}
-              </div>
-              
-              {/* Coluna 2: Informações adicionais */}
-              <div className="space-y-4">
+                
                 <div>
                   <label htmlFor="suggestionToFix" className="block text-sm font-medium mb-1">
                     Sugestão de Correção
@@ -409,104 +449,61 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                     className="resize-none"
                   />
                 </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="responsible" className="block text-sm font-medium mb-1">
-                      Responsável
-                    </label>
-                    <Input
-                      id="responsible"
-                      name="responsible"
-                      value={formData.responsible || ""}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="resolutionDeadline" className="block text-sm font-medium mb-1">
-                      Prazo para Resolução
-                    </label>
-                    <Input
-                      id="resolutionDeadline"
-                      name="resolutionDeadline"
-                      type="date"
-                      value={formData.resolutionDeadline || ""}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
               </div>
-              
-              {/* Coluna 3: Status e notas */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="severity" className="block text-sm font-medium mb-1">
-                      Gravidade <span className="text-red-500">*</span>
-                    </label>
-                    <Select
-                      value={formData.severity}
-                      onValueChange={(value) => handleSelectChange("severity", value)}
-                    >
-                      <SelectTrigger id="severity">
-                        <SelectValue placeholder="Gravidade" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white z-[99999]">
-                        <SelectItem value="Baixo">Baixo (1)</SelectItem>
-                        <SelectItem value="Médio">Médio (4)</SelectItem>
-                        <SelectItem value="Alto">Alto (7)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label htmlFor="status" className="block text-sm font-medium mb-1">
-                      Status <span className="text-red-500">*</span>
-                    </label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value) => handleSelectChange("status", value)}
-                    >
-                      <SelectTrigger id="status">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white z-[99999]">
-                        <SelectItem value="Reportado">Reportado</SelectItem>
-                        <SelectItem value="Em Análise">Em Análise</SelectItem>
-                        <SelectItem value="Resolvido">Resolvido</SelectItem>
-                        <SelectItem value="Arquivado">Arquivado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div>
-                  <label htmlFor="implementedAction" className="block text-sm font-medium mb-1">
-                    Ação Implementada
-                  </label>
-                  <Textarea
-                    id="implementedAction"
-                    name="implementedAction"
-                    value={formData.implementedAction || ""}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="resize-none"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="adminNotes" className="block text-sm font-medium mb-1">
-                    Notas Administrativas
-                  </label>
-                  <Textarea
-                    id="adminNotes"
-                    name="adminNotes"
-                    value={formData.adminNotes || ""}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="resize-none"
-                  />
-                </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="responsible" className="block text-sm font-medium mb-1">
+                  Responsável
+                </label>
+                <Input
+                  id="responsible"
+                  name="responsible"
+                  value={formData.responsible || ""}
+                  onChange={handleInputChange}
+                />
               </div>
+              <div>
+                <label htmlFor="resolutionDeadline" className="block text-sm font-medium mb-1">
+                  Prazo para Resolução
+                </label>
+                <Input
+                  id="resolutionDeadline"
+                  name="resolutionDeadline"
+                  type="date"
+                  value={formData.resolutionDeadline || ""}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label htmlFor="implementedAction" className="block text-sm font-medium mb-1">
+                Ação Implementada
+              </label>
+              <Textarea
+                id="implementedAction"
+                name="implementedAction"
+                value={formData.implementedAction || ""}
+                onChange={handleInputChange}
+                rows={3}
+                className="resize-none"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="adminNotes" className="block text-sm font-medium mb-1">
+                Notas Administrativas
+              </label>
+              <Textarea
+                id="adminNotes"
+                name="adminNotes"
+                value={formData.adminNotes || ""}
+                onChange={handleInputChange}
+                rows={3}
+                className="resize-none"
+              />
             </div>
             
             {/* Images section - simplified */}
