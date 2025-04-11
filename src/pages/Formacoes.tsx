@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { mockStatsByZone } from "@/services/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import FactoryModel3D from "@/components/FactoryModel3D";
+import Factory3DModelManager from "@/components/Factory3DModelManager";
 import VideosCategoryCard from '@/components/VideosCategoryCard';
 import { NoScrollLayout } from '@/components/NoScrollLayout';
 import { useIsCompactView } from '@/hooks/use-mobile';
@@ -114,8 +114,8 @@ export default function Formacoes() {
             </>
           ) : (
             <>
-              {/* Visualização 3D da fábrica */}
-              <FactoryModel3D onZoneClick={handleZoneClick} />
+              {/* Visualização 3D da fábrica - usando o novo componente */}
+              <Factory3DModelManager onZoneClick={handleZoneClick} />
               <p className="text-sm text-gray-500 mt-2 text-center">
                 Interaja com o modelo 3D para explorar as diferentes áreas da fábrica
               </p>
