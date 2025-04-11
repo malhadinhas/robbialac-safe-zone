@@ -7,12 +7,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Search, Plus, Eye, Edit, Trash2 } from "lucide-react";
+import { Search, Plus, Eye, Edit, Trash2, Save } from "lucide-react";
 import { Incident } from "@/types";
 import { Layout } from "@/components/Layout";
 import ImageGallery from "@/components/incidents/ImageGallery";
+import ImageUploader from "@/components/incidents/ImageUploader";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +36,9 @@ const QuaseAcidentes = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [formData, setFormData] = useState<any>({});
+  const [images, setImages] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const itemsPerPage = 10;
 
   const isAdmin = user?.role === "admin_app" || user?.role === "admin_qa";
@@ -57,6 +63,41 @@ const QuaseAcidentes = () => {
     setCurrentPage(1);
   }, [searchQuery]);
 
+  useEffect(() => {
+    if (selectedIncident && isEditModalOpen) {
+      setFormData({
+        id: selectedIncident.id,
+        title: selectedIncident.title,
+        description: selectedIncident.description,
+        location: selectedIncident.location,
+        date: selectedIncident.date instanceof Date 
+          ? selectedIncident.date.toISOString().split('T')[0] 
+          : new Date(selectedIncident.date).toISOString().split('T')[0],
+        severity: selectedIncident.severity,
+        status: selectedIncident.status,
+        department: selectedIncident.department,
+        implementedAction: selectedIncident.implementedAction || "",
+        responsible: selectedIncident.responsible || "",
+        adminNotes: selectedIncident.adminNotes || "",
+        suggestionToFix: selectedIncident.suggestionToFix || "",
+        resolutionDeadline: selectedIncident.resolutionDeadline 
+          ? (selectedIncident.resolutionDeadline instanceof Date 
+              ? selectedIncident.resolutionDeadline.toISOString().split('T')[0] 
+              : new Date(selectedIncident.resolutionDeadline).toISOString().split('T')[0]) 
+          : "",
+        reportedBy: selectedIncident.reportedBy,
+        pointsAwarded: selectedIncident.pointsAwarded,
+        factoryArea: selectedIncident.factoryArea || ""
+      });
+      
+      if (selectedIncident.images) {
+        setImages(selectedIncident.images);
+      } else {
+        setImages([]);
+      }
+    }
+  }, [selectedIncident, isEditModalOpen]);
+
   const handleIncidentClick = (incident: Incident) => {
     setSelectedIncident(incident);
     setIsViewModalOpen(true);
@@ -66,12 +107,6 @@ const QuaseAcidentes = () => {
     event.stopPropagation();
     setSelectedIncident(incident);
     setIsEditModalOpen(true);
-  };
-
-  const handleEditNavigate = () => {
-    if (selectedIncident) {
-      navigate(`/quase-acidentes/editar/${selectedIncident.id}`);
-    }
   };
 
   const handleDeleteClick = (event: React.MouseEvent, incident: Incident) => {
@@ -95,6 +130,49 @@ const QuaseAcidentes = () => {
     } catch (error) {
       toast.error("Erro ao arquivar quase acidente");
       console.error("Error archiving incident:", error);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleImagesChange = (newImages: string[]) => {
+    setImages(newImages);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title || !formData.description || !formData.location || !formData.date || !formData.severity || !formData.status) {
+      toast.error("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      const updatedIncident: Incident = {
+        ...selectedIncident!,
+        ...formData,
+        date: new Date(formData.date),
+        resolutionDeadline: formData.resolutionDeadline ? new Date(formData.resolutionDeadline) : undefined,
+        images: images
+      } as Incident;
+      
+      await updateIncident(updatedIncident);
+      toast.success("Quase acidente atualizado com sucesso");
+      setIsEditModalOpen(false);
+      refetch();
+    } catch (error) {
+      console.error("Error updating incident:", error);
+      toast.error("Erro ao atualizar quase acidente");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -409,17 +487,264 @@ const QuaseAcidentes = () => {
                 <DialogHeader>
                   <DialogTitle>Editar Quase Acidente</DialogTitle>
                 </DialogHeader>
-                <div className="py-4">
-                  <p className="mb-6">Você será redirecionado para a página de edição deste quase acidente.</p>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+                
+                <form onSubmit={handleSubmit} className="py-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="title" className="block text-sm font-medium mb-1">
+                          Título <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                          id="title"
+                          name="title"
+                          value={formData.title || ""}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="description" className="block text-sm font-medium mb-1">
+                          Descrição <span className="text-red-500">*</span>
+                        </label>
+                        <Textarea
+                          id="description"
+                          name="description"
+                          value={formData.description || ""}
+                          onChange={handleInputChange}
+                          rows={4}
+                          required
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="location" className="block text-sm font-medium mb-1">
+                            Local <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            id="location"
+                            name="location"
+                            value={formData.location || ""}
+                            onChange={handleInputChange}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="date" className="block text-sm font-medium mb-1">
+                            Data <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            id="date"
+                            name="date"
+                            type="date"
+                            value={formData.date || ""}
+                            onChange={handleInputChange}
+                            required
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label htmlFor="department" className="block text-sm font-medium mb-1">
+                            Departamento <span className="text-red-500">*</span>
+                          </label>
+                          <Input
+                            id="department"
+                            name="department"
+                            value={formData.department || ""}
+                            onChange={handleInputChange}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="factoryArea" className="block text-sm font-medium mb-1">
+                            Área da Fábrica
+                          </label>
+                          <Input
+                            id="factoryArea"
+                            name="factoryArea"
+                            value={formData.factoryArea || ""}
+                            onChange={handleInputChange}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label htmlFor="suggestionToFix" className="block text-sm font-medium mb-1">
+                          Sugestão de Correção
+                        </label>
+                        <Textarea
+                          id="suggestionToFix"
+                          name="suggestionToFix"
+                          value={formData.suggestionToFix || ""}
+                          onChange={handleInputChange}
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="severity" className="block text-sm font-medium mb-1">
+                          Gravidade <span className="text-red-500">*</span>
+                        </label>
+                        <Select
+                          value={formData.severity}
+                          onValueChange={(value) => handleSelectChange("severity", value)}
+                        >
+                          <SelectTrigger id="severity">
+                            <SelectValue placeholder="Selecione a gravidade" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Baixo">Baixo</SelectItem>
+                            <SelectItem value="Médio">Médio</SelectItem>
+                            <SelectItem value="Alto">Alto</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="status" className="block text-sm font-medium mb-1">
+                          Status <span className="text-red-500">*</span>
+                        </label>
+                        <Select
+                          value={formData.status}
+                          onValueChange={(value) => handleSelectChange("status", value)}
+                        >
+                          <SelectTrigger id="status">
+                            <SelectValue placeholder="Selecione o status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Reportado">Reportado</SelectItem>
+                            <SelectItem value="Em Análise">Em Análise</SelectItem>
+                            <SelectItem value="Resolvido">Resolvido</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label htmlFor="responsible" className="block text-sm font-medium mb-1">
+                          Responsável
+                        </label>
+                        <Input
+                          id="responsible"
+                          name="responsible"
+                          value={formData.responsible || ""}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="resolutionDeadline" className="block text-sm font-medium mb-1">
+                          Prazo para Resolução
+                        </label>
+                        <Input
+                          id="resolutionDeadline"
+                          name="resolutionDeadline"
+                          type="date"
+                          value={formData.resolutionDeadline || ""}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="implementedAction" className="block text-sm font-medium mb-1">
+                          Ação Implementada
+                        </label>
+                        <Textarea
+                          id="implementedAction"
+                          name="implementedAction"
+                          value={formData.implementedAction || ""}
+                          onChange={handleInputChange}
+                          rows={3}
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="adminNotes" className="block text-sm font-medium mb-1">
+                          Notas Administrativas
+                        </label>
+                        <Textarea
+                          id="adminNotes"
+                          name="adminNotes"
+                          value={formData.adminNotes || ""}
+                          onChange={handleInputChange}
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <h3 className="text-sm font-medium mb-3">Imagens</h3>
+                    <ImageUploader 
+                      onImagesSelected={() => {}} 
+                      onImagesChange={handleImagesChange}
+                    />
+                    
+                    {images.length > 0 && (
+                      <div className="mt-6">
+                        <h4 className="text-sm font-medium mb-3">Imagens Atuais ({images.length})</h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                          {images.map((image, index) => (
+                            <div key={index} className="relative group">
+                              <img 
+                                src={image} 
+                                alt={`Imagem ${index + 1}`} 
+                                className="h-24 w-full object-cover rounded-md border border-gray-200"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  onClick={() => {
+                                    const updatedImages = images.filter((_, i) => i !== index);
+                                    setImages(updatedImages);
+                                  }}
+                                >
+                                  Remover
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <DialogFooter className="flex justify-end gap-3 mt-6">
+                    <Button 
+                      variant="outline" 
+                      type="button"
+                      onClick={() => setIsEditModalOpen(false)}
+                    >
                       Cancelar
                     </Button>
-                    <Button onClick={handleEditNavigate} className="bg-robbialac hover:bg-robbialac/90">
-                      <Edit className="h-4 w-4 mr-2" /> Continuar para Edição
+                    <Button 
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="bg-robbialac hover:bg-robbialac-dark"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Salvar Alterações
+                        </>
+                      )}
                     </Button>
                   </DialogFooter>
-                </div>
+                </form>
               </>
             )}
           </DialogContent>

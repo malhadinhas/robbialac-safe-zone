@@ -236,14 +236,14 @@ export function Layout({ children }: LayoutProps) {
         </div>
       )}
       
-      {/* Main content com layout fluido e espaçamento adaptativo */}
+      {/* Main content com layout fluido e espaçamento adaptativo reduzido */}
       <main 
         style={{ 
           minHeight: mainHeight,
-          paddingTop: isCompactView ? "calc(60px + " + adaptiveSpacing.md + ")" : adaptiveSpacing.lg,
-          paddingLeft: !isCompactView ? (menuOpen ? "calc(18rem + " + adaptiveSpacing.md + ")" : "calc(5rem + " + adaptiveSpacing.md + ")") : adaptiveSpacing.md,
-          paddingRight: isCompactView ? adaptiveSpacing.md : adaptiveSpacing.xl,
-          paddingBottom: adaptiveSpacing.lg
+          paddingTop: isCompactView ? "calc(60px + " + adaptiveSpacing.sm + ")" : adaptiveSpacing.sm, // Reduzido de lg para sm
+          paddingLeft: !isCompactView ? (menuOpen ? "calc(18rem + " + adaptiveSpacing.sm + ")" : "calc(5rem + " + adaptiveSpacing.sm + ")") : adaptiveSpacing.sm, // Reduzido para sm
+          paddingRight: isCompactView ? adaptiveSpacing.sm : adaptiveSpacing.md, // Reduzido de xl para md
+          paddingBottom: adaptiveSpacing.sm // Reduzido de lg para sm
         }}
         className={cn(
           "flex-1 transition-all w-full overflow-x-hidden",
