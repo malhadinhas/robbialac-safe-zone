@@ -70,9 +70,9 @@ export function Layout({ children }: LayoutProps) {
     ? `${viewportHeight}px` 
     : "100vh";
   
-  // Reduzir a largura do menu expandido para economizar espaço
-  const expandedMenuWidth = "16rem"; // Reduzido de 18rem ou 72 para 16rem (64px)
-  const collapsedMenuWidth = "4rem"; // Mantido em 4rem (64px)
+  // Dimensões do menu - reduzidas ainda mais para economizar espaço
+  const expandedMenuWidth = "14rem"; // Reduzido de 16rem para 14rem
+  const collapsedMenuWidth = "3.5rem"; // Reduzido de 4rem para 3.5rem
   
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
@@ -114,20 +114,24 @@ export function Layout({ children }: LayoutProps) {
                 menuOpen ? "translate-x-0" : "-translate-x-full",
                 orientation === "landscape" ? "w-3/5 sm:w-1/2 md:w-2/5" : "w-full",
                 "pt-16") // Add padding top to avoid overlapping with header
-            : cn(`w-${menuOpen ? expandedMenuWidth : collapsedMenuWidth} min-h-screen sticky top-0`, // Usar variáveis para largura
-                menuOpen ? "block" : "hidden lg:block lg:w-[4rem] xl:w-[16rem]", 
+            : cn(`min-h-screen sticky top-0 shrink-0`, // Remove hardcoded width, use CSS vars for more flexibility
+                menuOpen ? `w-[${expandedMenuWidth}]` : `w-[${collapsedMenuWidth}]`,
+                menuOpen ? "block" : "hidden lg:block", 
                 "transition-[width]")
         )}
+        style={{ 
+          width: isCompactView ? undefined : menuOpen ? expandedMenuWidth : collapsedMenuWidth 
+        }}
       >
         {/* Logo para desktop */}
         {!isCompactView && (
-          <div className="p-4 border-b border-white/20">
+          <div className="p-3 border-b border-white/20">
             <div className={cn(
               "flex items-center", 
               menuOpen ? "space-x-3" : "justify-center"
             )}>
-              <img src="/placeholder.svg" alt="Logo" className="w-8 h-8 rounded-full bg-white" />
-              {menuOpen && <h1 className="font-bold transition-opacity whitespace-normal pr-2">RobbialacSegurança</h1>}
+              <img src="/placeholder.svg" alt="Logo" className="w-7 h-7 rounded-full bg-white" />
+              {menuOpen && <h1 className="font-bold text-sm transition-opacity whitespace-normal pr-2">RobbialacSegurança</h1>}
             </div>
           </div>
         )}
@@ -135,7 +139,7 @@ export function Layout({ children }: LayoutProps) {
         {/* User info com layout adaptativo - empilhar verticalmente em mobile */}
         <div className={cn(
           "border-b border-white/20",
-          isCompactView || menuOpen ? "p-4" : "p-2 flex justify-center"
+          isCompactView || menuOpen ? "p-3" : "p-2 flex justify-center"
         )}>
           <div className={cn(
             "flex", 
@@ -143,12 +147,12 @@ export function Layout({ children }: LayoutProps) {
               ? "flex-col items-center space-y-2" // Empilha verticalmente
               : "flex-col space-y-2 items-center"
           )}>
-            <div className="bg-white text-robbialac rounded-full w-10 h-10 flex items-center justify-center font-bold shrink-0">
+            <div className="bg-white text-robbialac rounded-full w-8 h-8 flex items-center justify-center font-bold shrink-0 text-sm">
               {user?.name.substring(0, 1)}
             </div>
             {(isCompactView || menuOpen) && (
               <div className="overflow-hidden text-center">
-                <p className="font-medium text-sm sm:text-base whitespace-normal break-words">{user?.name}</p>
+                <p className="font-medium text-xs sm:text-sm whitespace-normal break-words">{user?.name}</p>
                 <p className="text-xs text-white/70 whitespace-normal break-words">{user?.email}</p>
               </div>
             )}
@@ -158,10 +162,10 @@ export function Layout({ children }: LayoutProps) {
         {/* Navigation adaptativa - mostra apenas ícones em telas pequenas ou quando menu colapsado */}
         <nav className={cn(
           "flex flex-col",
-          isCompactView || menuOpen ? "p-2" : "items-center p-2"
+          isCompactView || menuOpen ? "p-2" : "items-center p-1"
         )}>
           <ul className={cn(
-            isCompactView || menuOpen ? "space-y-1 w-full" : "space-y-4 w-full flex flex-col items-center"
+            isCompactView || menuOpen ? "space-y-1 w-full" : "space-y-3 w-full flex flex-col items-center"
           )}>
             {menuItems.map((item) => (
               <li key={item.path} className="w-full">
@@ -179,11 +183,11 @@ export function Layout({ children }: LayoutProps) {
                   )}
                   title={!menuOpen && !isCompactView ? item.label : undefined}
                 >
-                  <item.icon size={isCompactView ? 20 : menuOpen ? 20 : 18} />
+                  <item.icon size={isCompactView ? 18 : menuOpen ? 18 : 16} />
                   {(isCompactView || menuOpen) ? (
-                    <span className="text-sm sm:text-base whitespace-normal">{item.label}</span>
+                    <span className="text-xs sm:text-sm whitespace-normal">{item.label}</span>
                   ) : (
-                    <span className="text-xs font-light hidden lg:block">{item.label}</span>
+                    <span className="text-[10px] font-light hidden lg:block">{item.label}</span>
                   )}
                 </Link>
               </li>
@@ -194,7 +198,7 @@ export function Layout({ children }: LayoutProps) {
         {/* Logout com layout adaptativo */}
         <div className={cn(
           "mt-auto sticky bottom-0 pb-safe",
-          isCompactView || menuOpen ? "p-2" : "p-2 flex justify-center"
+          isCompactView || menuOpen ? "p-2" : "p-1 flex justify-center"
         )}>
           <Button 
             variant="ghost" 
@@ -207,10 +211,10 @@ export function Layout({ children }: LayoutProps) {
             title={!menuOpen && !isCompactView ? "Sair" : undefined}
           >
             <LogOut className={cn(
-              isCompactView || menuOpen ? "mr-3" : "",
-              "h-5 w-5"
+              isCompactView || menuOpen ? "mr-2" : "",
+              "h-4 w-4"
             )} />
-            {(isCompactView || menuOpen) && "Sair"}
+            {(isCompactView || menuOpen) && <span className="text-xs sm:text-sm">Sair</span>}
           </Button>
         </div>
       </aside>
@@ -225,29 +229,32 @@ export function Layout({ children }: LayoutProps) {
       
       {/* Botão toggle para desktop */}
       {!isCompactView && (
-        <div className="fixed top-4 left-4 z-30">
+        <div className="fixed top-3 z-30">
           <Button 
             variant="outline" 
             size="icon"
             className={cn(
               "bg-white shadow-md border-robbialac/20 transition-all",
-              menuOpen ? "left-[16.5rem]" : "left-[4rem]" // Ajustado para a nova largura do menu expandido
+              menuOpen ? `left-[${expandedMenuWidth}]` : `left-[${collapsedMenuWidth}]`
             )}
+            style={{
+              left: menuOpen ? `calc(${expandedMenuWidth} - 0.75rem)` : `calc(${collapsedMenuWidth} - 0.75rem)`
+            }}
             onClick={toggleMenu}
           >
-            {menuOpen ? <X size={18} /> : <Menu size={18} />}
+            {menuOpen ? <X size={16} /> : <Menu size={16} />}
           </Button>
         </div>
       )}
       
-      {/* Main content com layout fluido e espaçamento adaptativo reduzido */}
+      {/* Main content com layout compacto e sem margens desnecessárias */}
       <main 
         style={{ 
           minHeight: mainHeight,
-          paddingTop: isCompactView ? "calc(60px + " + adaptiveSpacing.sm + ")" : adaptiveSpacing.sm,
-          paddingLeft: !isCompactView ? (menuOpen ? "calc(16rem + " + adaptiveSpacing.xs + ")" : "calc(4rem + " + adaptiveSpacing.xs + ")") : adaptiveSpacing.xs, // Reduzido significativamente
-          paddingRight: adaptiveSpacing.xs, // Reduzido para xs
-          paddingBottom: adaptiveSpacing.xs // Reduzido para xs
+          paddingTop: isCompactView ? "calc(60px + 0.5rem)" : "0.5rem",
+          paddingLeft: isCompactView ? "0.5rem" : "0.25rem",
+          paddingRight: "0.5rem",
+          paddingBottom: "0.5rem"
         }}
         className={cn(
           "flex-1 transition-all w-full overflow-x-hidden",
