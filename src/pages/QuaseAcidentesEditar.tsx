@@ -215,7 +215,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
             <p className="text-lg">Carregando...</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-2">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {/* Coluna 1: Informações principais */}
               <div className="space-y-2">

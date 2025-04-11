@@ -247,14 +247,14 @@ export function Layout({ children }: LayoutProps) {
         </div>
       )}
       
-      {/* Main content com layout compacto e sem margens desnecessárias */}
+      {/* Main content com layout consistente e distância apropriada */}
       <main 
         style={{ 
           minHeight: mainHeight,
-          paddingTop: isCompactView ? "calc(60px + 0.5rem)" : "0.5rem",
-          paddingLeft: isCompactView ? "0.5rem" : "0.25rem",
-          paddingRight: "0.5rem",
-          paddingBottom: "0.5rem"
+          paddingTop: isCompactView ? "calc(60px + 1rem)" : "1rem",
+          paddingLeft: "1.5rem",
+          paddingRight: "1.5rem",
+          paddingBottom: "1rem"
         }}
         className={cn(
           "flex-1 transition-all w-full overflow-x-hidden",
