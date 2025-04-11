@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Search, Plus, Eye } from "lucide-react";
 import { Incident } from "@/types";
-import NoScrollLayout from "@/components/NoScrollLayout";
+import { NoScrollLayout } from "@/components/NoScrollLayout";
 import ImageGallery from "@/components/incidents/ImageGallery";
 
 const QuaseAcidentes = () => {
