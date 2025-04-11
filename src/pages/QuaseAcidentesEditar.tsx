@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { ChevronLeft, Save } from "lucide-react";
 import { Incident } from "@/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FormIncidentData {
   id?: string;
@@ -31,6 +33,12 @@ interface FormIncidentData {
   reportedBy?: string;
   pointsAwarded?: number;
   factoryArea?: string;
+  frequencyValue?: number;
+  frequency?: "Baixa" | "Moderada" | "Alta";
+  gravityValue?: number;
+  risk?: number;
+  qaQuality?: "Baixa" | "Média" | "Alta";
+  resolutionDays?: number;
 }
 
 interface EditModalProps {
@@ -51,11 +59,32 @@ const DEPARTMENTS = [
   "Segurança"
 ];
 
+// Frequency mapping
+const FREQUENCY_VALUES = {
+  "Baixa": 2,
+  "Moderada": 6,
+  "Alta": 8
+};
+
+// Gravity mapping
+const GRAVITY_VALUES = {
+  "Baixo": 1,
+  "Médio": 4,
+  "Alto": 7
+};
+
+// Resolution days options
+const RESOLUTION_DAYS_OPTIONS = [30, 60, 90];
+
 export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditModalProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<FormIncidentData>({});
   const [images, setImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Check if user has admin privileges
+  const isAdmin = user?.role === "admin_qa" || user?.role === "admin_app";
 
   const { data: incident, isLoading } = useQuery({
     queryKey: ["incident", incidentId],
@@ -81,7 +110,13 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
         resolutionDeadline: incident.resolutionDeadline ? (incident.resolutionDeadline instanceof Date ? incident.resolutionDeadline.toISOString().split('T')[0] : new Date(incident.resolutionDeadline).toISOString().split('T')[0]) : "",
         reportedBy: incident.reportedBy,
         pointsAwarded: incident.pointsAwarded,
-        factoryArea: incident.factoryArea || ""
+        factoryArea: incident.factoryArea || "",
+        frequency: incident.frequency || "Baixa",
+        frequencyValue: incident.frequencyValue || FREQUENCY_VALUES["Baixa"],
+        gravityValue: incident.gravityValue || GRAVITY_VALUES["Baixo"],
+        risk: incident.risk || 0,
+        qaQuality: incident.qaQuality || "Baixa",
+        resolutionDays: incident.resolutionDays || 30
       });
       
       if (incident.images) {
@@ -90,6 +125,24 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
     }
   }, [incident]);
 
+  useEffect(() => {
+    // Calculate risk when frequency or gravity changes
+    if (formData.frequencyValue && formData.gravityValue) {
+      const risk = formData.frequencyValue * formData.gravityValue;
+      setFormData(prev => ({ ...prev, risk }));
+      
+      // Automatically determine QA Quality based on risk value
+      let qaQuality: "Baixa" | "Média" | "Alta" = "Baixa";
+      if (risk > 24) {
+        qaQuality = "Alta";
+      } else if (risk >= 8) {
+        qaQuality = "Média";
+      }
+      
+      setFormData(prev => ({ ...prev, qaQuality }));
+    }
+  }, [formData.frequencyValue, formData.gravityValue]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -97,6 +150,21 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Handle frequency and gravity special cases to set their values
+    if (name === "frequency") {
+      setFormData(prev => ({ 
+        ...prev, 
+        frequencyValue: FREQUENCY_VALUES[value as keyof typeof FREQUENCY_VALUES] || 2
+      }));
+    }
+    
+    if (name === "severity") {
+      setFormData(prev => ({ 
+        ...prev, 
+        gravityValue: GRAVITY_VALUES[value as keyof typeof GRAVITY_VALUES] || 1
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -130,7 +198,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[90vw] max-h-[90vh] p-4 overflow-hidden">
+      <DialogContent className="sm:max-w-[90vw] max-h-[90vh] p-4 overflow-auto" aria-describedby="dialog-description">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Editar Quase Acidente</DialogTitle>
         </DialogHeader>
@@ -202,6 +270,49 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                     />
                   </div>
                 </div>
+                
+                {isAdmin && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label htmlFor="frequency" className="block text-sm font-medium mb-0.5">
+                        Frequência
+                      </label>
+                      <Select
+                        value={formData.frequency}
+                        onValueChange={(value) => handleSelectChange("frequency", value)}
+                      >
+                        <SelectTrigger id="frequency" className="h-8">
+                          <SelectValue placeholder="Selecione a frequência" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Baixa">Baixa (2)</SelectItem>
+                          <SelectItem value="Moderada">Moderada (6)</SelectItem>
+                          <SelectItem value="Alta">Alta (8)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label htmlFor="resolutionDays" className="block text-sm font-medium mb-0.5">
+                        Dias para Resolução
+                      </label>
+                      <Select
+                        value={formData.resolutionDays?.toString()}
+                        onValueChange={(value) => handleSelectChange("resolutionDays", value)}
+                      >
+                        <SelectTrigger id="resolutionDays" className="h-8">
+                          <SelectValue placeholder="Selecione os dias" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {RESOLUTION_DAYS_OPTIONS.map((days) => (
+                            <SelectItem key={days} value={days.toString()}>
+                              {days} dias
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Coluna 2: Informações adicionais */}
@@ -282,6 +393,27 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                     />
                   </div>
                 </div>
+                
+                {isAdmin && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-sm font-medium mb-0.5">
+                        Risco Calculado
+                      </label>
+                      <div className="h-8 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
+                        <span>{formData.risk || 0}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-0.5">
+                        Qualidade QA
+                      </label>
+                      <div className="h-8 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
+                        <span>{formData.qaQuality || "Baixa"}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Coluna 3: Status e notas */}
@@ -299,9 +431,9 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                         <SelectValue placeholder="Gravidade" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Baixo">Baixo</SelectItem>
-                        <SelectItem value="Médio">Médio</SelectItem>
-                        <SelectItem value="Alto">Alto</SelectItem>
+                        <SelectItem value="Baixo">Baixo (1)</SelectItem>
+                        <SelectItem value="Médio">Médio (4)</SelectItem>
+                        <SelectItem value="Alto">Alto (7)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -320,6 +452,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                         <SelectItem value="Reportado">Reportado</SelectItem>
                         <SelectItem value="Em Análise">Em Análise</SelectItem>
                         <SelectItem value="Resolvido">Resolvido</SelectItem>
+                        <SelectItem value="Arquivado">Arquivado</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -393,6 +526,9 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
             </DialogFooter>
           </form>
         )}
+        <span id="dialog-description" className="sr-only">
+          Formulário para edição de quase acidentes
+        </span>
       </DialogContent>
     </Dialog>
   );
