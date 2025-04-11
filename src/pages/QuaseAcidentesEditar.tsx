@@ -85,6 +85,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
   
   // Check if user has admin privileges
   const isAdmin = user?.role === "admin_qa" || user?.role === "admin_app";
+  console.log("User role:", user?.role, "isAdmin:", isAdmin);
 
   const { data: incident, isLoading } = useQuery({
     queryKey: ["incident", incidentId],
@@ -94,6 +95,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
 
   useEffect(() => {
     if (incident) {
+      console.log("Incident data loaded:", incident);
       setFormData({
         id: incident.id,
         title: incident.title,
@@ -149,6 +151,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
   };
 
   const handleSelectChange = (name: string, value: string) => {
+    console.log(`Select change: ${name} = ${value}`);
     setFormData(prev => ({ ...prev, [name]: value }));
     
     // Handle frequency and gravity special cases to set their values
@@ -205,7 +208,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[90vw] max-h-[90vh] p-4 overflow-auto bg-white" aria-describedby="dialog-description">
+      <DialogContent className="sm:max-w-[90vw] max-h-[90vh] p-6 overflow-auto bg-white text-black" style={{zIndex: 9999}}>
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Editar Quase Acidente</DialogTitle>
         </DialogHeader>
@@ -215,12 +218,12 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
             <p className="text-lg">Carregando...</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Coluna 1: Informações principais */}
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <div>
-                  <label htmlFor="title" className="block text-sm font-medium mb-0.5">
+                  <label htmlFor="title" className="block text-sm font-medium mb-1">
                     Título <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -229,12 +232,11 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                     value={formData.title || ""}
                     onChange={handleInputChange}
                     required
-                    className="h-8"
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="description" className="block text-sm font-medium mb-0.5">
+                  <label htmlFor="description" className="block text-sm font-medium mb-1">
                     Descrição <span className="text-red-500">*</span>
                   </label>
                   <Textarea
@@ -248,9 +250,9 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                   />
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="location" className="block text-sm font-medium mb-0.5">
+                    <label htmlFor="location" className="block text-sm font-medium mb-1">
                       Local <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -259,11 +261,10 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                       value={formData.location || ""}
                       onChange={handleInputChange}
                       required
-                      className="h-8"
                     />
                   </div>
                   <div>
-                    <label htmlFor="date" className="block text-sm font-medium mb-0.5">
+                    <label htmlFor="date" className="block text-sm font-medium mb-1">
                       Data <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -273,26 +274,25 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                       value={formData.date || ""}
                       onChange={handleInputChange}
                       required
-                      className="h-8"
                     />
                   </div>
                 </div>
                 
                 {isAdmin && (
                   <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="frequency" className="block text-sm font-medium mb-0.5">
+                        <label htmlFor="frequency" className="block text-sm font-medium mb-1">
                           Frequência
                         </label>
                         <Select
                           value={formData.frequency}
                           onValueChange={(value) => handleSelectChange("frequency", value)}
                         >
-                          <SelectTrigger id="frequency" className="h-8">
+                          <SelectTrigger id="frequency">
                             <SelectValue placeholder="Selecione a frequência" />
                           </SelectTrigger>
-                          <SelectContent className="bg-white">
+                          <SelectContent className="bg-white z-[9999]">
                             <SelectItem value="Baixa">Baixa (2)</SelectItem>
                             <SelectItem value="Moderada">Moderada (6)</SelectItem>
                             <SelectItem value="Alta">Alta (8)</SelectItem>
@@ -300,17 +300,17 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                         </Select>
                       </div>
                       <div>
-                        <label htmlFor="resolutionDays" className="block text-sm font-medium mb-0.5">
+                        <label htmlFor="resolutionDays" className="block text-sm font-medium mb-1">
                           Dias para Resolução
                         </label>
                         <Select
                           value={formData.resolutionDays?.toString()}
                           onValueChange={(value) => handleSelectChange("resolutionDays", value)}
                         >
-                          <SelectTrigger id="resolutionDays" className="h-8">
+                          <SelectTrigger id="resolutionDays">
                             <SelectValue placeholder="Selecione os dias" />
                           </SelectTrigger>
-                          <SelectContent className="bg-white">
+                          <SelectContent className="bg-white z-[9999]">
                             {RESOLUTION_DAYS_OPTIONS.map((days) => (
                               <SelectItem key={days} value={days.toString()}>
                                 {days} dias
@@ -321,20 +321,20 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium mb-0.5">
+                        <label className="block text-sm font-medium mb-1">
                           Valor da Frequência
                         </label>
-                        <div className="h-8 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
+                        <div className="h-10 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
                           <span>{formData.frequencyValue || 0}</span>
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-0.5">
+                        <label className="block text-sm font-medium mb-1">
                           Valor da Gravidade
                         </label>
-                        <div className="h-8 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
+                        <div className="h-10 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
                           <span>{formData.gravityValue || 0}</span>
                         </div>
                       </div>
@@ -344,20 +344,20 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
               </div>
               
               {/* Coluna 2: Informações adicionais */}
-              <div className="space-y-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="department" className="block text-sm font-medium mb-0.5">
+                    <label htmlFor="department" className="block text-sm font-medium mb-1">
                       Departamento <span className="text-red-500">*</span>
                     </label>
                     <Select
                       value={formData.department}
                       onValueChange={(value) => handleSelectChange("department", value)}
                     >
-                      <SelectTrigger id="department" className="h-8">
+                      <SelectTrigger id="department">
                         <SelectValue placeholder="Selecione um departamento" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white">
+                      <SelectContent className="bg-white z-[9999]">
                         {DEPARTMENTS.map((dept) => (
                           <SelectItem key={dept} value={dept}>
                             {dept}
@@ -367,7 +367,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                     </Select>
                   </div>
                   <div>
-                    <label htmlFor="factoryArea" className="block text-sm font-medium mb-0.5">
+                    <label htmlFor="factoryArea" className="block text-sm font-medium mb-1">
                       Área da Fábrica
                     </label>
                     <Input
@@ -375,13 +375,12 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                       name="factoryArea"
                       value={formData.factoryArea || ""}
                       onChange={handleInputChange}
-                      className="h-8"
                     />
                   </div>
                 </div>
                 
                 <div>
-                  <label htmlFor="suggestionToFix" className="block text-sm font-medium mb-0.5">
+                  <label htmlFor="suggestionToFix" className="block text-sm font-medium mb-1">
                     Sugestão de Correção
                   </label>
                   <Textarea
@@ -394,9 +393,9 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                   />
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="responsible" className="block text-sm font-medium mb-0.5">
+                    <label htmlFor="responsible" className="block text-sm font-medium mb-1">
                       Responsável
                     </label>
                     <Input
@@ -404,11 +403,10 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                       name="responsible"
                       value={formData.responsible || ""}
                       onChange={handleInputChange}
-                      className="h-8"
                     />
                   </div>
                   <div>
-                    <label htmlFor="resolutionDeadline" className="block text-sm font-medium mb-0.5">
+                    <label htmlFor="resolutionDeadline" className="block text-sm font-medium mb-1">
                       Prazo para Resolução
                     </label>
                     <Input
@@ -417,26 +415,25 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                       type="date"
                       value={formData.resolutionDeadline || ""}
                       onChange={handleInputChange}
-                      className="h-8"
                     />
                   </div>
                 </div>
                 
                 {isAdmin && (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-0.5">
+                      <label className="block text-sm font-medium mb-1">
                         Risco Calculado
                       </label>
-                      <div className="h-8 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
+                      <div className="h-10 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
                         <span>{formData.risk || 0}</span>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-0.5">
+                      <label className="block text-sm font-medium mb-1">
                         Qualidade QA
                       </label>
-                      <div className="h-8 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
+                      <div className="h-10 bg-gray-100 border border-gray-300 rounded flex items-center px-3">
                         <span>{formData.qaQuality || "Baixa"}</span>
                       </div>
                     </div>
@@ -445,20 +442,20 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
               </div>
               
               {/* Coluna 3: Status e notas */}
-              <div className="space-y-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="severity" className="block text-sm font-medium mb-0.5">
+                    <label htmlFor="severity" className="block text-sm font-medium mb-1">
                       Gravidade <span className="text-red-500">*</span>
                     </label>
                     <Select
                       value={formData.severity}
                       onValueChange={(value) => handleSelectChange("severity", value)}
                     >
-                      <SelectTrigger id="severity" className="h-8">
+                      <SelectTrigger id="severity">
                         <SelectValue placeholder="Gravidade" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white">
+                      <SelectContent className="bg-white z-[9999]">
                         <SelectItem value="Baixo">Baixo (1)</SelectItem>
                         <SelectItem value="Médio">Médio (4)</SelectItem>
                         <SelectItem value="Alto">Alto (7)</SelectItem>
@@ -466,17 +463,17 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                     </Select>
                   </div>
                   <div>
-                    <label htmlFor="status" className="block text-sm font-medium mb-0.5">
+                    <label htmlFor="status" className="block text-sm font-medium mb-1">
                       Status <span className="text-red-500">*</span>
                     </label>
                     <Select
                       value={formData.status}
                       onValueChange={(value) => handleSelectChange("status", value)}
                     >
-                      <SelectTrigger id="status" className="h-8">
+                      <SelectTrigger id="status">
                         <SelectValue placeholder="Status" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white">
+                      <SelectContent className="bg-white z-[9999]">
                         <SelectItem value="Reportado">Reportado</SelectItem>
                         <SelectItem value="Em Análise">Em Análise</SelectItem>
                         <SelectItem value="Resolvido">Resolvido</SelectItem>
@@ -487,7 +484,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                 </div>
                 
                 <div>
-                  <label htmlFor="implementedAction" className="block text-sm font-medium mb-0.5">
+                  <label htmlFor="implementedAction" className="block text-sm font-medium mb-1">
                     Ação Implementada
                   </label>
                   <Textarea
@@ -501,7 +498,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                 </div>
                 
                 <div>
-                  <label htmlFor="adminNotes" className="block text-sm font-medium mb-0.5">
+                  <label htmlFor="adminNotes" className="block text-sm font-medium mb-1">
                     Notas Administrativas
                   </label>
                   <Textarea
@@ -517,12 +514,12 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
             </div>
             
             {/* Images section - simplified */}
-            <div className="mt-2">
+            <div>
               <p className="text-sm font-medium">Imagens ({images.length})</p>
               {images.length > 0 && (
-                <div className="grid grid-cols-6 gap-2 mt-1">
+                <div className="grid grid-cols-6 gap-2 mt-2">
                   {images.slice(0, 6).map((image, index) => (
-                    <div key={index} className="h-10 w-10">
+                    <div key={index} className="h-12 w-12">
                       <img 
                         src={image} 
                         alt={`Imagem ${index + 1}`} 
@@ -538,14 +535,12 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
               <Button 
                 variant="outline" 
                 type="button"
-                size="sm"
                 onClick={onClose}
               >
                 Cancelar
               </Button>
               <Button 
                 type="submit"
-                size="sm"
                 disabled={isSubmitting}
                 className="bg-robbialac hover:bg-robbialac-dark"
               >
@@ -554,9 +549,6 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
             </DialogFooter>
           </form>
         )}
-        <span id="dialog-description" className="sr-only">
-          Formulário para edição de quase acidentes
-        </span>
       </DialogContent>
     </Dialog>
   );
