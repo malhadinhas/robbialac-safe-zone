@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PresentationControls, Environment, useGLTF } from '@react-three/drei';
+import { OrbitControls, PresentationControls, Environment, useGLTF, Html } from '@react-three/drei';
 import GLTFModel from './GLTFModel';
 
 // Define available factory zones
@@ -94,36 +94,10 @@ const Factory3DModelManager: React.FC<Factory3DModelManagerProps> = ({
             />
           </mesh>
         )}
-        {/* Zone label */}
+        {/* Zone label - Using proper Html from @react-three/drei */}
         <Html position={[0, 1.5, 0]} center>
           <div className="bg-white/80 px-2 py-1 rounded shadow text-sm">{zone}</div>
         </Html>
-      </group>
-    );
-  };
-
-  // Html component for labels
-  const Html: React.FC<{ position: [number, number, number], center?: boolean, children: React.ReactNode }> = ({ 
-    position, 
-    center = false, 
-    children 
-  }) => {
-    return (
-      <group position={position}>
-        <mesh visible={false}>
-          <boxGeometry args={[0.1, 0.1, 0.1]} />
-          <meshBasicMaterial />
-        </mesh>
-        <div 
-          className={`html ${center ? 'transform -translate-x-1/2 -translate-y-1/2' : ''}`}
-          style={{
-            position: 'absolute',
-            fontSize: '14px',
-            pointerEvents: 'none'
-          }}
-        >
-          {children}
-        </div>
       </group>
     );
   };
