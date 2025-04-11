@@ -136,7 +136,7 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </div>
         
-        {/* Navigation adaptativa */}
+        {/* Navigation adaptativa - mostra apenas ícones em telas pequenas ou quando menu colapsado */}
         <nav className={cn(
           "flex flex-col",
           isCompactView || menuOpen ? "p-2" : "items-center p-2"
@@ -161,9 +161,10 @@ export function Layout({ children }: LayoutProps) {
                   title={!menuOpen && !isCompactView ? item.label : undefined}
                 >
                   <item.icon size={isCompactView ? 20 : menuOpen ? 20 : 18} />
-                  {(isCompactView || menuOpen) && <span className="text-sm sm:text-base">{item.label}</span>}
-                  {!menuOpen && !isCompactView && (
-                    <span className="text-xs font-light">{item.label.substring(0, 3)}</span>
+                  {(isCompactView || menuOpen) ? (
+                    <span className="text-sm sm:text-base">{item.label}</span>
+                  ) : (
+                    <span className="text-xs font-light hidden lg:block">{item.label}</span>
                   )}
                 </Link>
               </li>
@@ -225,7 +226,7 @@ export function Layout({ children }: LayoutProps) {
         style={{ 
           minHeight: mainHeight,
           paddingTop: isCompactView ? "calc(60px + " + adaptiveSpacing.md + ")" : adaptiveSpacing.lg,
-          paddingLeft: !isCompactView ? (menuOpen ? "calc(16rem + " + adaptiveSpacing.md + ")" : adaptiveSpacing.xl) : adaptiveSpacing.md,
+          paddingLeft: !isCompactView ? (menuOpen ? "calc(16rem + " + adaptiveSpacing.md + ")" : "calc(5rem + " + adaptiveSpacing.md + ")") : adaptiveSpacing.md,
           paddingRight: isCompactView ? adaptiveSpacing.md : adaptiveSpacing.xl,
           paddingBottom: adaptiveSpacing.lg
         }}
