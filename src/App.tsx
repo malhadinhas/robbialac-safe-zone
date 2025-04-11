@@ -14,6 +14,8 @@ import Formacoes from "./pages/Formacoes";
 import Videos from "./pages/Videos";
 import VideosVisualizar from "./pages/VideosVisualizar";
 import QuaseAcidentes from "./pages/QuaseAcidentes";
+import QuaseAcidentesEditar from "./pages/QuaseAcidentesEditar";
+import QuaseAcidentesNovo from "./pages/QuaseAcidentesNovo";
 import Pontuacao from "./pages/Pontuacao";
 import Definicoes from "./pages/Definicoes";
 import NotFound from "./pages/NotFound";
@@ -40,6 +42,8 @@ const App = () => (
               <Route path="/videos/:zone" element={<Videos />} />
               <Route path="/videos/visualizar/:id" element={<VideosVisualizar />} />
               <Route path="/quase-acidentes" element={<QuaseAcidentes />} />
+              <Route path="/quase-acidentes/editar/:id" element={<QuaseAcidentesEditar />} />
+              <Route path="/quase-acidentes/novo" element={<QuaseAcidentesNovo />} />
               <Route path="/pontuacao" element={<Pontuacao />} />
               <Route path="/definicoes" element={<Definicoes />} />
             </Route>
