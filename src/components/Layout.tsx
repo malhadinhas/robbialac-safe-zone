@@ -115,7 +115,20 @@ export function Layout({ children }: LayoutProps) {
                 alt="RobbiSeg Logo" 
                 className="w-8 h-8 rounded-full bg-white" 
               />
-              {menuOpen && <h1 className="font-bold text-sm transition-opacity whitespace-normal pr-2">RobbiSeg</h1>}
+              {menuOpen && (
+                <div className="flex items-center justify-between w-full">
+                  <h1 className="font-bold text-sm transition-opacity whitespace-normal">RobbiSeg</h1>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="h-7 w-7 text-white hover:bg-white/10"
+                    onClick={toggleMenu}
+                  >
+                    <Menu size={16} />
+                    <span className="sr-only">Toggle Menu</span>
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -210,7 +223,7 @@ export function Layout({ children }: LayoutProps) {
         />
       )}
       
-      {!isCompactView && (
+      {!isCompactView && !menuOpen && (
         <div 
           className="fixed top-3 z-30 flex items-center"
           style={{
