@@ -16,6 +16,10 @@ O modelo `Fabrica_v1.glb` deve conter as seguintes meshes que serão usadas para
 - `3D_PIN_ENCHIMENTO` - Identifica a zona de Enchimento
 - `3D_PIN_FABRICO` - Identifica a zona de Fabrico 
 - `3D_ROBBIALAC` - Identifica a zona principal Robbialac
+- `3D_PIN_MATERISPRIMAS` - Identifica a zona de Matérias-Primas
+- `3D_PIN_EXPEDICAO` - Identifica a zona de Expedição
+- `3D_PIN_TRAFEGO_INFERIOR` - Identifica a zona de Tráfego Inferior
+- `3D_PIN_TRAFEGO_SUPERIOR` - Identifica a zona de Tráfego Superior
 
 ## Requisitos do Modelo
 

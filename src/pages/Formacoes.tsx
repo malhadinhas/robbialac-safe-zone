@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,10 @@ const factoryZones = [
   { zone: 'Enchimento', color: '#3B82F6' },
   { zone: 'Fabrico', color: '#10B981' },
   { zone: 'Robbialac', color: '#EF4444' },
+  { zone: 'MateriaPrima', color: '#F59E0B' },
+  { zone: 'Expedicao', color: '#8B5CF6' },
+  { zone: 'TrafegoInferior', color: '#EC4899' },
+  { zone: 'TrafegoSuperior', color: '#06B6D4' }
 ];
 
 export default function Formacoes() {

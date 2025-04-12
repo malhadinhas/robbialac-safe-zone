@@ -5,7 +5,7 @@ import { OrbitControls, PresentationControls, Environment, useGLTF, Html } from 
 import * as THREE from 'three';
 
 // Define available factory zones
-export type FactoryZone = 'Enchimento' | 'Fabrico' | 'Robbialac';
+export type FactoryZone = 'Enchimento' | 'Fabrico' | 'Robbialac' | 'MateriaPrima' | 'Expedicao' | 'TrafegoInferior' | 'TrafegoSuperior';
 
 // Factory model path (relative to public folder)
 const FACTORY_MODEL_PATH = '/models/Fabrica_v1.glb';
@@ -14,14 +14,22 @@ const FACTORY_MODEL_PATH = '/models/Fabrica_v1.glb';
 const zoneMeshMapping: Record<FactoryZone, string> = {
   'Enchimento': '3D_PIN_ENCHIMENTO',
   'Fabrico': '3D_PIN_FABRICO',
-  'Robbialac': '3D_ROBBIALAC'
+  'Robbialac': '3D_ROBBIALAC',
+  'MateriaPrima': '3D_PIN_MATERISPRIMAS',
+  'Expedicao': '3D_PIN_EXPEDICAO',
+  'TrafegoInferior': '3D_PIN_TRAFEGO_INFERIOR',
+  'TrafegoSuperior': '3D_PIN_TRAFEGO_SUPERIOR'
 };
 
 // Mapping of zone names to colors (for highlighting)
 const zoneColors: Record<FactoryZone, string> = {
   'Enchimento': '#3B82F6',
   'Fabrico': '#10B981',
-  'Robbialac': '#EF4444'
+  'Robbialac': '#EF4444',
+  'MateriaPrima': '#F59E0B',
+  'Expedicao': '#8B5CF6',
+  'TrafegoInferior': '#EC4899',
+  'TrafegoSuperior': '#06B6D4'
 };
 
 // Component to load and display the factory model
