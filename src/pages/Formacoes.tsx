@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,10 +6,16 @@ import { useNavigate } from "react-router-dom";
 import { mockStatsByZone } from "@/services/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import Factory3DModelManager from "@/components/Factory3DModelManager";
+import Factory3DModelManager, { FactoryZone } from "@/components/Factory3DModelManager";
 import VideosCategoryCard from '@/components/VideosCategoryCard';
 import { NoScrollLayout } from '@/components/NoScrollLayout';
 import { useIsCompactView } from '@/hooks/use-mobile';
+
+const factoryZones = [
+  { zone: 'Enchimento', color: '#3B82F6' },
+  { zone: 'Fabrico', color: '#10B981' },
+  { zone: 'Robbialac', color: '#EF4444' },
+];
 
 export default function Formacoes() {
   const navigate = useNavigate();
@@ -24,7 +29,6 @@ export default function Formacoes() {
     setIsAdmin(user?.role === 'admin_app');
   }, [user]);
   
-  // Função para navegar para os vídeos de uma zona específica
   const handleZoneClick = (zone: string) => {
     navigate(`/videos/${zone.toLowerCase()}`);
   };
@@ -47,7 +51,6 @@ export default function Formacoes() {
     setUseSimpleView(!useSimpleView);
   };
 
-  // Video categories data
   const videoCategories = [
     { 
       title: "Segurança", 
@@ -63,7 +66,6 @@ export default function Formacoes() {
     }
   ];
   
-  // Define sections for the no-scroll layout
   const mainSection = (
     <>
       <div className="mb-6">
@@ -91,7 +93,6 @@ export default function Formacoes() {
         <CardContent>
           {useSimpleView ? (
             <>
-              {/* Visão simplificada por botões */}
               <div className="aspect-video bg-gray-100 rounded-md flex flex-col items-center justify-center p-8">
                 <div className="text-gray-500 mb-8 text-center">
                   <p className="mb-4">Visualização simplificada por botões.</p>
@@ -99,7 +100,7 @@ export default function Formacoes() {
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl w-full">
-                  {mockStatsByZone.map((zone) => (
+                  {factoryZones.map((zone) => (
                     <Button
                       key={zone.zone}
                       onClick={() => handleZoneClick(zone.zone)}
@@ -114,7 +115,6 @@ export default function Formacoes() {
             </>
           ) : (
             <>
-              {/* Visualização 3D da fábrica - usando o novo componente */}
               <Factory3DModelManager onZoneClick={handleZoneClick} />
               <p className="text-sm text-gray-500 mt-2 text-center">
                 Interaja com o modelo 3D para explorar as diferentes áreas da fábrica
@@ -151,7 +151,6 @@ export default function Formacoes() {
     <Layout>
       {pageContent}
       
-      {/* Modal de Upload - manter como está */}
       {isModalOpen && (
         <>
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -194,7 +193,7 @@ export default function Formacoes() {
                       <option value="">Selecione...</option>
                       <option value="enchimento">Enchimento</option>
                       <option value="fabrico">Fabrico</option>
-                      <option value="outra">Outra</option>
+                      <option value="robbialac">Robbialac</option>
                     </select>
                   </div>
                   

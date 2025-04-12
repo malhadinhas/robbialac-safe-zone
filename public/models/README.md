@@ -1,25 +1,36 @@
 
-# 3D Models
+# 3D Modelo da Fábrica
 
-This folder is for storing 3D model files (.glb or .gltf) for the factory visualization.
+Este diretório contém o modelo 3D da fábrica utilizado na visualização interativa.
 
-## Required Models
+## Modelo Principal
 
-For the factory visualization to work with real models instead of primitive shapes, you need to add the following files to this directory:
+Para que a visualização da fábrica funcione corretamente, você precisa adicionar o seguinte arquivo neste diretório:
 
-- `enchimento_zone.glb` - 3D model for the Enchimento (Filling) zone
-- `fabrico_zone.glb` - 3D model for the Fabrico (Manufacturing) zone
-- `expedicao_zone.glb` - 3D model for the Expedição (Shipping) zone
-- `armazem_zone.glb` - 3D model for the Armazém (Warehouse) zone
+- `Fabrica_v1.glb` - Modelo 3D completo da fábrica
 
-## Model Requirements
+## Meshes Interativas
 
-For best performance:
-- Keep file sizes under 5MB when possible
-- Use optimized models with appropriate polygon count for web
-- Include textures within the GLB file
-- Use the GLB format (binary GLTF) rather than separate GLTF + assets
+O modelo `Fabrica_v1.glb` deve conter as seguintes meshes que serão usadas para interação:
 
-## Testing
+- `3D_PIN_ENCHIMENTO` - Identifica a zona de Enchimento
+- `3D_PIN_FABRICO` - Identifica a zona de Fabrico 
+- `3D_ROBBIALAC` - Identifica a zona principal Robbialac
 
-Once you've added these files, the application will automatically load them instead of showing primitive shapes.
+## Requisitos do Modelo
+
+Para melhor performance:
+- Mantenha o tamanho do arquivo abaixo de 5MB quando possível
+- Use um modelo otimizado com número apropriado de polígonos para web
+- Inclua texturas dentro do arquivo GLB
+- Use o formato GLB (GLTF binário) em vez de GLTF + assets separados
+
+## Extensibilidade
+
+A estrutura do código permite adicionar mais zonas interativas no futuro. Você só precisará:
+1. Adicionar as novas meshes no modelo GLB
+2. Atualizar o código para reconhecer as novas zonas
+
+## Teste
+
+Após adicionar este arquivo, a aplicação irá automaticamente carregá-lo e tornar suas meshes interativas.
