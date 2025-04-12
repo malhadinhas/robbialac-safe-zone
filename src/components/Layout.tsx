@@ -83,15 +83,6 @@ export function Layout({ children }: LayoutProps) {
               />
             </div>
           </div>
-          <Button 
-            variant="ghost" 
-            size="ultra-responsive" 
-            iconOnly
-            onClick={toggleMenu} 
-            className="text-white"
-          >
-            {menuOpen ? <X size={isMobile ? 20 : 24} /> : <Menu size={isMobile ? 20 : 24} />}
-          </Button>
         </header>
       )}
       
@@ -189,22 +180,35 @@ export function Layout({ children }: LayoutProps) {
           "mt-auto sticky bottom-0 pb-safe",
           isCompactView || menuOpen ? "p-2" : "p-1 flex justify-center"
         )}>
-          <Button 
-            variant="ghost" 
-            size={isCompactView ? "responsive" : menuOpen ? "default" : "icon"}
-            className={cn(
-              "text-white hover:bg-white/10",
-              isCompactView || menuOpen ? "w-full justify-start" : "aspect-square"
-            )}
-            onClick={logout}
-            title={!menuOpen && !isCompactView ? "Sair" : undefined}
-          >
-            <LogOut className={cn(
-              isCompactView || menuOpen ? "mr-2" : "",
-              "h-4 w-4"
-            )} />
-            {(isCompactView || menuOpen) && <span className="text-xs sm:text-sm">Sair</span>}
-          </Button>
+          <div className="flex flex-col w-full space-y-2">
+            <Button 
+              variant="outline" 
+              size={isCompactView ? "responsive" : menuOpen ? "default" : "icon"}
+              className={cn(
+                "w-full text-robbialac border-robbialac/20 bg-blue-50 hover:bg-blue-100", 
+                isCompactView || menuOpen ? "justify-start" : "aspect-square"
+              )}
+              onClick={toggleMenu}
+              title={!menuOpen && !isCompactView ? "Alternar Menu" : undefined}
+            >
+              {menuOpen ? <X className={cn(isCompactView || menuOpen ? "mr-2" : "", "h-4 w-4")} /> : <Menu className={cn(isCompactView || menuOpen ? "mr-2" : "", "h-4 w-4")} />}
+              {(isCompactView || menuOpen) && <span className="text-xs sm:text-sm">{menuOpen ? "Fechar Menu" : "Abrir Menu"}</span>}
+            </Button>
+
+            <Button 
+              variant="ghost" 
+              size={isCompactView ? "responsive" : menuOpen ? "default" : "icon"}
+              className={cn(
+                "text-white hover:bg-white/10",
+                isCompactView || menuOpen ? "w-full justify-start" : "aspect-square"
+              )}
+              onClick={logout}
+              title={!menuOpen && !isCompactView ? "Sair" : undefined}
+            >
+              <LogOut className={cn(isCompactView || menuOpen ? "mr-2" : "", "h-4 w-4")} />
+              {(isCompactView || menuOpen) && <span className="text-xs sm:text-sm">Sair</span>}
+            </Button>
+          </div>
         </div>
       </aside>
       
@@ -221,7 +225,7 @@ export function Layout({ children }: LayoutProps) {
             variant="outline" 
             size="icon"
             className={cn(
-              "bg-white shadow-md border-robbialac/20 transition-all",
+              "bg-blue-50 shadow-md border-robbialac/20 transition-all",
               menuOpen ? `left-[${expandedMenuWidth}]` : `left-[${collapsedMenuWidth}]`
             )}
             style={{
