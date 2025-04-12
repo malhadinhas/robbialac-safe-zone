@@ -1,9 +1,8 @@
-
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { Home, BookOpen, AlertTriangle, Medal, Settings, LogOut, X, Menu } from "lucide-react";
+import { Home, BookOpen, AlertTriangle, Medal, Settings, LogOut, X, Menu, Aperture } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   useIsMobile, 
@@ -181,18 +180,6 @@ export function Layout({ children }: LayoutProps) {
           "sticky bottom-0 pb-safe p-4",
           "flex flex-col space-y-2"
         )}>
-          {/* Logo added here, just before the buttons */}
-          <div className={cn(
-            "flex items-center justify-center", 
-            "mb-2 border-t border-white/20 pt-2"
-          )}>
-            <img 
-              src="/lovable-uploads/6e68a784-6498-4199-a8ef-936b67038a4b.png" 
-              alt="RobbiSeg Logo" 
-              className="w-10 h-10 rounded-full bg-white" 
-            />
-          </div>
-
           <Button 
             variant="ghost" 
             size="default"
@@ -211,6 +198,18 @@ export function Layout({ children }: LayoutProps) {
           >
             <LogOut className="mr-2 h-4 w-4" />
             <span className="text-sm">Sair</span>
+          </Button>
+
+          <Button 
+            variant="ghost" 
+            size="default"
+            className="w-full text-white hover:bg-white/10 justify-center border-t border-white/20 pt-2"
+          >
+            <img 
+              src="/lovable-uploads/6e68a784-6498-4199-a8ef-936b67038a4b.png" 
+              alt="RobbiSeg Logo" 
+              className="w-8 h-8 rounded-full bg-white" 
+            />
           </Button>
         </div>
       </aside>
