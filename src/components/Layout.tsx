@@ -2,7 +2,7 @@ import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { Home, BookOpen, AlertTriangle, Medal, Settings, LogOut, Menu, X } from "lucide-react";
+import { Home, BookOpen, AlertTriangle, Medal, Settings, LogOut, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   useIsMobile, 
@@ -74,13 +74,13 @@ export function Layout({ children }: LayoutProps) {
           style={{ paddingLeft: adaptiveSpacing.md, paddingRight: adaptiveSpacing.md }}
         >
           <div className="flex items-center space-x-2 max-w-[75%]">
-            <img src="/placeholder.svg" alt="Logo" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white shrink-0" />
+            <img 
+              src="/lovable-uploads/a3de5e63-ebb5-4968-b16b-6769bce13858.png" 
+              alt="RobbiSeg Logo" 
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white shrink-0" 
+            />
             <div className="flex items-center">
-              <img 
-                src="/lovable-uploads/01973b68-ea11-48fd-b8e4-c72012f7cde3.png" 
-                alt="RobbialacSegurança" 
-                className="h-8 object-contain"
-              />
+              <span className="font-bold text-sm sm:text-base">RobbiSeg</span>
             </div>
           </div>
         </header>
@@ -88,7 +88,7 @@ export function Layout({ children }: LayoutProps) {
       
       <aside 
         className={cn(
-          "bg-robbialac text-white transition-all duration-300 ease-in-out",
+          "bg-[#1E90FF] text-white transition-all duration-300 ease-in-out",
           isCompactView
             ? cn("fixed inset-0 z-50 transform", 
                 menuOpen ? "translate-x-0" : "-translate-x-full",
@@ -142,7 +142,7 @@ export function Layout({ children }: LayoutProps) {
         </div>
         
         <nav className={cn(
-          "flex flex-col",
+          "flex flex-col flex-1",
           isCompactView || menuOpen ? "p-2" : "items-center p-1"
         )}>
           <ul className={cn(
@@ -156,7 +156,7 @@ export function Layout({ children }: LayoutProps) {
                   className={cn(
                     "flex items-center rounded-md transition-colors",
                     isActive(item.path)
-                      ? "bg-white text-robbialac font-medium"
+                      ? "bg-white text-[#1E90FF] font-medium"
                       : "text-white hover:bg-white/10",
                     isCompactView || menuOpen 
                       ? "px-3 py-2 space-x-3" 
@@ -177,38 +177,28 @@ export function Layout({ children }: LayoutProps) {
         </nav>
         
         <div className={cn(
-          "mt-auto sticky bottom-0 pb-safe",
-          isCompactView || menuOpen ? "p-2" : "p-1 flex justify-center"
+          "sticky bottom-0 pb-safe p-4",
+          "flex flex-col space-y-2"
         )}>
-          <div className="flex flex-col w-full space-y-2">
-            <Button 
-              variant="outline" 
-              size={isCompactView ? "responsive" : menuOpen ? "default" : "icon"}
-              className={cn(
-                "w-full text-robbialac border-robbialac/20 bg-blue-50 hover:bg-blue-100", 
-                isCompactView || menuOpen ? "justify-start" : "aspect-square"
-              )}
-              onClick={toggleMenu}
-              title={!menuOpen && !isCompactView ? "Alternar Menu" : undefined}
-            >
-              {menuOpen ? <X className={cn(isCompactView || menuOpen ? "mr-2" : "", "h-4 w-4")} /> : <Menu className={cn(isCompactView || menuOpen ? "mr-2" : "", "h-4 w-4")} />}
-              {(isCompactView || menuOpen) && <span className="text-xs sm:text-sm">{menuOpen ? "Fechar Menu" : "Abrir Menu"}</span>}
-            </Button>
+          <Button 
+            variant="ghost" 
+            size="default"
+            className="w-full text-white hover:bg-white/10 justify-start"
+            onClick={toggleMenu}
+          >
+            <X className="mr-2 h-4 w-4" />
+            <span className="text-sm">Fechar Menu</span>
+          </Button>
 
-            <Button 
-              variant="ghost" 
-              size={isCompactView ? "responsive" : menuOpen ? "default" : "icon"}
-              className={cn(
-                "text-white hover:bg-white/10",
-                isCompactView || menuOpen ? "w-full justify-start" : "aspect-square"
-              )}
-              onClick={logout}
-              title={!menuOpen && !isCompactView ? "Sair" : undefined}
-            >
-              <LogOut className={cn(isCompactView || menuOpen ? "mr-2" : "", "h-4 w-4")} />
-              {(isCompactView || menuOpen) && <span className="text-xs sm:text-sm">Sair</span>}
-            </Button>
-          </div>
+          <Button 
+            variant="ghost" 
+            size="default"
+            className="w-full text-white hover:bg-white/10 justify-start"
+            onClick={logout}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            <span className="text-sm">Sair</span>
+          </Button>
         </div>
       </aside>
       
