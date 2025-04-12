@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -40,14 +39,13 @@ export default function Login() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex justify-center">
-            <div className="bg-robbialac text-white p-4 rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" 
-                   stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-              </svg>
-            </div>
+            <img 
+              src="/lovable-uploads/6e68a784-6498-4199-a8ef-936b67038a4b.png" 
+              alt="RobbiSeg Logo" 
+              className="w-24 h-24 object-contain"
+            />
           </div>
-          <h1 className="mt-4 text-3xl font-bold text-gray-900">RobbialacSegurança</h1>
+          <h1 className="mt-4 text-3xl font-bold text-gray-900">RobbiSeg</h1>
           <p className="mt-2 text-gray-600">Plataforma de segurança e qualidade no trabalho</p>
         </div>
         

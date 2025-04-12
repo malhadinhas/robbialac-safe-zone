@@ -1,4 +1,3 @@
-
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,17 +28,14 @@ export function Layout({ children }: LayoutProps) {
   const adaptiveSpacing = useAdaptiveSpacing();
   const viewportHeight = useViewportHeight();
   
-  // Menu expandido por padrão para desktop (≥ 1024px), fechado para tablet e mobile
   const [menuOpen, setMenuOpen] = useState(!isCompactView);
   
-  // Atualiza estado do menu quando muda o tamanho da tela
   useEffect(() => {
     setMenuOpen(!isCompactView);
   }, [isCompactView]);
   
   const toggleMenu = () => setMenuOpen(!menuOpen);
   
-  // Menu items adaptativos - mais compactos em landscape
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/" },
     { icon: BookOpen, label: "Formações", path: "/formacoes" },
@@ -55,28 +51,23 @@ export function Layout({ children }: LayoutProps) {
     return location.pathname.startsWith(path);
   };
   
-  // Ajusta o layout quando a orientação muda
   useEffect(() => {
     if (isCompactView && menuOpen) {
-      // Fechar menu em landscape para economizar espaço
       if (orientation === "landscape") {
         setMenuOpen(false);
       }
     }
   }, [orientation, isCompactView, menuOpen]);
 
-  // Calcula a altura do conteúdo principal adaptável ao viewport
   const mainHeight = viewportHeight 
     ? `${viewportHeight}px` 
     : "100vh";
   
-  // Dimensões do menu - reduzidas ainda mais para economizar espaço
-  const expandedMenuWidth = "14rem"; // Reduzido de 16rem para 14rem
-  const collapsedMenuWidth = "3.5rem"; // Reduzido de 4rem para 3.5rem
-  
+  const expandedMenuWidth = "14rem";
+  const collapsedMenuWidth = "3.5rem";
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Header para dispositivos compactos */}
       {isCompactView && (
         <header 
           className="bg-robbialac text-white p-3 flex items-center justify-between fixed top-0 left-0 right-0 z-30"
@@ -84,7 +75,6 @@ export function Layout({ children }: LayoutProps) {
         >
           <div className="flex items-center space-x-2 max-w-[75%]">
             <img src="/placeholder.svg" alt="Logo" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white shrink-0" />
-            {/* Substitui o texto por uma imagem em tela pequena */}
             <div className="flex items-center">
               <img 
                 src="/lovable-uploads/01973b68-ea11-48fd-b8e4-c72012f7cde3.png" 
@@ -105,7 +95,6 @@ export function Layout({ children }: LayoutProps) {
         </header>
       )}
       
-      {/* Sidebar adaptativa */}
       <aside 
         className={cn(
           "bg-robbialac text-white transition-all duration-300 ease-in-out",
@@ -113,8 +102,8 @@ export function Layout({ children }: LayoutProps) {
             ? cn("fixed inset-0 z-50 transform", 
                 menuOpen ? "translate-x-0" : "-translate-x-full",
                 orientation === "landscape" ? "w-3/5 sm:w-1/2 md:w-2/5" : "w-full",
-                "pt-16") // Add padding top to avoid overlapping with header
-            : cn(`min-h-screen sticky top-0 shrink-0`, // Remove hardcoded width, use CSS vars for more flexibility
+                "pt-16")
+            : cn(`min-h-screen sticky top-0 shrink-0`,
                 menuOpen ? `w-[${expandedMenuWidth}]` : `w-[${collapsedMenuWidth}]`,
                 menuOpen ? "block" : "hidden lg:block", 
                 "transition-[width]")
@@ -123,20 +112,22 @@ export function Layout({ children }: LayoutProps) {
           width: isCompactView ? undefined : menuOpen ? expandedMenuWidth : collapsedMenuWidth 
         }}
       >
-        {/* Logo para desktop */}
         {!isCompactView && (
           <div className="p-3 border-b border-white/20">
             <div className={cn(
               "flex items-center", 
               menuOpen ? "space-x-3" : "justify-center"
             )}>
-              <img src="/placeholder.svg" alt="Logo" className="w-7 h-7 rounded-full bg-white" />
-              {menuOpen && <h1 className="font-bold text-sm transition-opacity whitespace-normal pr-2">RobbialacSegurança</h1>}
+              <img 
+                src="/lovable-uploads/6e68a784-6498-4199-a8ef-936b67038a4b.png" 
+                alt="RobbiSeg Logo" 
+                className="w-8 h-8 rounded-full bg-white" 
+              />
+              {menuOpen && <h1 className="font-bold text-sm transition-opacity whitespace-normal pr-2">RobbiSeg</h1>}
             </div>
           </div>
         )}
         
-        {/* User info com layout adaptativo - empilhar verticalmente em mobile */}
         <div className={cn(
           "border-b border-white/20",
           isCompactView || menuOpen ? "p-3" : "p-2 flex justify-center"
@@ -144,7 +135,7 @@ export function Layout({ children }: LayoutProps) {
           <div className={cn(
             "flex", 
             isCompactView || menuOpen 
-              ? "flex-col items-center space-y-2" // Empilha verticalmente
+              ? "flex-col items-center space-y-2"
               : "flex-col space-y-2 items-center"
           )}>
             <div className="bg-white text-robbialac rounded-full w-8 h-8 flex items-center justify-center font-bold shrink-0 text-sm">
@@ -159,7 +150,6 @@ export function Layout({ children }: LayoutProps) {
           </div>
         </div>
         
-        {/* Navigation adaptativa - mostra apenas ícones em telas pequenas ou quando menu colapsado */}
         <nav className={cn(
           "flex flex-col",
           isCompactView || menuOpen ? "p-2" : "items-center p-1"
@@ -195,7 +185,6 @@ export function Layout({ children }: LayoutProps) {
           </ul>
         </nav>
         
-        {/* Logout com layout adaptativo */}
         <div className={cn(
           "mt-auto sticky bottom-0 pb-safe",
           isCompactView || menuOpen ? "p-2" : "p-1 flex justify-center"
@@ -219,7 +208,6 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </aside>
       
-      {/* Backdrop para menu em mobile e tablet quando aberto */}
       {isCompactView && menuOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40"
@@ -227,7 +215,6 @@ export function Layout({ children }: LayoutProps) {
         />
       )}
       
-      {/* Botão toggle para desktop */}
       {!isCompactView && (
         <div className="fixed top-3 z-30">
           <Button 
@@ -247,7 +234,6 @@ export function Layout({ children }: LayoutProps) {
         </div>
       )}
       
-      {/* Main content com layout consistente e distância apropriada */}
       <main 
         style={{ 
           minHeight: mainHeight,
