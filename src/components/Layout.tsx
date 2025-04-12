@@ -181,6 +181,18 @@ export function Layout({ children }: LayoutProps) {
           "sticky bottom-0 pb-safe p-4",
           "flex flex-col space-y-2"
         )}>
+          {/* Logo added here, just before the buttons */}
+          <div className={cn(
+            "flex items-center justify-center", 
+            "mb-2 border-t border-white/20 pt-2"
+          )}>
+            <img 
+              src="/lovable-uploads/6e68a784-6498-4199-a8ef-936b67038a4b.png" 
+              alt="RobbiSeg Logo" 
+              className="w-10 h-10 rounded-full bg-white" 
+            />
+          </div>
+
           <Button 
             variant="ghost" 
             size="default"
