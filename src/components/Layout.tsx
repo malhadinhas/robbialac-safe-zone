@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { Home, BookOpen, AlertTriangle, Medal, Settings, LogOut, X, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { 
   useIsMobile, 
   useIsTablet, 
@@ -105,7 +106,7 @@ export function Layout({ children }: LayoutProps) {
         }}
       >
         {!isCompactView && (
-          <div className="p-3 border-b border-white/20">
+          <div className="p-3">
             <div className={cn(
               "flex items-center", 
               menuOpen ? "justify-between" : "justify-center"
@@ -120,8 +121,14 @@ export function Layout({ children }: LayoutProps) {
                   <h1 className="font-bold text-sm transition-opacity whitespace-normal">RobbiSeg</h1>
                 </div>
               )}
-              
-              {/* Hamburger menu button positioned here between logo and user */}
+            </div>
+            
+            {/* Add Separator and Hamburger Button */}
+            <div className="my-2">
+              <Separator className="bg-white/20" />
+            </div>
+            
+            <div className="flex justify-center">
               <Button 
                 variant="ghost" 
                 size="icon"
