@@ -1,8 +1,9 @@
+
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { Home, BookOpen, AlertTriangle, Medal, Settings, LogOut, X } from "lucide-react";
+import { Home, BookOpen, AlertTriangle, Medal, Settings, LogOut, X, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   useIsMobile, 
