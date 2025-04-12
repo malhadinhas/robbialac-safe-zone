@@ -1,4 +1,3 @@
-
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -148,7 +147,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
             {(isCompactView || menuOpen) && (
               <div className="overflow-hidden text-center">
-                <p className="font-medium text-xs sm:text-sm whitespace-normal break-words">{user?.name}</p>
+                <p className="font-medium text-xs sm:text-sm whitespace-normal">{user?.name}</p>
                 <p className="text-xs text-white/70 whitespace-normal break-words">{user?.email}</p>
               </div>
             )}
@@ -225,21 +224,19 @@ export function Layout({ children }: LayoutProps) {
       
       {!isCompactView && !menuOpen && (
         <div 
-          className="fixed top-3 z-30 flex items-center"
-          style={{
-            left: menuOpen ? `calc(${expandedMenuWidth} - 0.75rem)` : `calc(${collapsedMenuWidth} - 0.75rem)`
-          }}
+          className={cn(
+            "fixed top-3 z-30 flex items-center", 
+            menuOpen ? "hidden" : "", 
+            `left-[${menuOpen ? expandedMenuWidth : collapsedMenuWidth}] -translate-x-1/2`
+          )}
         >
           <Button 
             variant="outline" 
             size="icon"
-            className={cn(
-              "bg-sky-50 border-sky-200 text-sky-600 hover:bg-sky-100 transition-all",
-              menuOpen ? `left-[${expandedMenuWidth}]` : `left-[${collapsedMenuWidth}]`
-            )}
+            className="bg-sky-50 border-sky-200 text-sky-600 hover:bg-sky-100 transition-all"
             onClick={toggleMenu}
           >
-            {menuOpen ? <X size={16} /> : <Menu size={16} />}
+            <Menu size={16} />
           </Button>
         </div>
       )}
