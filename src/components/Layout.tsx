@@ -1,3 +1,4 @@
+
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -107,7 +108,7 @@ export function Layout({ children }: LayoutProps) {
           <div className="p-3 border-b border-white/20">
             <div className={cn(
               "flex items-center", 
-              menuOpen ? "space-x-3" : "justify-center"
+              menuOpen ? "justify-between" : "justify-center"
             )}>
               <img 
                 src="/lovable-uploads/6e68a784-6498-4199-a8ef-936b67038a4b.png" 
@@ -115,19 +116,21 @@ export function Layout({ children }: LayoutProps) {
                 className="w-8 h-8 rounded-full bg-white" 
               />
               {menuOpen && (
-                <div className="flex items-center justify-between w-full">
+                <div className="flex-1 ml-3">
                   <h1 className="font-bold text-sm transition-opacity whitespace-normal">RobbiSeg</h1>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="h-7 w-7 text-white hover:bg-white/10"
-                    onClick={toggleMenu}
-                  >
-                    <Menu size={16} />
-                    <span className="sr-only">Toggle Menu</span>
-                  </Button>
                 </div>
               )}
+              
+              {/* Hamburger menu button positioned here between logo and user */}
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-7 w-7 text-white hover:bg-white/10"
+                onClick={toggleMenu}
+              >
+                {menuOpen ? <X size={16} /> : <Menu size={16} />}
+                <span className="sr-only">Toggle Menu</span>
+              </Button>
             </div>
           </div>
         )}
@@ -197,16 +200,6 @@ export function Layout({ children }: LayoutProps) {
             variant="ghost" 
             size="default"
             className="w-full text-white hover:bg-white/10 justify-start"
-            onClick={toggleMenu}
-          >
-            <X className="mr-2 h-4 w-4" />
-            <span className="text-sm">Fechar Menu</span>
-          </Button>
-
-          <Button 
-            variant="ghost" 
-            size="default"
-            className="w-full text-white hover:bg-white/10 justify-start"
             onClick={logout}
           >
             <LogOut className="mr-2 h-4 w-4" />
@@ -220,25 +213,6 @@ export function Layout({ children }: LayoutProps) {
           className="fixed inset-0 bg-black/50 z-40"
           onClick={() => setMenuOpen(false)}
         />
-      )}
-      
-      {!isCompactView && !menuOpen && (
-        <div 
-          className={cn(
-            "fixed top-3 z-30 flex items-center", 
-            menuOpen ? "hidden" : "", 
-            `left-[${menuOpen ? expandedMenuWidth : collapsedMenuWidth}] -translate-x-1/2`
-          )}
-        >
-          <Button 
-            variant="outline" 
-            size="icon"
-            className="bg-sky-50 border-sky-200 text-sky-600 hover:bg-sky-100 transition-all"
-            onClick={toggleMenu}
-          >
-            <Menu size={16} />
-          </Button>
-        </div>
       )}
       
       <main 
