@@ -211,17 +211,19 @@ export function Layout({ children }: LayoutProps) {
       )}
       
       {!isCompactView && (
-        <div className="fixed top-3 z-30">
+        <div 
+          className="fixed top-3 z-30 flex items-center"
+          style={{
+            left: menuOpen ? `calc(${expandedMenuWidth} - 0.75rem)` : `calc(${collapsedMenuWidth} - 0.75rem)`
+          }}
+        >
           <Button 
             variant="outline" 
             size="icon"
             className={cn(
-              "bg-blue-50 shadow-md border-robbialac/20 transition-all",
+              "bg-sky-50 border-sky-200 text-sky-600 hover:bg-sky-100 transition-all",
               menuOpen ? `left-[${expandedMenuWidth}]` : `left-[${collapsedMenuWidth}]`
             )}
-            style={{
-              left: menuOpen ? `calc(${expandedMenuWidth} - 0.75rem)` : `calc(${collapsedMenuWidth} - 0.75rem)`
-            }}
             onClick={toggleMenu}
           >
             {menuOpen ? <X size={16} /> : <Menu size={16} />}
