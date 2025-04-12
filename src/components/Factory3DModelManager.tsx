@@ -32,100 +32,67 @@ const zoneColors: Record<FactoryZone, string> = {
   'TrafegoSuperior': '#06B6D4'
 };
 
-// Component to load and display the factory model
-const FactoryModel = ({ 
-  onZoneClick,
-  hoveredZone,
-  setHoveredZone
+// Fallback component showing primitive shapes if model fails to load
+const FallbackModel = ({ 
+  onZoneClick, 
+  hoveredZone, 
+  setHoveredZone 
 }: { 
-  onZoneClick: (zone: string) => void,
-  hoveredZone: FactoryZone | null,
-  setHoveredZone: (zone: FactoryZone | null) => void
+  onZoneClick: (zone: FactoryZone) => void, 
+  hoveredZone: FactoryZone | null, 
+  setHoveredZone: (zone: FactoryZone | null) => void 
 }) => {
-  const groupRef = useRef<THREE.Group>(null);
-  const { scene, nodes } = useGLTF(FACTORY_MODEL_PATH) as any;
-  const zones = Object.keys(zoneMeshMapping) as FactoryZone[];
-  
-  // Clone the scene to avoid modification issues
-  const model = scene.clone();
-  
-  // Effect for highlighting zones
-  useFrame(() => {
-    if (!nodes) return;
-    
-    // Reset all materials to original state
-    zones.forEach(zone => {
-      const meshName = zoneMeshMapping[zone];
-      if (nodes[meshName]) {
-        if (nodes[meshName].material && !nodes[meshName].originalMaterial) {
-          // Store original material for later restoration
-          nodes[meshName].originalMaterial = nodes[meshName].material.clone();
-        }
-        
-        const isHovered = hoveredZone === zone;
-        if (isHovered) {
-          // Highlight hovered zone
-          nodes[meshName].material.emissive = new THREE.Color(zoneColors[zone]);
-          nodes[meshName].material.emissiveIntensity = 0.8;
-        } else if (nodes[meshName].originalMaterial) {
-          // Restore original material
-          nodes[meshName].material.emissive = nodes[meshName].originalMaterial.emissive;
-          nodes[meshName].material.emissiveIntensity = nodes[meshName].originalMaterial.emissiveIntensity || 0;
-        }
-      }
-    });
-  });
-  
-  // Handle zone interactions
-  const handleZoneClick = (zone: FactoryZone) => () => {
-    onZoneClick(zone);
-  };
-  
-  const handlePointerOver = (zone: FactoryZone) => () => {
-    setHoveredZone(zone);
-    document.body.style.cursor = 'pointer';
-  };
-  
-  const handlePointerOut = () => {
-    setHoveredZone(null);
-    document.body.style.cursor = 'auto';
-  };
+  const zones = Object.keys(zoneColors) as FactoryZone[];
   
   return (
-    <group ref={groupRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
-      {/* Render the main factory model */}
-      <primitive object={model} />
+    <group>
+      {/* Base floor */}
+      <mesh position={[0, -0.5, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[15, 15]} />
+        <meshStandardMaterial color="#e0e0e0" />
+      </mesh>
       
-      {/* Add interactive areas for each zone */}
-      {zones.map(zone => {
-        const meshName = zoneMeshMapping[zone];
-        if (!nodes || !nodes[meshName]) return null;
-        
-        // Get the world position of the mesh
-        const position = new THREE.Vector3();
-        if (nodes[meshName].getWorldPosition) {
-          nodes[meshName].getWorldPosition(position);
-        } else {
-          // Fallback if getWorldPosition is not available
-          position.copy(nodes[meshName].position);
-        }
+      {/* Factory building representation */}
+      <mesh position={[0, 0, 0]}>
+        <boxGeometry args={[8, 1, 5]} />
+        <meshStandardMaterial color="#d4d4d8" />
+      </mesh>
+      
+      {/* Create interactive zones */}
+      {zones.map((zone, index) => {
+        // Position zones in a circular pattern
+        const totalZones = zones.length;
+        const angle = (index / totalZones) * Math.PI * 2;
+        const radius = 5;
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
         
         return (
-          <group key={zone} position={position}>
-            {/* Invisible clickable area */}
-            <mesh
-              visible={false}
-              onClick={handleZoneClick(zone)}
-              onPointerOver={handlePointerOver(zone)}
-              onPointerOut={handlePointerOut}
+          <group key={zone} position={[x, 0.5, z]}>
+            {/* Zone indicator */}
+            <mesh 
+              onClick={() => onZoneClick(zone)}
+              onPointerOver={() => {
+                setHoveredZone(zone);
+                document.body.style.cursor = 'pointer';
+              }}
+              onPointerOut={() => {
+                setHoveredZone(null);
+                document.body.style.cursor = 'auto';
+              }}
+              scale={hoveredZone === zone ? [1, 1.2, 1] : [1, 1, 1]}
             >
-              <sphereGeometry args={[0.5, 16, 16]} />
-              <meshBasicMaterial transparent opacity={0} />
+              <boxGeometry args={[1, 1, 1]} />
+              <meshStandardMaterial 
+                color={zoneColors[zone]} 
+                emissive={hoveredZone === zone ? zoneColors[zone] : '#000000'}
+                emissiveIntensity={hoveredZone === zone ? 0.5 : 0}
+              />
             </mesh>
             
-            {/* Label for the zone */}
-            <Html position={[0, 1, 0]} center>
-              <div className="bg-white/80 px-2 py-1 rounded shadow text-sm">
+            {/* Zone label */}
+            <Html position={[0, 1.5, 0]} center>
+              <div className="bg-white/80 px-2 py-1 rounded shadow text-sm font-medium">
                 {zone}
               </div>
             </Html>
@@ -134,6 +101,121 @@ const FactoryModel = ({
       })}
     </group>
   );
+};
+
+// Component to load and display the factory model
+const FactoryModel = ({ 
+  onZoneClick,
+  hoveredZone,
+  setHoveredZone,
+  onLoadError
+}: { 
+  onZoneClick: (zone: FactoryZone) => void,
+  hoveredZone: FactoryZone | null,
+  setHoveredZone: (zone: FactoryZone | null) => void,
+  onLoadError: (error: Error) => void
+}) => {
+  const groupRef = useRef<THREE.Group>(null);
+  
+  // Use a try-catch block to handle loading errors
+  try {
+    const { scene, nodes } = useGLTF(FACTORY_MODEL_PATH) as any;
+    const zones = Object.keys(zoneMeshMapping) as FactoryZone[];
+    
+    // Clone the scene to avoid modification issues
+    const model = scene.clone();
+    
+    // Effect for highlighting zones
+    useFrame(() => {
+      if (!nodes) return;
+      
+      // Reset all materials to original state
+      zones.forEach(zone => {
+        const meshName = zoneMeshMapping[zone];
+        if (nodes[meshName]) {
+          if (nodes[meshName].material && !nodes[meshName].originalMaterial) {
+            // Store original material for later restoration
+            nodes[meshName].originalMaterial = nodes[meshName].material.clone();
+          }
+          
+          const isHovered = hoveredZone === zone;
+          if (isHovered) {
+            // Highlight hovered zone
+            nodes[meshName].material.emissive = new THREE.Color(zoneColors[zone]);
+            nodes[meshName].material.emissiveIntensity = 0.8;
+          } else if (nodes[meshName].originalMaterial) {
+            // Restore original material
+            nodes[meshName].material.emissive = nodes[meshName].originalMaterial.emissive;
+            nodes[meshName].material.emissiveIntensity = nodes[meshName].originalMaterial.emissiveIntensity || 0;
+          }
+        }
+      });
+    });
+    
+    // Handle zone interactions
+    const handleZoneClick = (zone: FactoryZone) => () => {
+      onZoneClick(zone);
+    };
+    
+    const handlePointerOver = (zone: FactoryZone) => () => {
+      setHoveredZone(zone);
+      document.body.style.cursor = 'pointer';
+    };
+    
+    const handlePointerOut = () => {
+      setHoveredZone(null);
+      document.body.style.cursor = 'auto';
+    };
+    
+    return (
+      <group ref={groupRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
+        {/* Render the main factory model */}
+        <primitive object={model} />
+        
+        {/* Add interactive areas for each zone */}
+        {zones.map(zone => {
+          const meshName = zoneMeshMapping[zone];
+          if (!nodes || !nodes[meshName]) return null;
+          
+          // Get the world position of the mesh
+          const position = new THREE.Vector3();
+          if (nodes[meshName].getWorldPosition) {
+            nodes[meshName].getWorldPosition(position);
+          } else {
+            // Fallback if getWorldPosition is not available
+            position.copy(nodes[meshName].position);
+          }
+          
+          return (
+            <group key={zone} position={position}>
+              {/* Invisible clickable area */}
+              <mesh
+                visible={false}
+                onClick={handleZoneClick(zone)}
+                onPointerOver={handlePointerOver(zone)}
+                onPointerOut={handlePointerOut}
+              >
+                <sphereGeometry args={[0.5, 16, 16]} />
+                <meshBasicMaterial transparent opacity={0} />
+              </mesh>
+              
+              {/* Label for the zone */}
+              <Html position={[0, 1, 0]} center>
+                <div className="bg-white/80 px-2 py-1 rounded shadow text-sm font-medium">
+                  {zone}
+                </div>
+              </Html>
+            </group>
+          );
+        })}
+      </group>
+    );
+  } catch (error) {
+    // Report loading error
+    console.error('Error loading factory model:', error);
+    onLoadError(error as Error);
+    return null;
+  }
 };
 
 // Component for the entire factory model with interactive zones
@@ -147,79 +229,18 @@ const Factory3DModelManager: React.FC<Factory3DModelManagerProps> = ({
   className = "w-full h-[500px] bg-gray-100 rounded-md" 
 }) => {
   const [hoveredZone, setHoveredZone] = useState<FactoryZone | null>(null);
-  const [modelLoaded, setModelLoaded] = useState(false);
-  const [modelError, setModelError] = useState(false);
+  const [modelError, setModelError] = useState<Error | null>(null);
   
-  // Attempt to load the model
-  useEffect(() => {
-    const checkIfModelExists = async () => {
-      try {
-        const response = await fetch(FACTORY_MODEL_PATH);
-        setModelLoaded(response.ok);
-        if (!response.ok) {
-          setModelError(true);
-          console.error('Failed to load factory model:', await response.text());
-        }
-      } catch (error) {
-        console.error('Error loading factory 3D model:', error);
-        setModelError(true);
-        setModelLoaded(false);
-      }
-    };
-    
-    checkIfModelExists();
-  }, []);
-  
-  // Fallback component showing primitive shapes if model fails to load
-  const FallbackModel = () => {
-    const zones: FactoryZone[] = ['Enchimento', 'Fabrico', 'Robbialac'];
-    
-    return (
-      <>
-        {zones.map((zone, index) => {
-          const angle = (index / zones.length) * Math.PI * 2;
-          const radius = 2;
-          const x = Math.cos(angle) * radius;
-          const z = Math.sin(angle) * radius;
-          
-          return (
-            <group 
-              key={zone}
-              position={[x, 0, z]}
-              onClick={() => onZoneClick(zone)}
-              onPointerOver={() => setHoveredZone(zone)}
-              onPointerOut={() => setHoveredZone(null)}
-            >
-              <mesh scale={[1, hoveredZone === zone ? 1.2 : 1, 1]}>
-                <boxGeometry args={[1, 1, 1]} />
-                <meshStandardMaterial 
-                  color={hoveredZone === zone ? '#ffffff' : zoneColors[zone]}
-                  emissive={hoveredZone === zone ? zoneColors[zone] : 'black'}
-                  emissiveIntensity={hoveredZone === zone ? 0.5 : 0}
-                />
-              </mesh>
-              <Html position={[0, 1.5, 0]} center>
-                <div className="bg-white/80 px-2 py-1 rounded shadow text-sm">{zone}</div>
-              </Html>
-            </group>
-          );
-        })}
-      </>
-    );
+  const handleModelError = (error: Error) => {
+    setModelError(error);
   };
   
   return (
-    <div className={className}>
+    <div className={className + " relative"}>
       <Canvas camera={{ position: [0, 5, 10], fov: 50 }}>
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} intensity={1} />
         <directionalLight position={[-5, 5, 5]} intensity={1} castShadow />
-        
-        {/* Base floor */}
-        <mesh position={[0, -1, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-          <planeGeometry args={[20, 20]} />
-          <meshStandardMaterial color="#e5e7eb" />
-        </mesh>
         
         <PresentationControls
           global
@@ -228,14 +249,19 @@ const Factory3DModelManager: React.FC<Factory3DModelManagerProps> = ({
           polar={[0, Math.PI / 4]}
           azimuth={[-Math.PI / 4, Math.PI / 4]}
         >
-          {modelLoaded && !modelError ? (
+          {!modelError ? (
             <FactoryModel 
-              onZoneClick={onZoneClick} 
+              onZoneClick={onZoneClick as (zone: FactoryZone) => void} 
               hoveredZone={hoveredZone} 
-              setHoveredZone={setHoveredZone} 
+              setHoveredZone={setHoveredZone}
+              onLoadError={handleModelError}
             />
           ) : (
-            <FallbackModel />
+            <FallbackModel
+              onZoneClick={onZoneClick as (zone: FactoryZone) => void}
+              hoveredZone={hoveredZone}
+              setHoveredZone={setHoveredZone}
+            />
           )}
         </PresentationControls>
         
@@ -244,8 +270,9 @@ const Factory3DModelManager: React.FC<Factory3DModelManagerProps> = ({
       </Canvas>
       
       {modelError && (
-        <div className="absolute top-4 left-4 bg-red-100 p-2 rounded shadow-md text-red-800 text-sm">
-          <p>Erro ao carregar o modelo 3D. Usando representação simplificada.</p>
+        <div className="absolute top-4 left-4 bg-red-100 p-2 rounded shadow-md text-red-800 text-sm space-y-1 max-w-lg">
+          <p className="font-medium">Erro ao carregar o modelo 3D. Usando representação simplificada.</p>
+          <p className="text-xs">Verifique se o arquivo <code>/public/models/Fabrica_v1.glb</code> está presente.</p>
         </div>
       )}
       
@@ -256,11 +283,7 @@ const Factory3DModelManager: React.FC<Factory3DModelManagerProps> = ({
   );
 };
 
-// Try to preload the model
-try {
-  useGLTF.preload(FACTORY_MODEL_PATH);
-} catch (error) {
-  console.error("Failed to preload factory model:", error);
-}
+// Remove preload since it's causing errors when the file doesn't exist
+// Instead we'll handle errors directly in the component
 
 export default Factory3DModelManager;

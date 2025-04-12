@@ -38,3 +38,7 @@ A estrutura do código permite adicionar mais zonas interativas no futuro. Você
 ## Teste
 
 Após adicionar este arquivo, a aplicação irá automaticamente carregá-lo e tornar suas meshes interativas.
+
+## Temporariamente sem modelo?
+
+Se você estiver visualizando a aplicação sem o modelo 3D presente, será exibida uma visualização simplificada com representações básicas das zonas da fábrica até que o modelo real esteja disponível.
