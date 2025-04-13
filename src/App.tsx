@@ -29,9 +29,11 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       retry: 1,
       staleTime: 10000,
-      // Add global error handler
-      onError: (error) => {
-        console.error("Global query error:", error);
+      // Updated error handling approach for new React Query version
+      meta: {
+        onError: (error) => {
+          console.error("Global query error:", error);
+        }
       }
     },
   },
