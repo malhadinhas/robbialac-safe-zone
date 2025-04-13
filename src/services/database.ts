@@ -3,7 +3,7 @@ import { MongoDBConfig, getMongoConfig } from "@/config/database";
 import { MongoClient, Collection, Document, ServerApiVersion } from "mongodb";
 
 // Variables to store MongoDB client and connection state
-let client: MongoClient | null = null;
+let mongoClient: MongoClient | null = null;
 let isConnecting = false;
 let connectionError: Error | null = null;
 let connectionAttempts = 0;
@@ -15,11 +15,11 @@ console.log("=== DATABASE SERVICE MODULE LOADED ===");
  * Connect to MongoDB Atlas
  */
 export async function connectToDatabase(): Promise<MongoClient> {
-  console.log(`connectToDatabase: Connection check - client exists? ${client !== null}, connecting? ${isConnecting}`);
+  console.log(`connectToDatabase: Connection check - client exists? ${mongoClient !== null}, connecting? ${isConnecting}`);
   
-  if (client) {
+  if (mongoClient) {
     console.log("connectToDatabase: Reusing existing connection");
-    return client;
+    return mongoClient;
   }
 
   if (isConnecting) {
@@ -45,12 +45,12 @@ export async function connectToDatabase(): Promise<MongoClient> {
       throw connectionError;
     }
     
-    if (!client) {
+    if (!mongoClient) {
       console.error("connectToDatabase: MongoDB client not initialized after connection attempt");
       throw new Error("Failed to establish MongoDB connection");
     }
     
-    return client;
+    return mongoClient;
   }
 
   connectionAttempts++;
@@ -85,10 +85,10 @@ export async function connectToDatabase(): Promise<MongoClient> {
     await newClient.db("admin").command({ ping: 1 });
     console.log("connectToDatabase: Server ping successful!");
     
-    client = newClient;
+    mongoClient = newClient;
     
     console.log("connectToDatabase: MongoDB connection successfully established");
-    return client;
+    return mongoClient;
   } catch (error) {
     console.error("connectToDatabase: Error connecting to database:", error);
     connectionError = error instanceof Error 
@@ -121,10 +121,10 @@ export async function getCollection<T extends Document>(collectionName: string):
  * Close the database connection when needed
  */
 export async function closeConnection(): Promise<void> {
-  if (client) {
+  if (mongoClient) {
     console.log("closeConnection: Closing database connection...");
-    await client.close();
-    client = null;
+    await mongoClient.close();
+    mongoClient = null;
     console.log("closeConnection: Connection closed");
   } else {
     console.log("closeConnection: No active connection to close");
@@ -140,7 +140,7 @@ export async function initializeDatabase(): Promise<void> {
     console.log("initializeDatabase: Starting database initialization...");
     
     // Check if we already have a valid connection
-    if (client) {
+    if (mongoClient) {
       console.log("initializeDatabase: Using existing connection");
       return;
     }
@@ -180,7 +180,7 @@ export async function initializeDatabase(): Promise<void> {
  */
 export function getDatabaseConnectionStatus(): { connected: boolean; error: string | null } {
   console.log("getDatabaseConnectionStatus: Checking connection status");
-  console.log("getDatabaseConnectionStatus: Client exists?", client !== null);
+  console.log("getDatabaseConnectionStatus: Client exists?", mongoClient !== null);
   console.log("getDatabaseConnectionStatus: Connection error?", connectionError?.message);
   
   // If connecting, we don't know the real status yet
@@ -193,7 +193,7 @@ export function getDatabaseConnectionStatus(): { connected: boolean; error: stri
   }
   
   return {
-    connected: client !== null,
+    connected: mongoClient !== null,
     error: connectionError ? connectionError.message : null
   };
 }
@@ -204,10 +204,10 @@ export function getDatabaseConnectionStatus(): { connected: boolean; error: stri
 export async function tryReconnect(): Promise<boolean> {
   console.log("tryReconnect: Attempting reconnection to MongoDB...");
   
-  if (client) {
+  if (mongoClient) {
     console.log("tryReconnect: Closing existing connection before reconnecting...");
-    await client.close().catch(err => console.error("tryReconnect: Error closing existing connection:", err));
-    client = null;
+    await mongoClient.close().catch(err => console.error("tryReconnect: Error closing existing connection:", err));
+    mongoClient = null;
   }
   
   connectionError = null;
