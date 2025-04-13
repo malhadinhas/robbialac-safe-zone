@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { DatabaseProvider } from "@/contexts/DatabaseContext";
 import { PrivateRoute, PublicOnlyRoute } from "@/components/PrivateRoute";
 
 // Pages
@@ -28,30 +29,32 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            {/* Rotas Públicas */}
-            <Route element={<PublicOnlyRoute />}>
-              <Route path="/login" element={<Login />} />
-            </Route>
-            
-            {/* Rotas Privadas */}
-            <Route element={<PrivateRoute />}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/formacoes" element={<Formacoes />} />
-              <Route path="/videos/:zone" element={<Videos />} />
-              <Route path="/videos/visualizar/:id" element={<VideosVisualizar />} />
-              <Route path="/quase-acidentes" element={<QuaseAcidentes />} />
-              <Route path="/quase-acidentes/editar/:id" element={<QuaseAcidentesEditar />} />
-              <Route path="/quase-acidentes/novo" element={<QuaseAcidentesNovo />} />
-              <Route path="/pontuacao" element={<Pontuacao />} />
-              <Route path="/definicoes" element={<Definicoes />} />
-            </Route>
-            
-            {/* Rota de Erro */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
+        <DatabaseProvider>
+          <AuthProvider>
+            <Routes>
+              {/* Rotas Públicas */}
+              <Route element={<PublicOnlyRoute />}>
+                <Route path="/login" element={<Login />} />
+              </Route>
+              
+              {/* Rotas Privadas */}
+              <Route element={<PrivateRoute />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/formacoes" element={<Formacoes />} />
+                <Route path="/videos/:zone" element={<Videos />} />
+                <Route path="/videos/visualizar/:id" element={<VideosVisualizar />} />
+                <Route path="/quase-acidentes" element={<QuaseAcidentes />} />
+                <Route path="/quase-acidentes/editar/:id" element={<QuaseAcidentesEditar />} />
+                <Route path="/quase-acidentes/novo" element={<QuaseAcidentesNovo />} />
+                <Route path="/pontuacao" element={<Pontuacao />} />
+                <Route path="/definicoes" element={<Definicoes />} />
+              </Route>
+              
+              {/* Rota de Erro */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </DatabaseProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

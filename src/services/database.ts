@@ -5,6 +5,7 @@ import { MongoClient, Collection, Document } from "mongodb";
 // Variável para armazenar o client MongoDB
 let client: MongoClient | null = null;
 let isConnecting = false;
+let connectionError: Error | null = null;
 
 /**
  * Função para conectar ao MongoDB Atlas
@@ -19,13 +20,22 @@ export async function connectToDatabase(): Promise<MongoClient> {
     while (isConnecting) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
+    
+    // Se houve um erro durante a tentativa de conexão
+    if (connectionError) {
+      throw connectionError;
+    }
+    
     return client as MongoClient;
   }
 
   try {
     isConnecting = true;
+    connectionError = null;
     
     const config = getMongoConfig();
+    console.log("Tentando conectar ao MongoDB com URI:", config.uri.substring(0, 20) + "...");
+    
     const { MongoClient } = await import('mongodb');
     client = new MongoClient(config.uri);
     await client.connect();
@@ -34,6 +44,7 @@ export async function connectToDatabase(): Promise<MongoClient> {
     return client;
   } catch (error) {
     console.error("Erro ao conectar ao banco de dados:", error);
+    connectionError = error instanceof Error ? error : new Error("Erro desconhecido ao conectar");
     throw error;
   } finally {
     isConnecting = false;
@@ -44,9 +55,14 @@ export async function connectToDatabase(): Promise<MongoClient> {
  * Função para obter uma coleção específica
  */
 export async function getCollection<T extends Document>(collectionName: string): Promise<Collection<T>> {
-  const client = await connectToDatabase();
-  const config = getMongoConfig();
-  return client.db(config.dbName).collection<T>(collectionName);
+  try {
+    const client = await connectToDatabase();
+    const config = getMongoConfig();
+    return client.db(config.dbName).collection<T>(collectionName);
+  } catch (error) {
+    console.error(`Erro ao obter coleção ${collectionName}:`, error);
+    throw error;
+  }
 }
 
 /**
@@ -90,4 +106,14 @@ export async function initializeDatabase(): Promise<void> {
     console.error("Erro ao inicializar banco de dados:", error);
     throw error;
   }
+}
+
+/**
+ * Função para verificar o status da conexão com o banco de dados
+ */
+export function getDatabaseConnectionStatus(): { connected: boolean; error: string | null } {
+  return {
+    connected: client !== null,
+    error: connectionError ? connectionError.message : null
+  };
 }
