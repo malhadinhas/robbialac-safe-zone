@@ -20,12 +20,12 @@ let mongoConfig: MongoDBConfig = { ...defaultConfig };
  * Inicializa a configuração do MongoDB Atlas
  */
 export function initializeMongoConfig(config: MongoDBConfig): void {
-  console.log("Atualizando configuração MongoDB:", {
+  console.log("Config: Atualizando configuração MongoDB:", {
     uri: config.uri.substring(0, 20) + "...",
     dbName: config.dbName
   });
   mongoConfig = { ...config };
-  console.log("Configuração MongoDB atualizada com sucesso");
+  console.log("Config: Configuração MongoDB atualizada com sucesso");
 }
 
 /**
@@ -34,3 +34,6 @@ export function initializeMongoConfig(config: MongoDBConfig): void {
 export function getMongoConfig(): MongoDBConfig {
   return mongoConfig;
 }
+
+// Log de inicialização para verificar se este arquivo está sendo carregado
+console.log("MongoDB Config module loaded with database:", mongoConfig.dbName);

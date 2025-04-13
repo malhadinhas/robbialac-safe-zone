@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { DatabaseProvider } from "@/contexts/DatabaseContext";
 import { PrivateRoute, PublicOnlyRoute } from "@/components/PrivateRoute";
+import { useEffect } from "react";
 
 // Pages
 import Login from "./pages/Login";
@@ -21,43 +22,56 @@ import Pontuacao from "./pages/Pontuacao";
 import Definicoes from "./pages/Definicoes";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <DatabaseProvider>
-          <AuthProvider>
-            <Routes>
-              {/* Rotas Públicas */}
-              <Route element={<PublicOnlyRoute />}>
-                <Route path="/login" element={<Login />} />
-              </Route>
-              
-              {/* Rotas Privadas */}
-              <Route element={<PrivateRoute />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/formacoes" element={<Formacoes />} />
-                <Route path="/videos/:zone" element={<Videos />} />
-                <Route path="/videos/visualizar/:id" element={<VideosVisualizar />} />
-                <Route path="/quase-acidentes" element={<QuaseAcidentes />} />
-                <Route path="/quase-acidentes/editar/:id" element={<QuaseAcidentesEditar />} />
-                <Route path="/quase-acidentes/novo" element={<QuaseAcidentesNovo />} />
-                <Route path="/pontuacao" element={<Pontuacao />} />
-                <Route path="/definicoes" element={<Definicoes />} />
-              </Route>
-              
-              {/* Rota de Erro */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthProvider>
-        </DatabaseProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  useEffect(() => {
+    console.log("App component rendered");
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <DatabaseProvider>
+            <AuthProvider>
+              <Routes>
+                {/* Rotas Públicas */}
+                <Route element={<PublicOnlyRoute />}>
+                  <Route path="/login" element={<Login />} />
+                </Route>
+                
+                {/* Rotas Privadas */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/formacoes" element={<Formacoes />} />
+                  <Route path="/videos/:zone" element={<Videos />} />
+                  <Route path="/videos/visualizar/:id" element={<VideosVisualizar />} />
+                  <Route path="/quase-acidentes" element={<QuaseAcidentes />} />
+                  <Route path="/quase-acidentes/editar/:id" element={<QuaseAcidentesEditar />} />
+                  <Route path="/quase-acidentes/novo" element={<QuaseAcidentesNovo />} />
+                  <Route path="/pontuacao" element={<Pontuacao />} />
+                  <Route path="/definicoes" element={<Definicoes />} />
+                </Route>
+                
+                {/* Rota de Erro */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AuthProvider>
+          </DatabaseProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

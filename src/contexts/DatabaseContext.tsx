@@ -20,9 +20,9 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
 
   // Função para verificar o status da conexão
   const checkConnection = async (): Promise<boolean> => {
-    console.log("Verificando status da conexão...");
+    console.log("DatabaseContext: Verificando status da conexão...");
     const status = getDatabaseConnectionStatus();
-    console.log("Status da conexão:", status);
+    console.log("DatabaseContext: Status da conexão:", status);
     setIsConnected(status.connected);
     setConnectionError(status.error);
     return status.connected;
@@ -31,21 +31,23 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
   // Função para tentar reconectar
   const reconnect = async (): Promise<boolean> => {
     try {
-      console.log("Iniciando tentativa de reconexão...");
+      console.log("DatabaseContext: Iniciando tentativa de reconexão...");
       setIsInitializing(true);
       const result = await tryReconnect();
       await checkConnection(); // Atualiza o estado após tentativa de reconexão
       
       if (result) {
         toast.success("Reconectado ao MongoDB com sucesso!");
+        console.log("DatabaseContext: Reconexão bem-sucedida");
       } else {
         toast.error("Não foi possível reconectar ao MongoDB");
+        console.log("DatabaseContext: Falha na reconexão");
       }
       
       setIsInitializing(false);
       return result;
     } catch (error) {
-      console.error("Erro detalhado ao tentar reconectar:", error);
+      console.error("DatabaseContext: Erro detalhado ao tentar reconectar:", error);
       toast.error("Erro ao tentar reconectar: " + (error instanceof Error ? error.message : "Erro desconhecido"));
       setIsInitializing(false);
       return false;
@@ -56,15 +58,22 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const initialCheck = async () => {
       try {
-        console.log("Realizando verificação inicial da conexão...");
+        console.log("DatabaseContext: Realizando verificação inicial da conexão...");
         await checkConnection();
+        console.log("DatabaseContext: Verificação inicial concluída");
       } catch (error) {
-        console.error("Erro durante verificação inicial:", error);
+        console.error("DatabaseContext: Erro durante verificação inicial:", error);
       } finally {
-        setIsInitializing(false);
+        console.log("DatabaseContext: Finalizando inicialização");
+        // Pequeno atraso para garantir que a interface seja renderizada
+        setTimeout(() => {
+          setIsInitializing(false);
+          console.log("DatabaseContext: Estado isInitializing definido como false");
+        }, 1000);
       }
     };
 
+    console.log("DatabaseContext: Iniciando verificação inicial...");
     initialCheck();
     
     // Verifica a conexão periodicamente
@@ -78,9 +87,12 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
   // Mostrar notificações em caso de erros de conexão
   useEffect(() => {
     if (connectionError && !isInitializing) {
+      console.log("DatabaseContext: Exibindo erro de conexão:", connectionError);
       toast.error(`Erro de conexão com o banco de dados: ${connectionError}`);
     }
   }, [connectionError, isInitializing]);
+
+  console.log("DatabaseContext: Renderizando com estados:", { isConnected, connectionError, isInitializing });
 
   return (
     <DatabaseContext.Provider value={{

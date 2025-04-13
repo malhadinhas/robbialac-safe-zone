@@ -4,8 +4,13 @@ import App from './App.tsx';
 import './index.css';
 import { initializeDatabase, getDatabaseConnectionStatus } from './services/database';
 
+// Log to help debug initialization
+console.log('Application starting...');
+
 // Inicializa o banco de dados antes de renderizar a aplicação
 async function startApp() {
+  console.log('StartApp function called');
+  
   // Renderiza a aplicação imediatamente para mostrar ao menos a tela de carregamento
   const rootElement = document.getElementById("root");
   if (!rootElement) {
@@ -13,6 +18,7 @@ async function startApp() {
     return;
   }
   
+  console.log('Rendering initial app...');
   createRoot(rootElement).render(<App />);
   
   try {
@@ -30,4 +36,8 @@ async function startApp() {
   }
 }
 
-startApp();
+// Add a visible console message before starting
+console.log('=== STARTING APPLICATION ===');
+startApp().catch(err => {
+  console.error('Fatal error during application start:', err);
+});

@@ -7,30 +7,44 @@ let client: MongoClient | null = null;
 let isConnecting = false;
 let connectionError: Error | null = null;
 
+// Log inicial de módulo carregado
+console.log("Database service module loaded");
+
 /**
  * Função para conectar ao MongoDB Atlas
  */
 export async function connectToDatabase(): Promise<MongoClient> {
+  console.log("connectToDatabase: Verificando conexão existente");
   if (client) {
-    console.log("Reutilizando conexão existente com MongoDB");
+    console.log("connectToDatabase: Reutilizando conexão existente com MongoDB");
     return client;
   }
 
   if (isConnecting) {
-    console.log("Já existe uma tentativa de conexão em andamento, aguardando...");
-    // Espera até que a conexão seja estabelecida
-    while (isConnecting) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+    console.log("connectToDatabase: Já existe uma tentativa de conexão em andamento, aguardando...");
+    // Espera até que a conexão seja estabelecida com timeout
+    let waitTime = 0;
+    const maxWait = 10000; // 10 segundos
+    const checkInterval = 100; // 100ms
+    
+    while (isConnecting && waitTime < maxWait) {
+      await new Promise(resolve => setTimeout(resolve, checkInterval));
+      waitTime += checkInterval;
+    }
+    
+    if (isConnecting) {
+      console.error("connectToDatabase: Timeout ao esperar pela conexão");
+      throw new Error("Timeout ao tentar estabelecer conexão com MongoDB");
     }
     
     // Se houve um erro durante a tentativa de conexão
     if (connectionError) {
-      console.error("Erro na tentativa anterior de conexão:", connectionError);
+      console.error("connectToDatabase: Erro na tentativa anterior de conexão:", connectionError);
       throw connectionError;
     }
     
     if (!client) {
-      console.error("Cliente MongoDB não inicializado após tentativa de conexão");
+      console.error("connectToDatabase: Cliente MongoDB não inicializado após tentativa de conexão");
       throw new Error("Falha ao estabelecer conexão com MongoDB");
     }
     
@@ -42,8 +56,8 @@ export async function connectToDatabase(): Promise<MongoClient> {
     connectionError = null;
     
     const config = getMongoConfig();
-    console.log("Tentando conectar ao MongoDB com URI:", config.uri.substring(0, 20) + "...");
-    console.log("Database:", config.dbName);
+    console.log("connectToDatabase: Tentando conectar ao MongoDB com URI:", config.uri.substring(0, 20) + "...");
+    console.log("connectToDatabase: Database:", config.dbName);
     
     const newClient = new MongoClient(config.uri, {
       serverApi: {
@@ -56,24 +70,25 @@ export async function connectToDatabase(): Promise<MongoClient> {
       serverSelectionTimeoutMS: 10000
     });
     
-    console.log("Iniciando conexão...");
+    console.log("connectToDatabase: Iniciando conexão...");
     await newClient.connect();
-    console.log("Conexão estabelecida, verificando comunicação com servidor...");
+    console.log("connectToDatabase: Conexão estabelecida, verificando comunicação com servidor...");
     
     // Verifica se a conexão está realmente funcionando fazendo uma operação simples
     await newClient.db("admin").command({ ping: 1 });
-    console.log("Ping ao servidor MongoDB realizado com sucesso!");
+    console.log("connectToDatabase: Ping ao servidor MongoDB realizado com sucesso!");
     
     client = newClient; // Só atribuímos após conexão bem-sucedida
     
-    console.log("Conectado ao MongoDB Atlas com sucesso!");
+    console.log("connectToDatabase: Conectado ao MongoDB Atlas com sucesso!");
     return client;
   } catch (error) {
-    console.error("Erro detalhado ao conectar ao banco de dados:", error);
+    console.error("connectToDatabase: Erro detalhado ao conectar ao banco de dados:", error);
     connectionError = error instanceof Error ? error : new Error("Erro desconhecido ao conectar");
     throw error;
   } finally {
     isConnecting = false;
+    console.log("connectToDatabase: Estado de conexão finalizado");
   }
 }
 
@@ -82,11 +97,12 @@ export async function connectToDatabase(): Promise<MongoClient> {
  */
 export async function getCollection<T extends Document>(collectionName: string): Promise<Collection<T>> {
   try {
+    console.log(`getCollection: Obtendo coleção ${collectionName}`);
     const client = await connectToDatabase();
     const config = getMongoConfig();
     return client.db(config.dbName).collection<T>(collectionName);
   } catch (error) {
-    console.error(`Erro ao obter coleção ${collectionName}:`, error);
+    console.error(`getCollection: Erro ao obter coleção ${collectionName}:`, error);
     throw error;
   }
 }
@@ -96,9 +112,12 @@ export async function getCollection<T extends Document>(collectionName: string):
  */
 export async function closeConnection(): Promise<void> {
   if (client) {
+    console.log("closeConnection: Fechando conexão com banco de dados");
     await client.close();
     client = null;
-    console.log("Conexão com banco de dados fechada");
+    console.log("closeConnection: Conexão fechada");
+  } else {
+    console.log("closeConnection: Nenhuma conexão ativa para fechar");
   }
 }
 
@@ -108,7 +127,7 @@ export async function closeConnection(): Promise<void> {
  */
 export async function initializeDatabase(): Promise<void> {
   try {
-    console.log("Iniciando processo de inicialização do banco de dados...");
+    console.log("initializeDatabase: Iniciando processo de inicialização do banco de dados...");
     const client = await connectToDatabase();
     const config = getMongoConfig();
     const db = client.db(config.dbName);
@@ -117,23 +136,23 @@ export async function initializeDatabase(): Promise<void> {
     const requiredCollections = ['videos', 'users', 'incidents', 'medals'];
     
     // Verifica quais coleções já existem
-    console.log("Verificando coleções existentes...");
+    console.log("initializeDatabase: Verificando coleções existentes...");
     const collections = await db.listCollections().toArray();
     const existingCollections = collections.map(c => c.name);
-    console.log("Coleções existentes:", existingCollections);
+    console.log("initializeDatabase: Coleções existentes:", existingCollections);
     
     // Cria as coleções que não existem
     for (const collectionName of requiredCollections) {
       if (!existingCollections.includes(collectionName)) {
-        console.log(`Criando coleção ${collectionName}...`);
+        console.log(`initializeDatabase: Criando coleção ${collectionName}...`);
         await db.createCollection(collectionName);
-        console.log(`Coleção ${collectionName} criada com sucesso`);
+        console.log(`initializeDatabase: Coleção ${collectionName} criada com sucesso`);
       }
     }
     
-    console.log("Inicialização do banco de dados concluída com sucesso");
+    console.log("initializeDatabase: Inicialização do banco de dados concluída com sucesso");
   } catch (error) {
-    console.error("Erro ao inicializar banco de dados:", error);
+    console.error("initializeDatabase: Erro ao inicializar banco de dados:", error);
     connectionError = error instanceof Error ? error : new Error("Erro desconhecido ao inicializar");
     throw error;
   }
@@ -143,6 +162,19 @@ export async function initializeDatabase(): Promise<void> {
  * Função para verificar o status da conexão com o banco de dados
  */
 export function getDatabaseConnectionStatus(): { connected: boolean; error: string | null } {
+  console.log("getDatabaseConnectionStatus: Verificando status da conexão");
+  console.log("getDatabaseConnectionStatus: Cliente existe?", client !== null);
+  console.log("getDatabaseConnectionStatus: Erro de conexão?", connectionError?.message);
+  
+  // Se estiver conectando, ainda não sabemos o status real
+  if (isConnecting) {
+    console.log("getDatabaseConnectionStatus: Conexão em andamento...");
+    return {
+      connected: false,
+      error: "Conexão em andamento..."
+    };
+  }
+  
   return {
     connected: client !== null,
     error: connectionError ? connectionError.message : null
@@ -153,10 +185,10 @@ export function getDatabaseConnectionStatus(): { connected: boolean; error: stri
  * Função para tentar reconectar ao banco de dados
  */
 export async function tryReconnect(): Promise<boolean> {
-  console.log("Tentando reconexão com o MongoDB...");
+  console.log("tryReconnect: Tentando reconexão com o MongoDB...");
   if (client) {
-    console.log("Fechando conexão existente antes de tentar reconectar...");
-    await client.close().catch(err => console.error("Erro ao fechar conexão existente:", err));
+    console.log("tryReconnect: Fechando conexão existente antes de tentar reconectar...");
+    await client.close().catch(err => console.error("tryReconnect: Erro ao fechar conexão existente:", err));
     client = null;
   }
   
@@ -164,10 +196,13 @@ export async function tryReconnect(): Promise<boolean> {
   
   try {
     await connectToDatabase();
-    console.log("Reconexão bem-sucedida!");
+    console.log("tryReconnect: Reconexão bem-sucedida!");
     return true;
   } catch (error) {
-    console.error("Falha na tentativa de reconexão:", error);
+    console.error("tryReconnect: Falha na tentativa de reconexão:", error);
     return false;
   }
 }
+
+// Log para confirmar que o serviço foi carregado
+console.log("Database service initialized");
