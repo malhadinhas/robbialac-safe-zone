@@ -18,81 +18,94 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
 
-  // Função para verificar o status da conexão
+  // Function to check connection status
   const checkConnection = async (): Promise<boolean> => {
-    console.log("DatabaseContext: Verificando status da conexão...");
+    console.log("DatabaseContext: Checking connection status...");
     const status = getDatabaseConnectionStatus();
-    console.log("DatabaseContext: Status da conexão:", status);
+    console.log("DatabaseContext: Got connection status:", status);
+    
+    // Update state based on connection status
     setIsConnected(status.connected);
-    setConnectionError(status.error);
+    
+    if (status.error !== connectionError) {
+      console.log("DatabaseContext: Connection error changed:", status.error);
+      setConnectionError(status.error);
+    }
+    
     return status.connected;
   };
 
-  // Função para tentar reconectar
+  // Function to attempt reconnection
   const reconnect = async (): Promise<boolean> => {
     try {
-      console.log("DatabaseContext: Iniciando tentativa de reconexão...");
+      console.log("DatabaseContext: Starting reconnection attempt...");
       setIsInitializing(true);
+      
       const result = await tryReconnect();
-      await checkConnection(); // Atualiza o estado após tentativa de reconexão
+      await checkConnection(); // Update state after reconnection attempt
       
       if (result) {
-        toast.success("Reconectado ao MongoDB com sucesso!");
-        console.log("DatabaseContext: Reconexão bem-sucedida");
+        toast.success("Successfully reconnected to MongoDB!");
+        console.log("DatabaseContext: Reconnection successful");
       } else {
-        toast.error("Não foi possível reconectar ao MongoDB");
-        console.log("DatabaseContext: Falha na reconexão");
+        toast.error("Failed to reconnect to MongoDB");
+        console.log("DatabaseContext: Reconnection failed");
       }
       
       setIsInitializing(false);
       return result;
     } catch (error) {
-      console.error("DatabaseContext: Erro detalhado ao tentar reconectar:", error);
-      toast.error("Erro ao tentar reconectar: " + (error instanceof Error ? error.message : "Erro desconhecido"));
+      console.error("DatabaseContext: Detailed error during reconnection attempt:", error);
+      toast.error("Error during reconnection: " + (error instanceof Error ? error.message : "Unknown error"));
       setIsInitializing(false);
       return false;
     }
   };
 
-  // Verificar o status inicial da conexão
+  // Check initial connection status
   useEffect(() => {
+    console.log("DatabaseContext: Initial mount, checking connection...");
+    
     const initialCheck = async () => {
       try {
-        console.log("DatabaseContext: Realizando verificação inicial da conexão...");
+        console.log("DatabaseContext: Running initial connection check...");
         await checkConnection();
-        console.log("DatabaseContext: Verificação inicial concluída");
+        console.log("DatabaseContext: Initial connection check completed");
       } catch (error) {
-        console.error("DatabaseContext: Erro durante verificação inicial:", error);
+        console.error("DatabaseContext: Error during initial connection check:", error);
+        setConnectionError(error instanceof Error ? error.message : "Unknown error during connection check");
       } finally {
-        console.log("DatabaseContext: Finalizando inicialização");
-        // Pequeno atraso para garantir que a interface seja renderizada
+        // Small delay to ensure the interface is rendered
         setTimeout(() => {
+          console.log("DatabaseContext: Setting isInitializing to false");
           setIsInitializing(false);
-          console.log("DatabaseContext: Estado isInitializing definido como false");
-        }, 1000);
+        }, 2000);
       }
     };
 
-    console.log("DatabaseContext: Iniciando verificação inicial...");
     initialCheck();
     
-    // Verifica a conexão periodicamente
+    // Check connection periodically
     const interval = setInterval(() => {
-      checkConnection().catch(err => console.error("Erro ao verificar conexão:", err));
-    }, 60000); // Verifica a cada minuto
+      checkConnection().catch(err => console.error("Periodic connection check error:", err));
+    }, 60000); // Check every minute
     
     return () => clearInterval(interval);
   }, []);
 
-  // Mostrar notificações em caso de erros de conexão
+  // Display connection error notifications
   useEffect(() => {
     if (connectionError && !isInitializing) {
-      console.log("DatabaseContext: Exibindo erro de conexão:", connectionError);
-      toast.error(`Erro de conexão com o banco de dados: ${connectionError}`);
+      console.log("DatabaseContext: Showing connection error toast:", connectionError);
+      toast.error(`Database connection error: ${connectionError}`);
     }
   }, [connectionError, isInitializing]);
 
-  console.log("DatabaseContext: Renderizando com estados:", { isConnected, connectionError, isInitializing });
+  console.log("DatabaseContext: Rendering with states:", { 
+    isConnected, 
+    connectionError, 
+    isInitializing 
+  });
 
   return (
     <DatabaseContext.Provider value={{

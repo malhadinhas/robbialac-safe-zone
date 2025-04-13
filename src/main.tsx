@@ -3,41 +3,50 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import { initializeDatabase, getDatabaseConnectionStatus } from './services/database';
+import ErrorBoundary from './components/ErrorBoundary.tsx';
 
 // Log to help debug initialization
-console.log('Application starting...');
+console.log('=== APPLICATION STARTUP SEQUENCE ===');
+console.log('Environment variables loaded:', {
+  MONGODB_URI: import.meta.env.VITE_MONGODB_URI ? 'Set (masked)' : 'Not set',
+  DB_NAME: import.meta.env.VITE_MONGODB_DB_NAME || 'Using default'
+});
 
-// Inicializa o banco de dados antes de renderizar a aplicação
+// Initialize the database before rendering the application
 async function startApp() {
-  console.log('StartApp function called');
+  console.log('=== START APP FUNCTION CALLED ===');
   
-  // Renderiza a aplicação imediatamente para mostrar ao menos a tela de carregamento
+  // Render the application immediately to show at least the loading screen
   const rootElement = document.getElementById("root");
   if (!rootElement) {
-    console.error("Elemento root não encontrado!");
+    console.error("CRITICAL ERROR: Root element not found!");
     return;
   }
   
-  console.log('Rendering initial app...');
-  createRoot(rootElement).render(<App />);
+  console.log('Rendering initial app with loading state and error boundary...');
+  createRoot(rootElement).render(
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
   
   try {
-    // Tenta inicializar a conexão com o banco de dados
-    console.log('Tentando inicializar o banco de dados...');
+    // Try to initialize the database connection
+    console.log('Attempting database initialization...');
     await initializeDatabase();
-    console.log('Banco de dados inicializado com sucesso');
+    console.log('Database initialization completed successfully');
     
-    // Verificação adicional do status da conexão
+    // Double-check connection status
     const status = getDatabaseConnectionStatus();
-    console.log('Status da conexão após inicialização:', status);
+    console.log('Connection status after initialization:', status);
   } catch (error) {
-    console.error('Erro ao inicializar o banco de dados:', error);
-    // A interface tratará o erro de conexão através do DatabaseContext
+    console.error('ERROR DURING DATABASE INITIALIZATION:', error);
+    // The interface will handle the connection error through DatabaseContext
   }
 }
 
 // Add a visible console message before starting
-console.log('=== STARTING APPLICATION ===');
+console.log('=== APPLICATION STARTUP TRIGGERED ===');
 startApp().catch(err => {
-  console.error('Fatal error during application start:', err);
+  console.error('FATAL ERROR DURING APPLICATION START:', err);
 });

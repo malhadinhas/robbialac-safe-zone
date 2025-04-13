@@ -22,35 +22,49 @@ import Pontuacao from "./pages/Pontuacao";
 import Definicoes from "./pages/Definicoes";
 import NotFound from "./pages/NotFound";
 
+// Configure QueryClient with retry settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
+      staleTime: 10000,
     },
   },
 });
 
 const App = () => {
   useEffect(() => {
-    console.log("App component rendered");
+    console.log("=== APP COMPONENT RENDERED ===");
+    
+    // Add a safety timeout to detect if app is stuck in loading
+    const safetyTimeout = setTimeout(() => {
+      console.log("SAFETY CHECK: App might be stuck in loading state");
+      console.log("SAFETY CHECK: Current route:", window.location.pathname);
+      console.log("SAFETY CHECK: Current URL:", window.location.href);
+    }, 10000);
+    
+    return () => {
+      clearTimeout(safetyTimeout);
+      console.log("App component cleanup");
+    };
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Sonner />
+        <Sonner position="top-right" />
         <BrowserRouter>
           <DatabaseProvider>
             <AuthProvider>
               <Routes>
-                {/* Rotas Públicas */}
+                {/* Public Routes */}
                 <Route element={<PublicOnlyRoute />}>
                   <Route path="/login" element={<Login />} />
                 </Route>
                 
-                {/* Rotas Privadas */}
+                {/* Private Routes */}
                 <Route element={<PrivateRoute />}>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/formacoes" element={<Formacoes />} />
@@ -63,7 +77,7 @@ const App = () => {
                   <Route path="/definicoes" element={<Definicoes />} />
                 </Route>
                 
-                {/* Rota de Erro */}
+                {/* Error Route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AuthProvider>
