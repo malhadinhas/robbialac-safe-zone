@@ -68,10 +68,18 @@ export async function connectToDatabase(): Promise<MongoClient> {
       });
       
       // Add additional validation for MongoDB URI
-      if (!config.uri || !config.uri.startsWith('mongodb')) {
+      if (!config.uri) {
+        throw new Error("Invalid MongoDB connection URI: URI is empty");
+      } 
+      else if (!config.uri.startsWith('mongodb')) {
         throw new Error("Invalid MongoDB connection URI. Must start with 'mongodb' or 'mongodb+srv'");
       }
+
+      if (!config.dbName) {
+        throw new Error("Invalid MongoDB configuration: database name is missing");
+      }
       
+      console.log("connectToDatabase: Creating new MongoDB client...");
       const newClient = new MongoClient(config.uri, {
         serverApi: {
           version: ServerApiVersion.v1,
