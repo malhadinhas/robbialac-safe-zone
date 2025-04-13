@@ -1,18 +1,12 @@
-
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import { initializeDatabase, getDatabaseConnectionStatus } from './services/database';
 import ErrorBoundary from './components/ErrorBoundary.tsx';
 
 // Log to help debug initialization
 console.log('=== APPLICATION STARTUP SEQUENCE ===');
-console.log('Environment variables loaded:', {
-  MONGODB_URI: import.meta.env.VITE_MONGODB_URI ? 'Set (masked)' : 'Not set',
-  DB_NAME: import.meta.env.VITE_MONGODB_DB_NAME || 'Using default'
-});
 
-// Initialize the database before rendering the application
+// Initialize the application
 async function startApp() {
   console.log('=== START APP FUNCTION CALLED ===');
   
@@ -25,23 +19,7 @@ async function startApp() {
       return;
     }
     
-    console.log('Rendering initial app with loading state and error boundary...');
-    
-    // Try to initialize the database connection
-    console.log('Attempting database initialization...');
-    
-    try {
-      await initializeDatabase();
-      console.log('Database initialization completed successfully');
-      
-      // Double-check connection status
-      const status = getDatabaseConnectionStatus();
-      console.log('Connection status after initialization:', status);
-    } catch (dbError) {
-      // Log the error but continue rendering the app
-      // The DatabaseContext will handle this error and display it to the user
-      console.error('ERROR DURING DATABASE INITIALIZATION (but continuing):', dbError);
-    }
+    console.log('Rendering app with error boundary...');
     
     createRoot(rootElement).render(
       <ErrorBoundary>

@@ -148,20 +148,39 @@ const QuaseAcidentes = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.description || !formData.location || !formData.date || !formData.severity || !formData.status) {
-      toast.error("Por favor, preencha todos os campos obrigatórios");
-      return;
-    }
+    setIsSubmitting(true);
     
     try {
-      setIsSubmitting(true);
-      
-      const updatedIncident: Incident = {
+      // Garante que todos os campos obrigatórios estejam presentes
+      const updatedIncident = {
         ...selectedIncident!,
         ...formData,
+        id: selectedIncident!.id,
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
         date: new Date(formData.date),
+        status: formData.status as "Reportado" | "Em Análise" | "Resolvido" | "Arquivado",
+        severity: formData.severity as "Baixo" | "Médio" | "Alto",
+        reportedBy: formData.reportedBy || selectedIncident!.reportedBy,
+        department: formData.department,
+        pointsAwarded: formData.pointsAwarded || selectedIncident!.pointsAwarded || 0,
         resolutionDeadline: formData.resolutionDeadline ? new Date(formData.resolutionDeadline) : undefined,
-        images: images
+        images: images,
+        // Campos opcionais
+        implementedAction: formData.implementedAction,
+        responsible: formData.responsible,
+        adminNotes: formData.adminNotes,
+        suggestionToFix: formData.suggestionToFix,
+        factoryArea: formData.factoryArea,
+        gravityValue: formData.gravityValue,
+        frequency: formData.frequency,
+        frequencyValue: formData.frequencyValue,
+        risk: formData.risk,
+        qaQuality: formData.qaQuality,
+        resolutionDays: formData.resolutionDays,
+        reporterName: formData.reporterName,
+        completionDate: formData.completionDate ? new Date(formData.completionDate) : undefined
       } as Incident;
       
       await updateIncident(updatedIncident);
@@ -254,6 +273,21 @@ const QuaseAcidentes = () => {
     return items;
   };
 
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case "Resolvido":
+        return "bg-green-100 text-green-800";
+      case "Em Análise":
+        return "bg-blue-100 text-blue-800";
+      case "Arquivado":
+        return "bg-gray-100 text-gray-800";
+      case "Reportado":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
   return (
     <Layout>
       <div className="container p-4">
@@ -319,12 +353,7 @@ const QuaseAcidentes = () => {
                     </p>
                   </div>
                   <div className="flex-shrink-0 flex items-center gap-2">
-                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      incident.status === "Resolvido" ? "bg-green-100 text-green-800" :
-                      incident.status === "Em Análise" ? "bg-blue-100 text-blue-800" :
-                      incident.status === "Arquivado" ? "bg-gray-100 text-gray-800" :
-                      "bg-yellow-100 text-yellow-800"
-                    }`}>
+                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(incident.status)}`}>
                       {incident.status}
                     </div>
                     <Button size="icon" variant="ghost" className="text-muted-foreground">
@@ -411,12 +440,7 @@ const QuaseAcidentes = () => {
                     </div>
                     <div>
                       <h3 className="text-sm font-medium mb-1">Status</h3>
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
-                        selectedIncident.status === "Resolvido" ? "bg-green-100 text-green-800" :
-                        selectedIncident.status === "Em Análise" ? "bg-blue-100 text-blue-800" :
-                        selectedIncident.status === "Arquivado" ? "bg-gray-100 text-gray-800" :
-                        "bg-yellow-100 text-yellow-800"
-                      }`}>
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${getStatusStyle(selectedIncident.status)}`}>
                         {selectedIncident.status}
                       </div>
                     </div>
@@ -621,6 +645,7 @@ const QuaseAcidentes = () => {
                             <SelectItem value="Reportado">Reportado</SelectItem>
                             <SelectItem value="Em Análise">Em Análise</SelectItem>
                             <SelectItem value="Resolvido">Resolvido</SelectItem>
+                            <SelectItem value="Arquivado">Arquivado</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

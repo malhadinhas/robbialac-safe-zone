@@ -1,12 +1,15 @@
-
-import { getR2Config, defaultTranscodingConfig } from "../config/storage";
-import { Video } from "@/types";
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { Video } from "@/types";
+import { getR2Config } from "@/config/storage";
 
-// Função para obter um cliente S3 configurado para o Cloudflare R2
-function getR2Client(): S3Client {
+const getR2Client = () => {
   const config = getR2Config();
+  console.log('Configuração R2:', {
+    accountId: config.accountId,
+    bucketName: config.bucketName,
+    publicUrl: config.publicUrl
+  });
   
   return new S3Client({
     region: "auto",
@@ -16,105 +19,71 @@ function getR2Client(): S3Client {
       secretAccessKey: config.secretAccessKey,
     },
   });
-}
+};
 
-/**
- * Gera uma URL assinada para acesso temporário ao vídeo
- */
-export async function generateSignedUrl(videoId: string, expirationMinutes: number = 60): Promise<string> {
+export const generateSignedUrl = async (key: string): Promise<string> => {
   try {
-    const r2Config = getR2Config();
+    console.log('Gerando URL assinada para chave:', key);
+    const config = getR2Config();
     const client = getR2Client();
-    
-    // Cria um comando para obter o objeto (vídeo)
     const command = new GetObjectCommand({
-      Bucket: r2Config.bucketName,
-      Key: `videos/${videoId}/index.m3u8`,
+      Bucket: config.bucketName,
+      Key: key,
     });
-    
-    // Gera a URL assinada com o tempo de expiração
-    const signedUrl = await getSignedUrl(client, command, {
-      expiresIn: expirationMinutes * 60, // Converter minutos para segundos
-    });
-    
-    console.log(`URL assinada gerada para o vídeo ${videoId}, expira em ${expirationMinutes} minutos`);
+    const signedUrl = await getSignedUrl(client, command, { expiresIn: 3600 });
+    console.log('URL assinada gerada com sucesso:', signedUrl);
     return signedUrl;
   } catch (error) {
     console.error("Erro ao gerar URL assinada:", error);
-    throw new Error("Falha ao gerar URL de acesso ao vídeo");
+    throw error;
   }
-}
+};
 
-/**
- * Prepara um vídeo para upload para R2
- */
-export async function prepareVideoUpload(videoFile: File, metadata: Omit<Video, "id" | "url" | "thumbnail" | "uploadDate" | "views">): Promise<{ 
-  uploadUrl: string;
-  videoId: string;
-}> {
+export const prepareVideoUpload = async (fileName: string): Promise<{ uploadUrl: string; key: string }> => {
   try {
-    const videoId = `video_${Date.now()}`;
-    const r2Config = getR2Config();
+    console.log('Preparando upload para arquivo:', fileName);
+    const config = getR2Config();
+    const key = `videos/${Date.now()}-${fileName}`;
     const client = getR2Client();
-    
-    console.log(`Preparando upload para vídeo: ${metadata.title}`);
-    
-    // Gera uma URL pré-assinada para upload direto
     const command = new PutObjectCommand({
-      Bucket: r2Config.bucketName,
-      Key: `videos/${videoId}/original.mp4`,
-      ContentType: videoFile.type,
+      Bucket: config.bucketName,
+      Key: key,
     });
-    
-    const uploadUrl = await getSignedUrl(client, command, {
-      expiresIn: 3600, // URL válida por 1 hora
-    });
-    
-    return {
-      uploadUrl,
-      videoId
-    };
+    const uploadUrl = await getSignedUrl(client, command, { expiresIn: 3600 });
+    console.log('URL de upload gerada:', { key, uploadUrl });
+    return { uploadUrl, key };
   } catch (error) {
-    console.error("Erro ao preparar upload:", error);
-    throw new Error("Falha ao preparar upload do vídeo");
+    console.error("Erro ao preparar upload do vídeo:", error);
+    throw error;
   }
-}
+};
 
-/**
- * Completa o processo de upload, depois que o arquivo foi carregado para R2
- */
-export async function completeVideoUpload(videoId: string, metadata: Partial<Video>): Promise<Video> {
-  // Na implementação real, aqui seria iniciado o processo de transcodificação do vídeo
-  // Para HLS e geração de miniaturas, provavelmente via um webhook ou função serverless
-  
-  const r2Config = getR2Config();
-  const baseUrl = r2Config.publicUrl;
-  const thumbnailUrl = `${baseUrl}/videos/${videoId}/thumbnail.jpg`;
-  
-  const newVideo: Video = {
-    id: videoId,
-    title: metadata.title || "Vídeo sem título",
-    description: metadata.description || "",
-    url: `${baseUrl}/videos/${videoId}/index.m3u8`,
-    thumbnail: thumbnailUrl,
-    duration: metadata.duration || 0,
-    category: metadata.category as any || "Segurança",
-    zone: metadata.zone as any || "Enchimento",
-    uploadDate: new Date(),
-    views: 0,
-    pointsForWatching: metadata.pointsForWatching || 10
-  };
-  
-  // Aqui seria implementada a lógica para salvar os metadados no MongoDB
+export const completeVideoUpload = async (videoData: Partial<Video>): Promise<Video> => {
   try {
-    const { getCollection } = await import('./database');
-    const collection = await getCollection("videos");
-    await collection.insertOne(newVideo);
-    console.log("Vídeo processado e salvo no banco de dados:", videoId);
+    console.log('Completando upload do vídeo:', videoData);
+    const response = await fetch("/api/videos", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(videoData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Erro na resposta da API:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: errorData
+      });
+      throw new Error("Erro ao salvar metadados do vídeo");
+    }
+
+    const video = await response.json();
+    console.log('Vídeo salvo com sucesso:', video);
+    return video;
   } catch (error) {
-    console.error("Erro ao salvar metadados do vídeo:", error);
-    throw new Error("Falha ao processar o vídeo após upload");
+    console.error("Erro ao completar upload do vídeo:", error);
+    throw error;
   }
-  
-  return newVideo;
-}
+};

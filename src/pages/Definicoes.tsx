@@ -23,7 +23,6 @@ import { initializeR2Config } from "@/config/storage";
 import { initializeMongoConfig } from "@/config/database";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { initializeDatabase } from "@/services/database";
 
 export default function Definicoes() {
   const [language, setLanguage] = useState("pt");
@@ -52,17 +51,6 @@ export default function Definicoes() {
     // MongoDB
     setMongoUri(import.meta.env.VITE_MONGODB_URI || "mongodb+srv://RobbialacSeguranca:[senha]@workplace-safety.j7o51.mongodb.net/workplace-safety");
     setMongoDbName(import.meta.env.VITE_MONGODB_DB_NAME || "workplace-safety");
-    
-    // Inicializar o banco de dados
-    const initializeApp = async () => {
-      try {
-        await initializeDatabase();
-      } catch (error) {
-        console.error("Erro ao inicializar banco de dados:", error);
-      }
-    };
-    
-    initializeApp();
   }, []);
 
   const handleSave = () => {
@@ -95,7 +83,7 @@ export default function Definicoes() {
     }
   };
   
-  const handleSaveMongoConfig = () => {
+  const handleSaveMongoConfig = async () => {
     try {
       // Validação básica
       if (!mongoUri || !mongoDbName) {
@@ -103,22 +91,17 @@ export default function Definicoes() {
         return;
       }
       
+      // Atualizar a configuração
       initializeMongoConfig({
         uri: mongoUri,
         dbName: mongoDbName
       });
       
-      // Inicializar o banco de dados com a nova configuração
-      initializeDatabase().then(() => {
-        toast.success("Configuração do MongoDB Atlas salva e banco de dados inicializado com sucesso!");
-      }).catch(error => {
-        console.error("Erro ao inicializar banco de dados:", error);
-        toast.error("Erro ao inicializar banco de dados");
-      });
+      toast.success("Configuração do MongoDB Atlas salva com sucesso!");
       
     } catch (error) {
       console.error("Erro ao salvar configuração MongoDB:", error);
-      toast.error("Erro ao salvar configuração MongoDB");
+      toast.error("Erro ao salvar configuração MongoDB: " + (error instanceof Error ? error.message : "Erro desconhecido"));
     }
   };
 

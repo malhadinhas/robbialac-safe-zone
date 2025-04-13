@@ -1,13 +1,14 @@
-
 import { Incident } from "@/types";
-import { getCollection } from "./database";
 
 export async function getIncidents(): Promise<Incident[]> {
   try {
-    const collection = await getCollection<Incident>("incidents");
-    const incidents = await collection.find({}).toArray();
-    console.log(`Recuperados ${incidents.length} incidentes do MongoDB Atlas`);
-    return incidents.map(incident => ({
+    const response = await fetch('/api/incidents');
+    if (!response.ok) {
+      throw new Error('Erro ao buscar incidentes');
+    }
+    const incidents = await response.json();
+    console.log(`Recuperados ${incidents.length} incidentes`);
+    return incidents.map((incident: Incident) => ({
       ...incident,
       date: new Date(incident.date),
       completionDate: incident.completionDate ? new Date(incident.completionDate) : undefined,
@@ -21,19 +22,20 @@ export async function getIncidents(): Promise<Incident[]> {
 
 export async function getIncidentById(id: string): Promise<Incident | null> {
   try {
-    const collection = await getCollection<Incident>("incidents");
-    const incident = await collection.findOne({ id });
-    
-    if (incident) {
-      return {
-        ...incident,
-        date: new Date(incident.date),
-        completionDate: incident.completionDate ? new Date(incident.completionDate) : undefined,
-        resolutionDeadline: incident.resolutionDeadline ? new Date(incident.resolutionDeadline) : undefined
-      };
+    const response = await fetch(`/api/incidents/${id}`);
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error('Erro ao buscar incidente');
     }
-    
-    return null;
+    const incident = await response.json();
+    return {
+      ...incident,
+      date: new Date(incident.date),
+      completionDate: incident.completionDate ? new Date(incident.completionDate) : undefined,
+      resolutionDeadline: incident.resolutionDeadline ? new Date(incident.resolutionDeadline) : undefined
+    };
   } catch (error) {
     console.error("Erro ao buscar incidente por ID:", error);
     throw error;
@@ -42,13 +44,17 @@ export async function getIncidentById(id: string): Promise<Incident | null> {
 
 export async function createIncident(incident: Omit<Incident, "id">): Promise<Incident> {
   try {
-    const collection = await getCollection("incidents");
-    const newIncident = {
-      ...incident,
-      id: crypto.randomUUID()
-    };
-    
-    await collection.insertOne(newIncident);
+    const response = await fetch('/api/incidents', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(incident)
+    });
+    if (!response.ok) {
+      throw new Error('Erro ao criar incidente');
+    }
+    const newIncident = await response.json();
     console.log(`Novo incidente criado com ID: ${newIncident.id}`);
     return newIncident;
   } catch (error) {
@@ -59,9 +65,20 @@ export async function createIncident(incident: Omit<Incident, "id">): Promise<In
 
 export async function updateIncident(incident: Incident): Promise<void> {
   try {
-    const collection = await getCollection("incidents");
-    const { id, ...dataToUpdate } = incident;
-    await collection.updateOne({ id }, { $set: dataToUpdate });
+    const { _id, ...incidentWithoutId } = incident;
+    
+    const response = await fetch(`/api/incidents/${incident.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(incidentWithoutId)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Erro ao atualizar incidente');
+    }
   } catch (error) {
     console.error("Erro ao atualizar incidente:", error);
     throw error;

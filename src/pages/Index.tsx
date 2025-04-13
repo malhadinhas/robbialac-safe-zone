@@ -1,16 +1,7 @@
-
 import { Layout } from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { 
-  mockStatsByCategory, 
-  mockStatsByZone, 
-  mockStatsBySeverity, 
-  mockVideos, 
-  mockIncidents,
-  mockMedals 
-} from "@/services/mockData";
 import { 
   PieChart, 
   Pie, 
@@ -26,17 +17,12 @@ import {
 import { Eye, AlertTriangle, Film, Clock, BookOpen, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { useIsMobile, useIsTablet, useIsCompactView } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NoScrollLayout } from "@/components/NoScrollLayout";
-import { 
-  Carousel, 
-  CarouselContent, 
-  CarouselItem, 
-  CarouselPrevious, 
-  CarouselNext,
-  CarouselPagination
-} from "@/components/ui/carousel";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getVideos } from "@/services/videoService";
+import { getIncidents } from "@/services/incidentService";
+import { Video, Incident } from "@/types";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -45,18 +31,78 @@ export default function Dashboard() {
   const isCompactView = useIsCompactView();
   const [activeTab, setActiveTab] = useState<"videos" | "quaseAcidentes">("videos");
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+  
+  // Estados para dados da API
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Dados simplificados para exibição
-  const recentVideos = mockVideos.slice(0, 3);
-  const recentIncidents = mockIncidents.slice(0, 3);
+  // Carregar dados da API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [videosData, incidentsData] = await Promise.all([
+          getVideos(),
+          getIncidents()
+        ]);
+        setVideos(videosData);
+        setIncidents(incidentsData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erro ao carregar dados');
+        console.error('Erro ao carregar dados:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Dados processados
+  const recentVideos = videos.slice(0, 3);
+  const recentIncidents = incidents.slice(0, 3);
   
   // Cálculo da próxima medalha
-  const nextMedal = mockMedals.find(medal => !medal.acquired);
+  const nextMedal = user?.medals ? user.medals.find(medal => !medal.acquired) : null;
   
   // Progress para o próximo nível
   const progressToNextLevel = Math.min(((user?.points || 0) % 500) / 5, 100);
   const currentLevel = user?.level || 1;
   const pointsToNextLevel = 500 - ((user?.points || 0) % 500);
+
+  // Estatísticas por categoria
+  const statsByCategory = videos.reduce((acc, video) => {
+    const category = acc.find(stat => stat.category === video.category);
+    if (category) {
+      category.count++;
+    } else {
+      acc.push({
+        category: video.category,
+        count: 1,
+        color: video.category === 'Segurança' ? '#FF4444' : 
+               video.category === 'Qualidade' ? '#4444FF' : '#44FF44'
+      });
+    }
+    return acc;
+  }, [] as { category: string; count: number; color: string }[]);
+
+  // Estatísticas por severidade
+  const statsBySeverity = incidents.reduce((acc, incident) => {
+    const severity = acc.find(stat => stat.severity === incident.severity);
+    if (severity) {
+      severity.count++;
+    } else {
+      acc.push({
+        severity: incident.severity,
+        count: 1,
+        color: incident.severity === 'Alto' ? '#FF4444' : 
+               incident.severity === 'Médio' ? '#FFAA44' : '#FFFF44'
+      });
+    }
+    return acc;
+  }, [] as { severity: string; count: number; color: string }[]);
 
   // Custom label renderer for PieChart that shows only percentages
   const renderCustomPieChartLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
@@ -78,6 +124,27 @@ export default function Dashboard() {
       </text>
     );
   };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-robbialac"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center justify-center h-full">
+          <div className="text-red-500 mb-4">Erro ao carregar dados: {error}</div>
+          <Button onClick={() => window.location.reload()}>Tentar Novamente</Button>
+        </div>
+      </Layout>
+    );
+  }
 
   // Define dashboard sections for mobile/tablet view
   const dashboardSections = [
@@ -155,7 +222,7 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={mockStatsByCategory}
+                  data={statsByCategory}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -165,7 +232,7 @@ export default function Dashboard() {
                   nameKey="category"
                   label={renderCustomPieChartLabel}
                 >
-                  {mockStatsByCategory.map((entry, index) => (
+                  {statsByCategory.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -183,13 +250,13 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mockStatsBySeverity}>
+              <BarChart data={statsBySeverity}>
                 <XAxis dataKey="severity" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="count" name="Quantidade">
-                  {mockStatsBySeverity.map((entry, index) => (
+                  {statsBySeverity.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Bar>
@@ -420,7 +487,7 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={mockStatsByCategory}
+                      data={statsByCategory}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -430,7 +497,7 @@ export default function Dashboard() {
                       nameKey="category"
                       label={renderCustomPieChartLabel}
                     >
-                      {mockStatsByCategory.map((entry, index) => (
+                      {statsByCategory.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
@@ -448,13 +515,13 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={mockStatsBySeverity}>
+                  <BarChart data={statsBySeverity}>
                     <XAxis dataKey="severity" />
                     <YAxis />
                     <Tooltip />
                     <Legend />
                     <Bar dataKey="count" name="Quantidade">
-                      {mockStatsBySeverity.map((entry, index) => (
+                      {statsBySeverity.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Bar>

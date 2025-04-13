@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,6 +20,7 @@ import QuaseAcidentesNovo from "./pages/QuaseAcidentesNovo";
 import Pontuacao from "./pages/Pontuacao";
 import Definicoes from "./pages/Definicoes";
 import NotFound from "./pages/NotFound";
+import TestApi from './pages/TestApi';
 
 // Configure QueryClient with retry settings
 const queryClient = new QueryClient({
@@ -91,6 +91,9 @@ const App = () => {
                   
                   {/* Error Route */}
                   <Route path="*" element={<NotFound />} />
+
+                  {/* Test API Route */}
+                  <Route path="/test-api" element={<TestApi />} />
                 </Routes>
               </div>
             </AuthProvider>

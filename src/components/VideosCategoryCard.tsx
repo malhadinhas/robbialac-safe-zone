@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,10 +10,11 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface VideosCategoryCardProps {
   category: string;
+  displayTitle: string;
   description: string;
 }
 
-const VideosCategoryCard = ({ category, description }: VideosCategoryCardProps) => {
+const VideosCategoryCard = ({ category, displayTitle, description }: VideosCategoryCardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [lastViewedVideo, setLastViewedVideo] = useState<Video | null>(null);
@@ -59,7 +59,7 @@ const VideosCategoryCard = ({ category, description }: VideosCategoryCardProps) 
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
-        <CardTitle className="text-lg">{category}</CardTitle>
+        <CardTitle className="text-lg">{displayTitle}</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow">
         <p className="text-gray-600 mb-4 break-words">{description}</p>

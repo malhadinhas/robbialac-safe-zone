@@ -1,3 +1,4 @@
+import Hls from 'hls.js';
 
 /**
  * Serviço para gerenciamento do player de vídeo HLS
@@ -24,14 +25,13 @@ export function isHlsSupported(): boolean {
 
 /**
  * Carrega um player HLS no elemento de vídeo fornecido.
- * Este é um wrapper que em produção usaria hls.js
  */
 export function loadHlsPlayer(videoElement: HTMLVideoElement, hlsUrl: string, options: PlayerOptions = {}): () => void {
   console.log(`Carregando vídeo HLS: ${hlsUrl}`);
   
-  // Em produção, aqui verificaríamos suporte a HLS e carregaríamos hls.js se necessário
-  videoElement.src = hlsUrl;
+  let hls: Hls | null = null;
   
+  // Configurar opções do vídeo
   if (options.autoplay) {
     videoElement.autoplay = true;
   }
@@ -44,22 +44,81 @@ export function loadHlsPlayer(videoElement: HTMLVideoElement, hlsUrl: string, op
     videoElement.controls = true;
   }
   
-  if (options.startTime) {
-    videoElement.currentTime = options.startTime;
+  // Se o navegador suporta HLS nativamente
+  if (isHlsSupported()) {
+    console.log('Usando suporte HLS nativo');
+    videoElement.src = hlsUrl;
+    
+    if (options.startTime) {
+      videoElement.currentTime = options.startTime;
+    }
+  }
+  // Se o navegador não suporta HLS nativamente, usar hls.js
+  else if (Hls.isSupported()) {
+    console.log('Usando hls.js');
+    hls = new Hls({
+      debug: false,
+      enableWorker: true,
+      lowLatencyMode: true,
+      backBufferLength: 90
+    });
+    
+    hls.loadSource(hlsUrl);
+    hls.attachMedia(videoElement);
+    
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      console.log('HLS manifest carregado');
+      if (options.startTime) {
+        videoElement.currentTime = options.startTime;
+      }
+      if (options.autoplay) {
+        videoElement.play().catch(console.error);
+      }
+    });
+    
+    hls.on(Hls.Events.ERROR, (event, data) => {
+      if (data.fatal) {
+        console.error('Erro fatal HLS:', data);
+        switch (data.type) {
+          case Hls.ErrorTypes.NETWORK_ERROR:
+            console.log('Tentando recuperar de erro de rede...');
+            hls?.startLoad();
+            break;
+          case Hls.ErrorTypes.MEDIA_ERROR:
+            console.log('Tentando recuperar de erro de mídia...');
+            hls?.recoverMediaError();
+            break;
+          default:
+            console.error('Erro irrecuperável');
+            destroyPlayer();
+            break;
+        }
+      }
+    });
+  } else {
+    console.error('Navegador não suporta HLS');
+    throw new Error('Seu navegador não suporta reprodução de vídeos HLS');
   }
   
   // Função para destruir o player
-  return () => {
+  const destroyPlayer = () => {
     videoElement.pause();
     videoElement.src = '';
     videoElement.load();
+    
+    if (hls) {
+      hls.destroy();
+      hls = null;
+    }
+    
     console.log('Player HLS destruído');
   };
+  
+  return destroyPlayer;
 }
 
 /**
  * Hook para usar o player HLS em um componente React
- * Em produção, isso seria implementado como um hook React real
  */
 export function setupHlsPlayer(): {
   attachPlayer: (element: HTMLVideoElement, url: string, options?: PlayerOptions) => void;

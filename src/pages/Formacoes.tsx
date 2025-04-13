@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,15 +58,28 @@ export default function Formacoes() {
   const videoCategories = [
     { 
       title: "Segurança", 
+      displayTitle: "Segurança",
       description: "Vídeos sobre protocolos de segurança, EPIs e procedimentos de emergência."
     },
     { 
-      title: "Qualidade", 
-      description: "Vídeos sobre controle de qualidade, inspeções e padrões de produção."
+      title: "Treinamento", 
+      displayTitle: "Treinamento",
+      description: "Vídeos de treinamento e capacitação para funcionários."
     },
     { 
-      title: "Procedimentos e Regras", 
+      title: "Procedimentos", 
+      displayTitle: "Procedimentos",
       description: "Vídeos sobre normas da empresa, processos e boas práticas."
+    },
+    {
+      title: "Equipamentos",
+      displayTitle: "Equipamentos", 
+      description: "Vídeos sobre uso e manutenção de equipamentos."
+    },
+    {
+      title: "Outros",
+      displayTitle: "Outros",
+      description: "Outros vídeos informativos e educacionais."
     }
   ];
   
@@ -137,6 +149,7 @@ export default function Formacoes() {
         <VideosCategoryCard 
           key={category.title}
           category={category.title} 
+          displayTitle={category.displayTitle}
           description={category.description}
         />
       ))}

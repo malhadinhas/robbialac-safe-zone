@@ -1,7 +1,6 @@
-
 import React, { Component, ErrorInfo, ReactNode } from "react";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Alert, AlertTitle, AlertDescription } from "./ui/alert";
+import { Button } from "./ui/button";
 import { RefreshCw } from "lucide-react";
 
 interface Props {
@@ -57,5 +56,5 @@ class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
-
 export default ErrorBoundary;
+
