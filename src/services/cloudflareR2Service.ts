@@ -1,19 +1,41 @@
 
 import { getR2Config, defaultTranscodingConfig } from "../config/storage";
 import { Video } from "@/types";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+
+// Função para obter um cliente S3 configurado para o Cloudflare R2
+function getR2Client(): S3Client {
+  const config = getR2Config();
+  
+  return new S3Client({
+    region: "auto",
+    endpoint: `https://${config.accountId}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: config.accessKeyId,
+      secretAccessKey: config.secretAccessKey,
+    },
+  });
+}
 
 /**
  * Gera uma URL assinada para acesso temporário ao vídeo
  */
 export async function generateSignedUrl(videoId: string, expirationMinutes: number = 60): Promise<string> {
   try {
-    // Simulação de URL assinada para ambiente de desenvolvimento
-    // Em produção, isso seria feito através de uma chamada à API de backend
     const r2Config = getR2Config();
-    const expirationTimestamp = Date.now() + expirationMinutes * 60 * 1000;
+    const client = getR2Client();
     
-    // Formato simulado de URL assinada para HLS
-    const signedUrl = `${r2Config.publicUrl}/videos/${videoId}/index.m3u8?expires=${expirationTimestamp}&signature=mockSignature`;
+    // Cria um comando para obter o objeto (vídeo)
+    const command = new GetObjectCommand({
+      Bucket: r2Config.bucketName,
+      Key: `videos/${videoId}/index.m3u8`,
+    });
+    
+    // Gera a URL assinada com o tempo de expiração
+    const signedUrl = await getSignedUrl(client, command, {
+      expiresIn: expirationMinutes * 60, // Converter minutos para segundos
+    });
     
     console.log(`URL assinada gerada para o vídeo ${videoId}, expira em ${expirationMinutes} minutos`);
     return signedUrl;
@@ -25,25 +47,31 @@ export async function generateSignedUrl(videoId: string, expirationMinutes: numb
 
 /**
  * Prepara um vídeo para upload para R2
- * Esta é uma função simulada que em produção seria executada no backend
  */
 export async function prepareVideoUpload(videoFile: File, metadata: Omit<Video, "id" | "url" | "thumbnail" | "uploadDate" | "views">): Promise<{ 
   uploadUrl: string;
   videoId: string;
 }> {
   try {
-    // Simulação de preparação de upload
     const videoId = `video_${Date.now()}`;
+    const r2Config = getR2Config();
+    const client = getR2Client();
     
     console.log(`Preparando upload para vídeo: ${metadata.title}`);
-    console.log(`Em produção, este vídeo seria convertido para HLS com as seguintes qualidades:`, 
-      defaultTranscodingConfig.qualities
-    );
     
-    // Retornamos uma URL de upload simulada
-    // Em produção, isso seria uma URL pré-assinada para upload direto ao R2
+    // Gera uma URL pré-assinada para upload direto
+    const command = new PutObjectCommand({
+      Bucket: r2Config.bucketName,
+      Key: `videos/${videoId}/original.mp4`,
+      ContentType: videoFile.type,
+    });
+    
+    const uploadUrl = await getSignedUrl(client, command, {
+      expiresIn: 3600, // URL válida por 1 hora
+    });
+    
     return {
-      uploadUrl: "https://mock-upload-url.com",
+      uploadUrl,
       videoId
     };
   } catch (error) {
@@ -54,36 +82,39 @@ export async function prepareVideoUpload(videoFile: File, metadata: Omit<Video, 
 
 /**
  * Completa o processo de upload, depois que o arquivo foi carregado para R2
- * Em produção, isso atualizaria os metadados no banco de dados
  */
 export async function completeVideoUpload(videoId: string, metadata: Partial<Video>): Promise<Video> {
+  // Na implementação real, aqui seria iniciado o processo de transcodificação do vídeo
+  // Para HLS e geração de miniaturas, provavelmente via um webhook ou função serverless
+  
+  const r2Config = getR2Config();
+  const baseUrl = r2Config.publicUrl;
+  const thumbnailUrl = `${baseUrl}/videos/${videoId}/thumbnail.jpg`;
+  
+  const newVideo: Video = {
+    id: videoId,
+    title: metadata.title || "Vídeo sem título",
+    description: metadata.description || "",
+    url: `${baseUrl}/videos/${videoId}/index.m3u8`,
+    thumbnail: thumbnailUrl,
+    duration: metadata.duration || 0,
+    category: metadata.category as any || "Segurança",
+    zone: metadata.zone as any || "Enchimento",
+    uploadDate: new Date(),
+    views: 0,
+    pointsForWatching: metadata.pointsForWatching || 10
+  };
+  
+  // Aqui seria implementada a lógica para salvar os metadados no MongoDB
   try {
-    console.log(`Finalizando upload do vídeo ${videoId}`);
-    console.log("Em produção, aqui seria onde o vídeo seria processado e convertido para HLS");
-    
-    // Simulação de criação de objeto de vídeo completo
-    const baseUrl = getR2Config().publicUrl;
-    const mockThumbnail = `${baseUrl}/videos/${videoId}/thumbnail.jpg`;
-    
-    const newVideo: Video = {
-      id: videoId,
-      title: metadata.title || "Vídeo sem título",
-      description: metadata.description || "",
-      url: `${baseUrl}/videos/${videoId}/index.m3u8`,
-      thumbnail: mockThumbnail,
-      duration: metadata.duration || 0,
-      category: metadata.category || "Segurança",
-      zone: metadata.zone || "Enchimento",
-      uploadDate: new Date(),
-      views: 0,
-      pointsForWatching: metadata.pointsForWatching || 10
-    };
-    
-    console.log("Vídeo processado com sucesso (simulação):", newVideo);
-    return newVideo;
+    const { getCollection } = await import('./database');
+    const collection = await getCollection("videos");
+    await collection.insertOne(newVideo);
+    console.log("Vídeo processado e salvo no banco de dados:", videoId);
   } catch (error) {
-    console.error("Erro ao completar upload:", error);
+    console.error("Erro ao salvar metadados do vídeo:", error);
     throw new Error("Falha ao processar o vídeo após upload");
   }
+  
+  return newVideo;
 }
-

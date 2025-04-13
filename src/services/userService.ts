@@ -1,91 +1,91 @@
-import { User, Medal } from "@/types";
-import { getCollection, initializeMockCollection } from "./database";
-import { mockMedals } from "./mockData";
 
-// Usuários mockados - retirado de auth.ts
-const mockUsers = [
-  {
-    id: "1",
-    email: "joao.malhadinhas@robbialac.pt",
-    password: "Sara2010",
-    name: "João Malhadinhas",
-    role: "admin_app",
-    points: 1200,
-    level: 5,
-    medals: [],
-    viewedVideos: [],
-    reportedIncidents: []
-  },
-  {
-    id: "2",
-    email: "ines.lopes@robbialac.pt",
-    password: "Sara2010",
-    name: "Inês Lopes",
-    role: "admin_qa",
-    points: 850,
-    level: 3,
-    medals: [],
-    viewedVideos: [],
-    reportedIncidents: []
-  },
-  {
-    id: "3",
-    email: "user@robbialac.pt",
-    password: "Sara2010",
-    name: "Usuário Teste",
-    role: "user",
-    points: 320,
-    level: 1,
-    medals: [],
-    viewedVideos: [],
-    reportedIncidents: []
-  }
-];
+import { User, Medal } from "@/types";
+import { getCollection } from "./database";
+import { compare, hash } from "bcrypt";
 
 export async function getUserByEmail(email: string): Promise<User | null> {
   try {
-    // Inicializa a coleção com dados mockados
-    const usersWithoutPasswords = mockUsers.map(({ password, ...user }) => user);
-    await initializeMockCollection("users", usersWithoutPasswords);
+    const collection = await getCollection<User & { password?: string }>("users");
+    const user = await collection.findOne({ email });
     
-    const collection = await getCollection("users");
-    const count = await collection.countDocuments();
-    
-    // Se não houver documentos, inicializa com os usuários mockados
-    if (count === 0) {
-      console.log("Inicializando coleção de usuários com dados mockados");
-      // Remove as senhas antes de inserir no banco
-      await collection.insertMany(usersWithoutPasswords);
-    }
-    
-    const user = await collection.findOne<User>({ email });
     if (!user) return null;
     
+    // Remover senha antes de retornar para o cliente
+    const { password, ...userWithoutPassword } = user;
+    
     return {
-      ...user,
-      medals: user.medals.map(medal => ({
+      ...userWithoutPassword,
+      medals: (userWithoutPassword.medals || []).map(medal => ({
         ...medal,
         acquiredDate: medal.acquiredDate ? new Date(medal.acquiredDate) : undefined
       }))
-    };
+    } as User;
   } catch (error) {
     console.error("Erro ao buscar usuário por email:", error);
-    // Em caso de erro, retorna o usuário dos dados mockados (sem a senha)
-    const mockUser = mockUsers.find(u => u.email === email);
-    if (!mockUser) return null;
-    
-    const { password, ...userWithoutPassword } = mockUser;
-    return userWithoutPassword as User;
+    throw error;
   }
 }
 
 export async function validateUser(email: string, password: string): Promise<User | null> {
-  // Simular validação com os dados mockados (em produção, a senha estaria hasheada no banco)
-  const mockUser = mockUsers.find(u => u.email === email && u.password === password);
-  if (!mockUser) return null;
-  
-  // Busca o usuário atualizado no banco
-  return getUserByEmail(email);
+  try {
+    const collection = await getCollection<User & { password: string }>("users");
+    const user = await collection.findOne({ email });
+    
+    if (!user) return null;
+    
+    // Usa bcrypt para comparar as senhas de forma segura
+    const isValid = await compare(password, user.password);
+    
+    if (!isValid) return null;
+    
+    // Remove a senha antes de retornar o usuário
+    const { password: _, ...userWithoutPassword } = user;
+    
+    return {
+      ...userWithoutPassword,
+      medals: (userWithoutPassword.medals || []).map(medal => ({
+        ...medal,
+        acquiredDate: medal.acquiredDate ? new Date(medal.acquiredDate) : undefined
+      }))
+    } as User;
+  } catch (error) {
+    console.error("Erro ao validar usuário:", error);
+    return null;
+  }
+}
+
+export async function createUser(userData: Omit<User, "id"> & { password: string }): Promise<User> {
+  try {
+    const collection = await getCollection("users");
+    
+    // Verifica se o email já está em uso
+    const existingUser = await collection.findOne({ email: userData.email });
+    if (existingUser) {
+      throw new Error("Email já está em uso");
+    }
+    
+    // Gera hash da senha
+    const passwordHash = await hash(userData.password, 10);
+    
+    const newUser = {
+      ...userData,
+      id: crypto.randomUUID(),
+      password: passwordHash,
+      medals: [],
+      viewedVideos: [],
+      reportedIncidents: []
+    };
+    
+    await collection.insertOne(newUser);
+    
+    // Remove a senha antes de retornar
+    const { password, ...userWithoutPassword } = newUser;
+    
+    return userWithoutPassword as User;
+  } catch (error) {
+    console.error("Erro ao criar usuário:", error);
+    throw error;
+  }
 }
 
 export async function updateUser(user: User): Promise<void> {
@@ -101,23 +101,47 @@ export async function updateUser(user: User): Promise<void> {
 
 export async function getAllMedals(): Promise<Medal[]> {
   try {
-    const collection = await getCollection("medals");
-    const count = await collection.countDocuments();
-    
-    // Se não houver documentos, inicializa com os dados mockados
-    if (count === 0) {
-      console.log("Inicializando coleção de medalhas com dados mockados");
-      await collection.insertMany(mockMedals);
-    }
-    
-    const medals = await collection.find<Medal>({}).toArray();
+    const collection = await getCollection<Medal>("medals");
+    const medals = await collection.find({}).toArray();
     return medals.map(medal => ({
       ...medal,
       acquiredDate: medal.acquiredDate ? new Date(medal.acquiredDate) : undefined
     }));
   } catch (error) {
     console.error("Erro ao buscar medalhas:", error);
-    // Em caso de erro, retorna os dados mockados
-    return mockMedals;
+    throw error;
+  }
+}
+
+export async function createAdminUser(): Promise<void> {
+  try {
+    const collection = await getCollection("users");
+    const adminEmail = "admin@robbialac.pt";
+    
+    // Verifica se já existe um admin
+    const existingAdmin = await collection.findOne({ email: adminEmail });
+    if (existingAdmin) {
+      return; // Admin já existe, não precisa criar
+    }
+    
+    // Cria um usuário admin inicial
+    const adminPassword = await hash("Admin@123", 10);
+    const adminUser = {
+      id: crypto.randomUUID(),
+      email: adminEmail,
+      password: adminPassword,
+      name: "Administrador",
+      role: "admin_app",
+      points: 0,
+      level: 1,
+      medals: [],
+      viewedVideos: [],
+      reportedIncidents: []
+    };
+    
+    await collection.insertOne(adminUser);
+    console.log("Usuário administrador criado com sucesso");
+  } catch (error) {
+    console.error("Erro ao criar usuário administrador:", error);
   }
 }

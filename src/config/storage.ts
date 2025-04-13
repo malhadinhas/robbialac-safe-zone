@@ -36,13 +36,14 @@ export const defaultTranscodingConfig: VideoTranscodingConfig = {
   ]
 };
 
-// Configuração padrão para Cloudflare R2
+// Carregamento das configurações do Cloudflare R2 a partir das variáveis de ambiente
+// IMPORTANTE: Estas variáveis devem ser definidas em um arquivo .env local em produção
 const defaultConfig: CloudflareR2Config = {
-  accountId: import.meta.env.VITE_CF_ACCOUNT_ID || '',
-  accessKeyId: import.meta.env.VITE_CF_ACCESS_KEY_ID || '',
-  secretAccessKey: import.meta.env.VITE_CF_SECRET_ACCESS_KEY || '',
-  bucketName: import.meta.env.VITE_CF_BUCKET_NAME || '',
-  publicUrl: import.meta.env.VITE_CF_PUBLIC_URL || ''
+  accountId: import.meta.env.VITE_CF_ACCOUNT_ID || '485c3c736434b646ff46725121de873c',
+  accessKeyId: import.meta.env.VITE_CF_ACCESS_KEY_ID || '56f3925666837ff8ba99087b930e88cb',
+  secretAccessKey: import.meta.env.VITE_CF_SECRET_ACCESS_KEY || '31352a5a4c56a50c5f05cd7cdcb1d010f6fd6a24f32c2b1560bc56a613c266cc',
+  bucketName: import.meta.env.VITE_CF_BUCKET_NAME || 'workplace-safety-videos',
+  publicUrl: import.meta.env.VITE_CF_PUBLIC_URL || 'https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com'
 };
 
 // Configuração atual para Cloudflare R2

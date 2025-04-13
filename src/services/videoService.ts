@@ -1,37 +1,29 @@
 
 import { Video } from "@/types";
-import { getCollection, initializeMockCollection } from "./database";
-import { mockVideos } from "./mockData";
+import { getCollection } from "./database";
 import { generateSignedUrl } from "./cloudflareR2Service";
+
+// Removi todas as referências a mockVideos
 
 export async function getVideos(): Promise<Video[]> {
   try {
-    await initializeMockCollection("videos", mockVideos);
-    
-    const collection = await getCollection("videos");
-    const count = await collection.countDocuments();
-    
-    if (count === 0) {
-      console.log("Inicializando coleção de vídeos com dados mockados");
-      await collection.insertMany(mockVideos);
-    }
-    
-    const videos = await collection.find<Video>({}).toArray();
-    console.log(`Recuperados ${videos.length} vídeos do banco de dados local`);
+    const collection = await getCollection<Video>("videos");
+    const videos = await collection.find({}).toArray();
+    console.log(`Recuperados ${videos.length} vídeos do MongoDB Atlas`);
     return videos.map(video => ({
       ...video,
       uploadDate: new Date(video.uploadDate)
     }));
   } catch (error) {
     console.error("Erro ao buscar vídeos:", error);
-    return mockVideos;
+    throw error;
   }
 }
 
 export async function getVideoById(id: string): Promise<Video | null> {
   try {
-    const collection = await getCollection("videos");
-    const video = await collection.findOne<Video>({ id });
+    const collection = await getCollection<Video>("videos");
+    const video = await collection.findOne({ id });
     
     if (video) {
       return {
@@ -43,13 +35,13 @@ export async function getVideoById(id: string): Promise<Video | null> {
     return null;
   } catch (error) {
     console.error("Erro ao buscar vídeo por ID:", error);
-    return mockVideos.find(v => v.id === id) || null;
+    throw error;
   }
 }
 
 export async function incrementVideoViews(id: string): Promise<void> {
   try {
-    const collection = await getCollection("videos");
+    const collection = await getCollection<Video>("videos");
     await collection.updateOne(
       { id },
       { $inc: { views: 1 } }
@@ -62,35 +54,71 @@ export async function incrementVideoViews(id: string): Promise<void> {
 
 export async function getLastViewedVideosByCategory(category: string, limit: number = 5): Promise<Video[]> {
   try {
-    const filteredVideos = mockVideos
-      .filter(video => video.category === category)
-      .sort((a, b) => b.views - a.views)
-      .slice(0, limit);
+    const collection = await getCollection<Video>("videos");
+    const videos = await collection
+      .find({ category })
+      .sort({ views: -1 })
+      .limit(limit)
+      .toArray();
     
-    console.log(`Retrieved ${filteredVideos.length} last viewed videos for category ${category}`);
-    return filteredVideos;
+    console.log(`Recuperados ${videos.length} vídeos mais visualizados da categoria ${category}`);
+    return videos.map(video => ({
+      ...video,
+      uploadDate: new Date(video.uploadDate)
+    }));
   } catch (error) {
-    console.error("Error getting last viewed videos by category:", error);
-    return [];
+    console.error("Erro ao buscar vídeos mais visualizados por categoria:", error);
+    throw error;
   }
 }
 
 export async function getNextVideoToWatch(category: string, viewedVideoIds: string[] = []): Promise<Video | null> {
   try {
-    const categoryVideos = mockVideos.filter(video => video.category === category);
+    const collection = await getCollection<Video>("videos");
     
-    const unwatchedVideos = categoryVideos.filter(video => 
-      viewedVideoIds.length === 0 || !viewedVideoIds.includes(video.id)
-    );
+    // Tenta encontrar um vídeo não assistido na categoria
+    let query: any = { category };
+    if (viewedVideoIds.length > 0) {
+      query.id = { $nin: viewedVideoIds };
+    }
     
-    const recommendedVideo = unwatchedVideos.length > 0 
-      ? unwatchedVideos[0] 
-      : (categoryVideos.length > 0 ? categoryVideos[0] : null);
+    let video = await collection.findOne(query);
     
-    return recommendedVideo;
-  } catch (error) {
-    console.error("Error getting next video recommendation:", error);
+    // Se não encontrar um vídeo não assistido, retorna qualquer vídeo da categoria
+    if (!video) {
+      video = await collection.findOne({ category });
+    }
+    
+    if (video) {
+      return {
+        ...video,
+        uploadDate: new Date(video.uploadDate)
+      };
+    }
+    
     return null;
+  } catch (error) {
+    console.error("Erro ao buscar próximo vídeo para assistir:", error);
+    throw error;
+  }
+}
+
+export async function createVideo(video: Omit<Video, "id" | "uploadDate" | "views">): Promise<Video> {
+  try {
+    const collection = await getCollection<Video>("videos");
+    const newVideo: Video = {
+      ...video,
+      id: crypto.randomUUID(),
+      uploadDate: new Date(),
+      views: 0
+    };
+    
+    await collection.insertOne(newVideo);
+    console.log(`Novo vídeo criado com ID: ${newVideo.id}`);
+    return newVideo;
+  } catch (error) {
+    console.error("Erro ao criar vídeo:", error);
+    throw error;
   }
 }
 
@@ -99,19 +127,10 @@ export async function getNextVideoToWatch(category: string, viewedVideoIds: stri
  */
 export async function getVideoStreamUrl(videoId: string): Promise<string> {
   try {
-    // Em produção, esta função faria uma chamada à API para obter uma URL assinada
     const signedUrl = await generateSignedUrl(videoId, 120); // URL válida por 2 horas
     return signedUrl;
   } catch (error) {
     console.error("Erro ao obter URL de streaming para o vídeo:", error);
-    
-    // Em caso de erro, retorna a URL do vídeo do mock como fallback
-    const mockVideo = mockVideos.find(v => v.id === videoId);
-    if (mockVideo) {
-      return mockVideo.url;
-    }
-    
     throw new Error("Não foi possível obter a URL do vídeo");
   }
 }
-

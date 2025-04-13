@@ -18,12 +18,13 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { WhatsAppIntegration } from "@/components/whatsapp/WhatsAppIntegration";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check } from "lucide-react";
 import { initializeR2Config } from "@/config/storage";
 import { initializeMongoConfig } from "@/config/database";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { initializeDatabase } from "@/services/database";
 
 export default function Definicoes() {
   const [language, setLanguage] = useState("pt");
@@ -38,7 +39,32 @@ export default function Definicoes() {
   
   // MongoDB config
   const [mongoUri, setMongoUri] = useState("");
-  const [mongoDbName, setMongoDbName] = useState("robbialac_security");
+  const [mongoDbName, setMongoDbName] = useState("workplace-safety");
+
+  // Carregar valores iniciais das variáveis de ambiente
+  useEffect(() => {
+    // Cloudflare R2
+    setR2AccountId(import.meta.env.VITE_CF_ACCOUNT_ID || "485c3c736434b646ff46725121de873c");
+    setR2AccessKeyId(import.meta.env.VITE_CF_ACCESS_KEY_ID || "56f3925666837ff8ba99087b930e88cb");
+    setR2SecretKey(import.meta.env.VITE_CF_SECRET_ACCESS_KEY || "");  // Por segurança não exibimos a chave
+    setR2BucketName(import.meta.env.VITE_CF_BUCKET_NAME || "workplace-safety-videos");
+    setR2PublicUrl(import.meta.env.VITE_CF_PUBLIC_URL || "https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com");
+    
+    // MongoDB
+    setMongoUri(import.meta.env.VITE_MONGODB_URI || "mongodb+srv://RobbialacSeguranca:[senha]@workplace-safety.j7o51.mongodb.net/workplace-safety");
+    setMongoDbName(import.meta.env.VITE_MONGODB_DB_NAME || "workplace-safety");
+    
+    // Inicializar o banco de dados
+    const initializeApp = async () => {
+      try {
+        await initializeDatabase();
+      } catch (error) {
+        console.error("Erro ao inicializar banco de dados:", error);
+      }
+    };
+    
+    initializeApp();
+  }, []);
 
   const handleSave = () => {
     setSaved(true);
@@ -50,15 +76,15 @@ export default function Definicoes() {
   const handleSaveR2Config = () => {
     try {
       // Validações básicas
-      if (!r2AccountId || !r2AccessKeyId || !r2SecretKey || !r2BucketName || !r2PublicUrl) {
-        toast.error("Preencha todos os campos da configuração R2");
+      if (!r2AccountId || !r2AccessKeyId || !r2BucketName || !r2PublicUrl) {
+        toast.error("Preencha todos os campos obrigatórios da configuração R2");
         return;
       }
       
       initializeR2Config({
         accountId: r2AccountId,
         accessKeyId: r2AccessKeyId,
-        secretAccessKey: r2SecretKey,
+        secretAccessKey: r2SecretKey || import.meta.env.VITE_CF_SECRET_ACCESS_KEY || "31352a5a4c56a50c5f05cd7cdcb1d010f6fd6a24f32c2b1560bc56a613c266cc",
         bucketName: r2BucketName,
         publicUrl: r2PublicUrl
       });
@@ -87,7 +113,14 @@ export default function Definicoes() {
         }
       });
       
-      toast.success("Configuração do MongoDB Atlas salva com sucesso!");
+      // Inicializar o banco de dados com a nova configuração
+      initializeDatabase().then(() => {
+        toast.success("Configuração do MongoDB Atlas salva e banco de dados inicializado com sucesso!");
+      }).catch(error => {
+        console.error("Erro ao inicializar banco de dados:", error);
+        toast.error("Erro ao inicializar banco de dados");
+      });
+      
     } catch (error) {
       console.error("Erro ao salvar configuração MongoDB:", error);
       toast.error("Erro ao salvar configuração MongoDB");
@@ -178,7 +211,7 @@ export default function Definicoes() {
                     id="r2-account-id" 
                     value={r2AccountId}
                     onChange={(e) => setR2AccountId(e.target.value)}
-                    placeholder="ex: 123456789abcdef" 
+                    placeholder="ex: 485c3c736434b646ff46725121de873c" 
                   />
                 </div>
                 
@@ -188,7 +221,7 @@ export default function Definicoes() {
                     id="r2-access-key" 
                     value={r2AccessKeyId}
                     onChange={(e) => setR2AccessKeyId(e.target.value)}
-                    placeholder="ex: ABCDEFG123456789" 
+                    placeholder="ex: 56f3925666837ff8ba99087b930e88cb" 
                   />
                 </div>
                 
@@ -209,7 +242,7 @@ export default function Definicoes() {
                     id="r2-bucket" 
                     value={r2BucketName}
                     onChange={(e) => setR2BucketName(e.target.value)}
-                    placeholder="ex: robbialac-videos" 
+                    placeholder="ex: workplace-safety-videos" 
                   />
                 </div>
                 
@@ -219,20 +252,8 @@ export default function Definicoes() {
                     id="r2-public-url" 
                     value={r2PublicUrl}
                     onChange={(e) => setR2PublicUrl(e.target.value)}
-                    placeholder="ex: https://videos.seu-dominio.com" 
+                    placeholder="ex: https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com" 
                   />
-                </div>
-                
-                <div className="bg-amber-50 border border-amber-200 p-3 rounded-md text-amber-800 text-sm mt-4">
-                  <p>
-                    <strong>Nota:</strong> Para integração com Cloudflare R2, você precisará:
-                  </p>
-                  <ul className="list-disc pl-5 mt-2 space-y-1">
-                    <li>Criar um bucket R2 no painel da Cloudflare</li>
-                    <li>Configurar as R2 API Keys (Access e Secret keys)</li>
-                    <li>Ativar o Workers Site ou o R2 Website</li>
-                    <li>Configurar uma URL personalizada com um domínio próprio via DNS</li>
-                  </ul>
                 </div>
                 
                 <Button 
@@ -260,8 +281,11 @@ export default function Definicoes() {
                     id="mongo-uri" 
                     value={mongoUri}
                     onChange={(e) => setMongoUri(e.target.value)}
-                    placeholder="mongodb+srv://usuario:senha@cluster0.mongodb.net/" 
+                    placeholder="mongodb+srv://usuario:senha@cluster.mongodb.net/" 
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Exemplo: mongodb+srv://RobbialacSeguranca:[senha]@workplace-safety.j7o51.mongodb.net/workplace-safety
+                  </p>
                 </div>
                 
                 <div className="space-y-2">
@@ -270,21 +294,19 @@ export default function Definicoes() {
                     id="mongo-db" 
                     value={mongoDbName}
                     onChange={(e) => setMongoDbName(e.target.value)}
-                    placeholder="robbialac_security" 
+                    placeholder="workplace-safety" 
                   />
                 </div>
                 
                 <div className="bg-amber-50 border border-amber-200 p-3 rounded-md text-amber-800 text-sm mt-4">
                   <p>
-                    <strong>Nota:</strong> Para integração com MongoDB Atlas, você precisará:
+                    <strong>Importante:</strong> Esta aplicação está configurada para usar:
                   </p>
                   <ul className="list-disc pl-5 mt-2 space-y-1">
-                    <li>Criar uma conta no MongoDB Atlas</li>
-                    <li>Configurar um cluster (o plano gratuito é suficiente para testes)</li>
-                    <li>Configurar um usuário de banco de dados com as permissões necessárias</li>
-                    <li>Configurar a Network Access para permitir conexões dos IPs necessários</li>
-                    <li>Obter a string de conexão no formato MongoDB+SRV</li>
+                    <li>MongoDB Atlas para armazenamento de dados</li>
+                    <li>Cloudflare R2 para armazenamento de vídeos</li>
                   </ul>
+                  <p className="mt-2">As configurações serão salvas apenas para esta sessão. Para uso em produção, configure as variáveis de ambiente diretamente no servidor.</p>
                 </div>
                 
                 <Button 
