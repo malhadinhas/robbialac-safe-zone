@@ -1,4 +1,3 @@
-
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { 
@@ -106,11 +105,7 @@ export default function Definicoes() {
       
       initializeMongoConfig({
         uri: mongoUri,
-        dbName: mongoDbName,
-        options: {
-          useNewUrlParser: true,
-          useUnifiedTopology: true
-        }
+        dbName: mongoDbName
       });
       
       // Inicializar o banco de dados com a nova configuração

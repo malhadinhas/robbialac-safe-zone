@@ -27,7 +27,7 @@ export async function connectToDatabase(): Promise<MongoClient> {
     
     const config = getMongoConfig();
     const { MongoClient } = await import('mongodb');
-    client = new MongoClient(config.uri, config.options);
+    client = new MongoClient(config.uri);
     await client.connect();
     console.log("Conectado ao MongoDB Atlas com sucesso!");
     

@@ -56,7 +56,7 @@ export async function getLastViewedVideosByCategory(category: string, limit: num
   try {
     const collection = await getCollection<Video>("videos");
     const videos = await collection
-      .find({ category })
+      .find({ category: category as any })
       .sort({ views: -1 })
       .limit(limit)
       .toArray();
@@ -77,7 +77,7 @@ export async function getNextVideoToWatch(category: string, viewedVideoIds: stri
     const collection = await getCollection<Video>("videos");
     
     // Tenta encontrar um vídeo não assistido na categoria
-    let query: any = { category };
+    let query: any = { category: category as any };
     if (viewedVideoIds.length > 0) {
       query.id = { $nin: viewedVideoIds };
     }
@@ -86,7 +86,7 @@ export async function getNextVideoToWatch(category: string, viewedVideoIds: stri
     
     // Se não encontrar um vídeo não assistido, retorna qualquer vídeo da categoria
     if (!video) {
-      video = await collection.findOne({ category });
+      video = await collection.findOne({ category: category as any });
     }
     
     if (video) {
