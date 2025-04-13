@@ -19,7 +19,31 @@ async function startApp() {
       return;
     }
     
+<<<<<<< HEAD
     console.log('Rendering app with error boundary...');
+=======
+    console.log('Rendering initial app with loading state and error boundary...');
+    
+    // Try to initialize the database connection
+    console.log('Attempting database initialization...');
+    
+    try {
+      await initializeDatabase();
+      console.log('Database initialization completed successfully');
+      
+      // Double-check connection status
+      const status = getDatabaseConnectionStatus();
+      console.log('Connection status after initialization:', status);
+      
+      if (!status.connected && status.error) {
+        console.warn('Database connection issue detected but continuing app startup:', status.error);
+      }
+    } catch (dbError) {
+      // Log the error but continue rendering the app
+      // The DatabaseContext will handle this error and display it to the user
+      console.error('ERROR DURING DATABASE INITIALIZATION (but continuing):', dbError);
+    }
+>>>>>>> 247e54d8cf2ab37cc17bb28c5cb119e9bc6c7393
     
     createRoot(rootElement).render(
       <ErrorBoundary>
@@ -35,6 +59,9 @@ async function startApp() {
         <div style="padding: 20px; color: red; font-family: sans-serif;">
           <h1>Critical Error</h1>
           <p>The application failed to start: ${error instanceof Error ? error.message : String(error)}</p>
+          <pre style="background:#f5f5f5;padding:10px;overflow:auto;max-height:300px;margin-top:10px;">
+            ${error instanceof Error ? (error.stack || error.message) : String(error)}
+          </pre>
         </div>
       `;
     } catch (e) {
