@@ -29,9 +29,9 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       retry: 1,
       staleTime: 10000,
-      // Updated error handling approach for new React Query version
       meta: {
-        onError: (error) => {
+        // Corrigido: removida a propriedade onError direta e movida para dentro de meta
+        errorHandler: (error: unknown) => {
           console.error("Global query error:", error);
         }
       }
