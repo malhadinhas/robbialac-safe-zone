@@ -29,6 +29,10 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       retry: 1,
       staleTime: 10000,
+      // Add global error handler
+      onError: (error) => {
+        console.error("Global query error:", error);
+      }
     },
   },
 });
@@ -42,13 +46,18 @@ const App = () => {
       console.log("SAFETY CHECK: App might be stuck in loading state");
       console.log("SAFETY CHECK: Current route:", window.location.pathname);
       console.log("SAFETY CHECK: Current URL:", window.location.href);
-    }, 10000);
+      
+      // Log detailed React tree state
+      console.log("SAFETY CHECK: Trying to identify where rendering might be stuck");
+    }, 5000); // Reduced from 10 seconds to 5 seconds
     
     return () => {
       clearTimeout(safetyTimeout);
       console.log("App component cleanup");
     };
   }, []);
+
+  console.log("App component rendering...");
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -58,28 +67,30 @@ const App = () => {
         <BrowserRouter>
           <DatabaseProvider>
             <AuthProvider>
-              <Routes>
-                {/* Public Routes */}
-                <Route element={<PublicOnlyRoute />}>
-                  <Route path="/login" element={<Login />} />
-                </Route>
-                
-                {/* Private Routes */}
-                <Route element={<PrivateRoute />}>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/formacoes" element={<Formacoes />} />
-                  <Route path="/videos/:zone" element={<Videos />} />
-                  <Route path="/videos/visualizar/:id" element={<VideosVisualizar />} />
-                  <Route path="/quase-acidentes" element={<QuaseAcidentes />} />
-                  <Route path="/quase-acidentes/editar/:id" element={<QuaseAcidentesEditar />} />
-                  <Route path="/quase-acidentes/novo" element={<QuaseAcidentesNovo />} />
-                  <Route path="/pontuacao" element={<Pontuacao />} />
-                  <Route path="/definicoes" element={<Definicoes />} />
-                </Route>
-                
-                {/* Error Route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <div className="app-container">
+                <Routes>
+                  {/* Public Routes */}
+                  <Route element={<PublicOnlyRoute />}>
+                    <Route path="/login" element={<Login />} />
+                  </Route>
+                  
+                  {/* Private Routes */}
+                  <Route element={<PrivateRoute />}>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/formacoes" element={<Formacoes />} />
+                    <Route path="/videos/:zone" element={<Videos />} />
+                    <Route path="/videos/visualizar/:id" element={<VideosVisualizar />} />
+                    <Route path="/quase-acidentes" element={<QuaseAcidentes />} />
+                    <Route path="/quase-acidentes/editar/:id" element={<QuaseAcidentesEditar />} />
+                    <Route path="/quase-acidentes/novo" element={<QuaseAcidentesNovo />} />
+                    <Route path="/pontuacao" element={<Pontuacao />} />
+                    <Route path="/definicoes" element={<Definicoes />} />
+                  </Route>
+                  
+                  {/* Error Route */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
             </AuthProvider>
           </DatabaseProvider>
         </BrowserRouter>

@@ -17,22 +17,35 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
+  
+  // Function to safely check and set connection status without crashing the app
+  const safeCheckConnection = async (): Promise<boolean> => {
+    try {
+      console.log("DatabaseContext: Safely checking connection status...");
+      const status = getDatabaseConnectionStatus();
+      console.log("DatabaseContext: Got connection status:", status);
+      
+      // Update state based on connection status
+      setIsConnected(status.connected);
+      
+      if (status.error !== connectionError) {
+        console.log("DatabaseContext: Connection error changed:", status.error);
+        setConnectionError(status.error);
+      }
+      
+      return status.connected;
+    } catch (error) {
+      console.error("DatabaseContext: Error safely checking connection:", error);
+      setConnectionError("Error checking connection status: " + (error instanceof Error ? error.message : String(error)));
+      setIsConnected(false);
+      return false;
+    }
+  };
 
   // Function to check connection status
   const checkConnection = async (): Promise<boolean> => {
     console.log("DatabaseContext: Checking connection status...");
-    const status = getDatabaseConnectionStatus();
-    console.log("DatabaseContext: Got connection status:", status);
-    
-    // Update state based on connection status
-    setIsConnected(status.connected);
-    
-    if (status.error !== connectionError) {
-      console.log("DatabaseContext: Connection error changed:", status.error);
-      setConnectionError(status.error);
-    }
-    
-    return status.connected;
+    return safeCheckConnection();
   };
 
   // Function to attempt reconnection
@@ -42,7 +55,7 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
       setIsInitializing(true);
       
       const result = await tryReconnect();
-      await checkConnection(); // Update state after reconnection attempt
+      await safeCheckConnection(); // Update state after reconnection attempt
       
       if (result) {
         toast.success("Successfully reconnected to MongoDB!");
@@ -52,13 +65,15 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
         console.log("DatabaseContext: Reconnection failed");
       }
       
-      setIsInitializing(false);
       return result;
     } catch (error) {
       console.error("DatabaseContext: Detailed error during reconnection attempt:", error);
       toast.error("Error during reconnection: " + (error instanceof Error ? error.message : "Unknown error"));
-      setIsInitializing(false);
+      setConnectionError("Reconnection error: " + (error instanceof Error ? error.message : String(error)));
+      setIsConnected(false);
       return false;
+    } finally {
+      setIsInitializing(false);
     }
   };
 
@@ -69,11 +84,11 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
     const initialCheck = async () => {
       try {
         console.log("DatabaseContext: Running initial connection check...");
-        await checkConnection();
+        await safeCheckConnection();
         console.log("DatabaseContext: Initial connection check completed");
       } catch (error) {
         console.error("DatabaseContext: Error during initial connection check:", error);
-        setConnectionError(error instanceof Error ? error.message : "Unknown error during connection check");
+        setConnectionError("Initial connection check error: " + (error instanceof Error ? error.message : String(error)));
       } finally {
         // Small delay to ensure the interface is rendered
         setTimeout(() => {
@@ -87,7 +102,7 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
     
     // Check connection periodically
     const interval = setInterval(() => {
-      checkConnection().catch(err => console.error("Periodic connection check error:", err));
+      safeCheckConnection().catch(err => console.error("Periodic connection check error:", err));
     }, 60000); // Check every minute
     
     return () => clearInterval(interval);
