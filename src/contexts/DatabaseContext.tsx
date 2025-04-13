@@ -8,6 +8,7 @@ interface DatabaseContextType {
   connectionError: string | null;
   checkConnection: () => Promise<boolean>;
   reconnect: () => Promise<boolean>;
+  isInitializing: boolean;
 }
 
 const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
@@ -15,10 +16,13 @@ const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined
 export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
 
   // Função para verificar o status da conexão
   const checkConnection = async (): Promise<boolean> => {
+    console.log("Verificando status da conexão...");
     const status = getDatabaseConnectionStatus();
+    console.log("Status da conexão:", status);
     setIsConnected(status.connected);
     setConnectionError(status.error);
     return status.connected;
@@ -27,6 +31,8 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
   // Função para tentar reconectar
   const reconnect = async (): Promise<boolean> => {
     try {
+      console.log("Iniciando tentativa de reconexão...");
+      setIsInitializing(true);
       const result = await tryReconnect();
       await checkConnection(); // Atualiza o estado após tentativa de reconexão
       
@@ -36,9 +42,12 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
         toast.error("Não foi possível reconectar ao MongoDB");
       }
       
+      setIsInitializing(false);
       return result;
     } catch (error) {
+      console.error("Erro detalhado ao tentar reconectar:", error);
       toast.error("Erro ao tentar reconectar: " + (error instanceof Error ? error.message : "Erro desconhecido"));
+      setIsInitializing(false);
       return false;
     }
   };
@@ -46,14 +55,21 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
   // Verificar o status inicial da conexão
   useEffect(() => {
     const initialCheck = async () => {
-      await checkConnection();
+      try {
+        console.log("Realizando verificação inicial da conexão...");
+        await checkConnection();
+      } catch (error) {
+        console.error("Erro durante verificação inicial:", error);
+      } finally {
+        setIsInitializing(false);
+      }
     };
 
     initialCheck();
     
     // Verifica a conexão periodicamente
     const interval = setInterval(() => {
-      checkConnection().catch(console.error);
+      checkConnection().catch(err => console.error("Erro ao verificar conexão:", err));
     }, 60000); // Verifica a cada minuto
     
     return () => clearInterval(interval);
@@ -61,10 +77,10 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
 
   // Mostrar notificações em caso de erros de conexão
   useEffect(() => {
-    if (connectionError) {
+    if (connectionError && !isInitializing) {
       toast.error(`Erro de conexão com o banco de dados: ${connectionError}`);
     }
-  }, [connectionError]);
+  }, [connectionError, isInitializing]);
 
   return (
     <DatabaseContext.Provider value={{
@@ -72,6 +88,7 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
       connectionError,
       checkConnection,
       reconnect,
+      isInitializing
     }}>
       {children}
     </DatabaseContext.Provider>

@@ -3,23 +3,37 @@ import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDatabase } from "@/contexts/DatabaseContext";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCcw, Settings } from "lucide-react";
+import { AlertTriangle, RefreshCcw, Settings, Loader2 } from "lucide-react";
 
 export const PrivateRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  const { isConnected, connectionError, reconnect } = useDatabase();
+  const { isConnected, connectionError, reconnect, isInitializing } = useDatabase();
   const navigate = useNavigate();
   
-  if (isLoading) {
+  console.log("PrivateRoute - Status:", { 
+    isAuthenticated, 
+    isLoading, 
+    isConnected, 
+    connectionError, 
+    isInitializing 
+  });
+  
+  // Mostra tela de carregamento durante a inicialização
+  if (isLoading || isInitializing) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-robbialac text-xl font-semibold">
-          Carregando...
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 text-robbialac animate-spin mb-4" />
+        <div className="text-robbialac text-xl font-semibold mb-2">
+          Inicializando...
         </div>
+        <p className="text-gray-500 text-center max-w-md">
+          Conectando ao banco de dados e carregando a aplicação.
+        </p>
       </div>
     );
   }
   
+  // Mostra erro de conexão se não conseguiu conectar ao banco de dados
   if (!isConnected && connectionError) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -57,24 +71,40 @@ export const PrivateRoute = () => {
     );
   }
   
+  // Redireciona para login se não estiver autenticado
   if (!isAuthenticated) {
+    console.log("Usuário não autenticado. Redirecionando para login...");
     return <Navigate to="/login" replace />;
   }
   
+  // Se tudo estiver ok, mostra o conteúdo da rota
   return <Outlet />;
 };
 
 export const PublicOnlyRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  const { isConnected, connectionError, reconnect } = useDatabase();
+  const { isConnected, connectionError, reconnect, isInitializing } = useDatabase();
   const navigate = useNavigate();
   
-  if (isLoading) {
+  console.log("PublicOnlyRoute - Status:", { 
+    isAuthenticated, 
+    isLoading, 
+    isConnected, 
+    connectionError, 
+    isInitializing 
+  });
+  
+  // Mostra tela de carregamento durante a inicialização
+  if (isLoading || isInitializing) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-robbialac text-xl font-semibold">
-          Carregando...
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 text-robbialac animate-spin mb-4" />
+        <div className="text-robbialac text-xl font-semibold mb-2">
+          Inicializando...
         </div>
+        <p className="text-gray-500 text-center max-w-md">
+          Conectando ao banco de dados e carregando a aplicação.
+        </p>
       </div>
     );
   }
@@ -117,9 +147,12 @@ export const PublicOnlyRoute = () => {
     );
   }
   
+  // Redireciona para dashboard se já estiver autenticado
   if (isAuthenticated) {
+    console.log("Usuário já autenticado. Redirecionando para dashboard...");
     return <Navigate to="/" replace />;
   }
   
+  // Se tudo estiver ok, mostra o conteúdo da rota
   return <Outlet />;
 };

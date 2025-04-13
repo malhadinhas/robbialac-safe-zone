@@ -8,7 +8,6 @@ export interface MongoDBConfig {
 }
 
 // Carregamento das configurações do MongoDB a partir das variáveis de ambiente
-// IMPORTANTE: Estas variáveis devem ser definidas em um arquivo .env local em produção
 const defaultConfig: MongoDBConfig = {
   uri: import.meta.env.VITE_MONGODB_URI || 'mongodb+srv://RobbialacSeguranca:L4QZLeo7U0EwsKw8@workplace-safety.j7o51.mongodb.net/workplace-safety',
   dbName: import.meta.env.VITE_MONGODB_DB_NAME || 'workplace-safety'
@@ -21,8 +20,12 @@ let mongoConfig: MongoDBConfig = { ...defaultConfig };
  * Inicializa a configuração do MongoDB Atlas
  */
 export function initializeMongoConfig(config: MongoDBConfig): void {
+  console.log("Atualizando configuração MongoDB:", {
+    uri: config.uri.substring(0, 20) + "...",
+    dbName: config.dbName
+  });
   mongoConfig = { ...config };
-  console.log("Configuração MongoDB inicializada com sucesso");
+  console.log("Configuração MongoDB atualizada com sucesso");
 }
 
 /**
