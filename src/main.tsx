@@ -12,8 +12,7 @@ async function startApp() {
     console.log('Banco de dados inicializado com sucesso');
   } catch (error) {
     console.error('Erro ao inicializar o banco de dados:', error);
-    // Continuamos mesmo se houver erro, pois pode ser um problema temporário
-    // ou o usuário pode configurar mais tarde nas definições
+    // Continuamos mesmo se houver erro, pois a interface tratará o erro
   }
   
   // Renderiza a aplicação

@@ -36,11 +36,17 @@ export async function connectToDatabase(): Promise<MongoClient> {
     const config = getMongoConfig();
     console.log("Tentando conectar ao MongoDB com URI:", config.uri.substring(0, 20) + "...");
     
-    const { MongoClient } = await import('mongodb');
-    client = new MongoClient(config.uri);
-    await client.connect();
-    console.log("Conectado ao MongoDB Atlas com sucesso!");
+    const newClient = new MongoClient(config.uri, {
+      // Opções adicionais para garantir compatibilidade e estabilidade
+      connectTimeoutMS: 5000,
+      socketTimeoutMS: 30000,
+      serverSelectionTimeoutMS: 5000
+    });
     
+    await newClient.connect();
+    client = newClient; // Só atribuímos após conexão bem-sucedida
+    
+    console.log("Conectado ao MongoDB Atlas com sucesso!");
     return client;
   } catch (error) {
     console.error("Erro ao conectar ao banco de dados:", error);
@@ -104,6 +110,7 @@ export async function initializeDatabase(): Promise<void> {
     console.log("Inicialização do banco de dados concluída");
   } catch (error) {
     console.error("Erro ao inicializar banco de dados:", error);
+    connectionError = error instanceof Error ? error : new Error("Erro desconhecido ao inicializar");
     throw error;
   }
 }
@@ -116,4 +123,23 @@ export function getDatabaseConnectionStatus(): { connected: boolean; error: stri
     connected: client !== null,
     error: connectionError ? connectionError.message : null
   };
+}
+
+/**
+ * Função para tentar reconectar ao banco de dados
+ */
+export async function tryReconnect(): Promise<boolean> {
+  if (client) {
+    await client.close().catch(err => console.error("Erro ao fechar conexão existente:", err));
+    client = null;
+  }
+  
+  connectionError = null;
+  
+  try {
+    await connectToDatabase();
+    return true;
+  } catch (error) {
+    return false;
+  }
 }

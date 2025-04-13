@@ -1,12 +1,13 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { getDatabaseConnectionStatus } from "@/services/database";
+import { getDatabaseConnectionStatus, tryReconnect } from "@/services/database";
 import { toast } from "sonner";
 
 interface DatabaseContextType {
   isConnected: boolean;
   connectionError: string | null;
   checkConnection: () => Promise<boolean>;
+  reconnect: () => Promise<boolean>;
 }
 
 const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
@@ -23,6 +24,25 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
     return status.connected;
   };
 
+  // Função para tentar reconectar
+  const reconnect = async (): Promise<boolean> => {
+    try {
+      const result = await tryReconnect();
+      await checkConnection(); // Atualiza o estado após tentativa de reconexão
+      
+      if (result) {
+        toast.success("Reconectado ao MongoDB com sucesso!");
+      } else {
+        toast.error("Não foi possível reconectar ao MongoDB");
+      }
+      
+      return result;
+    } catch (error) {
+      toast.error("Erro ao tentar reconectar: " + (error instanceof Error ? error.message : "Erro desconhecido"));
+      return false;
+    }
+  };
+
   // Verificar o status inicial da conexão
   useEffect(() => {
     const initialCheck = async () => {
@@ -30,6 +50,13 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
     };
 
     initialCheck();
+    
+    // Verifica a conexão periodicamente
+    const interval = setInterval(() => {
+      checkConnection().catch(console.error);
+    }, 60000); // Verifica a cada minuto
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Mostrar notificações em caso de erros de conexão
@@ -44,6 +71,7 @@ export const DatabaseProvider = ({ children }: { children: ReactNode }) => {
       isConnected,
       connectionError,
       checkConnection,
+      reconnect,
     }}>
       {children}
     </DatabaseContext.Provider>

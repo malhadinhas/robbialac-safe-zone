@@ -1,13 +1,14 @@
 
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDatabase } from "@/contexts/DatabaseContext";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, RefreshCcw, Settings } from "lucide-react";
 
 export const PrivateRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  const { isConnected, connectionError, checkConnection } = useDatabase();
+  const { isConnected, connectionError, reconnect } = useDatabase();
+  const navigate = useNavigate();
   
   if (isLoading) {
     return (
@@ -31,20 +32,23 @@ export const PrivateRoute = () => {
             Não foi possível conectar ao banco de dados MongoDB. Por favor, verifique suas 
             configurações de conexão e tente novamente.
           </p>
-          <p className="text-gray-700 mb-4 font-mono text-sm bg-gray-100 p-2 rounded">
+          <p className="text-gray-700 mb-4 font-mono text-sm bg-gray-100 p-2 rounded overflow-auto max-h-32">
             {connectionError}
           </p>
           <div className="flex justify-between">
             <Button 
-              onClick={() => checkConnection()}
-              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => reconnect()}
+              className="bg-blue-600 hover:bg-blue-700 flex items-center"
             >
+              <RefreshCcw className="mr-2 h-4 w-4" />
               Tentar Novamente
             </Button>
             <Button 
-              onClick={() => window.location.href = "/definicoes"}
+              onClick={() => navigate("/definicoes")}
               variant="outline" 
+              className="flex items-center"
             >
+              <Settings className="mr-2 h-4 w-4" />
               Ir para Definições
             </Button>
           </div>
@@ -62,7 +66,8 @@ export const PrivateRoute = () => {
 
 export const PublicOnlyRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  const { isConnected, connectionError, checkConnection } = useDatabase();
+  const { isConnected, connectionError, reconnect } = useDatabase();
+  const navigate = useNavigate();
   
   if (isLoading) {
     return (
@@ -87,15 +92,26 @@ export const PublicOnlyRoute = () => {
             Não foi possível conectar ao banco de dados MongoDB. Por favor, verifique suas 
             configurações de conexão e tente novamente.
           </p>
-          <p className="text-gray-700 mb-4 font-mono text-sm bg-gray-100 p-2 rounded">
+          <p className="text-gray-700 mb-4 font-mono text-sm bg-gray-100 p-2 rounded overflow-auto max-h-32">
             {connectionError}
           </p>
-          <Button 
-            onClick={() => checkConnection()}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            Tentar Novamente
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button 
+              onClick={() => reconnect()}
+              className="bg-blue-600 hover:bg-blue-700 flex items-center justify-center"
+            >
+              <RefreshCcw className="mr-2 h-4 w-4" />
+              Tentar Novamente
+            </Button>
+            <Button 
+              onClick={() => navigate("/definicoes")}
+              variant="outline" 
+              className="flex items-center justify-center"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Ir para Definições
+            </Button>
+          </div>
         </div>
       </div>
     );
