@@ -9,6 +9,12 @@ interface UserPointsBreakdown {
   color: string;
 }
 
+interface UserRanking {
+  position: number;
+  totalUsers: number;
+  points: number;
+}
+
 /**
  * Obtém a distribuição de pontos do usuário por categoria de atividade
  */
@@ -74,6 +80,63 @@ export const getUserPointsBreakdown = async (req: Request, res: Response) => {
     
     res.status(500).json({ 
       message: 'Erro ao buscar distribuição de pontos',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+};
+
+/**
+ * Obtém o ranking do usuário em relação a todos os usuários
+ */
+export const getUserRanking = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    
+    if (!userId) {
+      logger.warn('Solicitação de ranking sem ID de usuário');
+      return res.status(400).json({ message: 'ID de usuário é obrigatório' });
+    }
+    
+    logger.info(`Buscando ranking para o usuário ${userId}`);
+    
+    // Obtém a coleção de usuários
+    const usersCollection = await getCollection('users');
+    
+    // Obtém todos os usuários ordenados por pontos (decrescente)
+    const usersSorted = await usersCollection.find({}).sort({ points: -1 }).toArray();
+    
+    // Conta total de usuários
+    const totalUsers = usersSorted.length;
+    
+    // Encontra a posição do usuário atual
+    const userPosition = usersSorted.findIndex(user => user.id === userId) + 1;
+    
+    // Obtém os pontos do usuário
+    const user = await usersCollection.findOne({ id: userId });
+    const userPoints = user ? user.points : 0;
+    
+    const result: UserRanking = {
+      position: userPosition > 0 ? userPosition : totalUsers,
+      totalUsers,
+      points: userPoints
+    };
+    
+    logger.info(`Ranking recuperado com sucesso`, { 
+      userId, 
+      position: result.position,
+      totalUsers: result.totalUsers
+    });
+    
+    res.json(result);
+    
+  } catch (error) {
+    logger.error('Erro ao buscar ranking do usuário', {
+      userId: req.params.userId,
+      error: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+    
+    res.status(500).json({ 
+      message: 'Erro ao buscar ranking do usuário',
       details: error instanceof Error ? error.message : 'Erro desconhecido'
     });
   }

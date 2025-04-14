@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User } from "@/types";
 import { loginUser, logoutUser, getCurrentUser } from "@/services/auth";
@@ -11,6 +10,7 @@ interface AuthContextType {
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
+  updateUserPoints: (newPoints: number) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -60,6 +60,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     toast.info("Sessão encerrada");
     navigate('/login');
   };
+  
+  // Função para atualizar os pontos do usuário
+  const updateUserPoints = (newPoints: number) => {
+    if (user) {
+      const updatedUser = { ...user, points: newPoints };
+      setUser(updatedUser);
+      localStorage.setItem('robbialac_user', JSON.stringify(updatedUser));
+    }
+  };
 
   return (
     <AuthContext.Provider value={{
@@ -68,6 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       logout,
       isLoading,
       isAuthenticated: !!user,
+      updateUserPoints,
     }}>
       {children}
     </AuthContext.Provider>

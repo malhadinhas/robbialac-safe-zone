@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserMedals, Medal } from "@/services/medalService";
-import { getUserPointsBreakdown, UserPointsBreakdown } from "@/services/statsService";
+import { getUserPointsBreakdown, UserPointsBreakdown, getUserRanking, UserRanking } from "@/services/statsService";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,6 +18,7 @@ export default function Pontuacao() {
   const [medals, setMedals] = useState<Medal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pointsBreakdown, setPointsBreakdown] = useState<UserPointsBreakdown[]>([]);
+  const [userRanking, setUserRanking] = useState<UserRanking>({ position: 0, totalUsers: 0, points: 0 });
   
   useEffect(() => {
     const fetchData = async () => {
@@ -30,6 +31,10 @@ export default function Pontuacao() {
         // Buscar distribuição de pontos
         const pointsData = await getUserPointsBreakdown(user?.id);
         setPointsBreakdown(pointsData);
+        
+        // Buscar ranking do usuário
+        const rankingData = await getUserRanking(user?.id);
+        setUserRanking(rankingData);
       } catch (error) {
         console.error("Erro ao buscar dados:", error);
       } finally {
@@ -233,7 +238,13 @@ export default function Pontuacao() {
             <div className="text-5xl font-bold text-robbialac mb-6">{user?.points || 0}</div>
             <div className="text-center space-y-2">
               <p className="font-medium">Nível {currentLevel}</p>
-              <p className="text-sm text-gray-600">Ranking: #12 de 50</p>
+              <p className="text-sm text-gray-600">
+                {isLoading ? (
+                  <span className="animate-pulse">Carregando ranking...</span>
+                ) : (
+                  `Ranking: #${userRanking.position} de ${userRanking.totalUsers}`
+                )}
+              </p>
               <Button className="mt-4 w-full bg-robbialac hover:bg-robbialac-dark">
                 Ver Ranking Completo
               </Button>
