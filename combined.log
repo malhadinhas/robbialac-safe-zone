@@ -97,3 +97,56 @@
 {"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:06:07.584Z","url":"/api/database/status"}
 {"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:07:07.590Z","url":"/api/database/status"}
 {"level":"info","message":"Servidor rodando em http://localhost:3000","timestamp":"2025-04-14T10:13:38.124Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:13:58.132Z","url":"/api/incidents"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:13:58.135Z","url":"/api/videos"}
+{"count":0,"level":"info","message":"Vídeos recuperados com sucesso","timestamp":"2025-04-14T10:13:58.537Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:14.794Z","url":"/api/zones/stats"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:14.796Z","url":"/api/videos/category/Seguran%C3%A7a/most-viewed?limit=1"}
+{"category":"Segurança","level":"info","limit":1,"message":"Buscando vídeos por categoria:","timestamp":"2025-04-14T10:14:14.797Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:14.800Z","url":"/api/videos/category/Procedimentos/most-viewed?limit=1"}
+{"category":"Procedimentos","level":"info","limit":1,"message":"Buscando vídeos por categoria:","timestamp":"2025-04-14T10:14:14.801Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:14.804Z","url":"/api/videos/category/Equipamentos/most-viewed?limit=1"}
+{"category":"Equipamentos","level":"info","limit":1,"message":"Buscando vídeos por categoria:","timestamp":"2025-04-14T10:14:14.805Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:14.807Z","url":"/api/videos/category/Outros/most-viewed?limit=1"}
+{"category":"Outros","level":"info","limit":1,"message":"Buscando vídeos por categoria:","timestamp":"2025-04-14T10:14:14.807Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:14.808Z","url":"/api/videos/category/Treinamento/most-viewed?limit=1"}
+{"category":"Treinamento","level":"info","limit":1,"message":"Buscando vídeos por categoria:","timestamp":"2025-04-14T10:14:14.809Z"}
+{"count":5,"level":"info","message":"Estatísticas de zonas recuperadas com sucesso","timestamp":"2025-04-14T10:14:14.854Z"}
+{"level":"info","message":"Encontrados 0 vídeos para a categoria \"Segurança\"","timestamp":"2025-04-14T10:14:14.864Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"POST","timestamp":"2025-04-14T10:14:14.899Z","url":"/api/videos/category/Seguran%C3%A7a/next"}
+{"level":"info","message":"Encontrados 0 vídeos para a categoria \"Outros\"","timestamp":"2025-04-14T10:14:14.926Z"}
+{"level":"info","message":"Encontrados 0 vídeos para a categoria \"Treinamento\"","timestamp":"2025-04-14T10:14:14.928Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"POST","timestamp":"2025-04-14T10:14:14.935Z","url":"/api/videos/category/Treinamento/next"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"POST","timestamp":"2025-04-14T10:14:14.937Z","url":"/api/videos/category/Outros/next"}
+{"level":"info","message":"Encontrados 0 vídeos para a categoria \"Equipamentos\"","timestamp":"2025-04-14T10:14:15.229Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"POST","timestamp":"2025-04-14T10:14:15.235Z","url":"/api/videos/category/Equipamentos/next"}
+{"level":"info","message":"Encontrados 0 vídeos para a categoria \"Procedimentos\"","timestamp":"2025-04-14T10:14:15.243Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"POST","timestamp":"2025-04-14T10:14:15.250Z","url":"/api/videos/category/Procedimentos/next"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:18.107Z","url":"/api/videos"}
+{"count":0,"level":"info","message":"Vídeos recuperados com sucesso","timestamp":"2025-04-14T10:14:18.171Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:23.218Z","url":"/api/videos/category/Seguran%C3%A7a/most-viewed?limit=1"}
+{"category":"Segurança","level":"info","limit":1,"message":"Buscando vídeos por categoria:","timestamp":"2025-04-14T10:14:23.218Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:23.221Z","url":"/api/videos/category/Treinamento/most-viewed?limit=1"}
+{"category":"Treinamento","level":"info","limit":1,"message":"Buscando vídeos por categoria:","timestamp":"2025-04-14T10:14:23.222Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:23.223Z","url":"/api/videos/category/Procedimentos/most-viewed?limit=1"}
+{"category":"Procedimentos","level":"info","limit":1,"message":"Buscando vídeos por categoria:","timestamp":"2025-04-14T10:14:23.223Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:23.224Z","url":"/api/videos/category/Equipamentos/most-viewed?limit=1"}
+{"category":"Equipamentos","level":"info","limit":1,"message":"Buscando vídeos por categoria:","timestamp":"2025-04-14T10:14:23.224Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:23.225Z","url":"/api/videos/category/Outros/most-viewed?limit=1"}
+{"category":"Outros","level":"info","limit":1,"message":"Buscando vídeos por categoria:","timestamp":"2025-04-14T10:14:23.226Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:23.227Z","url":"/api/zones/stats"}
+{"level":"info","message":"Encontrados 0 vídeos para a categoria \"Equipamentos\"","timestamp":"2025-04-14T10:14:23.283Z"}
+{"level":"info","message":"Encontrados 0 vídeos para a categoria \"Segurança\"","timestamp":"2025-04-14T10:14:23.284Z"}
+{"level":"info","message":"Encontrados 0 vídeos para a categoria \"Procedimentos\"","timestamp":"2025-04-14T10:14:23.284Z"}
+{"level":"info","message":"Encontrados 0 vídeos para a categoria \"Treinamento\"","timestamp":"2025-04-14T10:14:23.287Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"POST","timestamp":"2025-04-14T10:14:23.314Z","url":"/api/videos/category/Equipamentos/next"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"POST","timestamp":"2025-04-14T10:14:23.315Z","url":"/api/videos/category/Seguran%C3%A7a/next"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"POST","timestamp":"2025-04-14T10:14:23.315Z","url":"/api/videos/category/Procedimentos/next"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"POST","timestamp":"2025-04-14T10:14:23.316Z","url":"/api/videos/category/Treinamento/next"}
+{"count":5,"level":"info","message":"Estatísticas de zonas recuperadas com sucesso","timestamp":"2025-04-14T10:14:23.626Z"}
+{"level":"info","message":"Encontrados 0 vídeos para a categoria \"Outros\"","timestamp":"2025-04-14T10:14:23.650Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"POST","timestamp":"2025-04-14T10:14:23.843Z","url":"/api/videos/category/Outros/next"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:25.124Z","url":"/api/incidents"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:26.008Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:14:56.583Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T10:15:26.588Z","url":"/api/database/status"}
