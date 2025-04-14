@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import ErrorBoundary from './components/ErrorBoundary.tsx';
+import { initializeDatabase, getDatabaseConnectionStatus } from './config/database';
 
 // Log to help debug initialization
 console.log('=== APPLICATION STARTUP SEQUENCE ===');
@@ -19,9 +20,6 @@ async function startApp() {
       return;
     }
     
-<<<<<<< HEAD
-    console.log('Rendering app with error boundary...');
-=======
     console.log('Rendering initial app with loading state and error boundary...');
     
     // Try to initialize the database connection
@@ -43,7 +41,6 @@ async function startApp() {
       // The DatabaseContext will handle this error and display it to the user
       console.error('ERROR DURING DATABASE INITIALIZATION (but continuing):', dbError);
     }
->>>>>>> 247e54d8cf2ab37cc17bb28c5cb119e9bc6c7393
     
     createRoot(rootElement).render(
       <ErrorBoundary>

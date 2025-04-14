@@ -1,10 +1,10 @@
-
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
-import { mockMedals } from "@/services/mockData";
+import { getUserMedals, Medal } from "@/services/medalService";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,10 +14,30 @@ import { useIsCompactView } from "@/hooks/use-mobile";
 export default function Pontuacao() {
   const { user } = useAuth();
   const isCompactView = useIsCompactView();
+  const [medals, setMedals] = useState<Medal[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchMedals = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getUserMedals(user?.id);
+        setMedals(data);
+      } catch (error) {
+        console.error("Erro ao buscar medalhas:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user?.id) {
+      fetchMedals();
+    }
+  }, [user?.id]);
   
   // Cálculo da próxima medalha e progresso
-  const earnedMedals = mockMedals.filter(medal => medal.acquired);
-  const unearnedMedals = mockMedals.filter(medal => !medal.acquired);
+  const earnedMedals = medals || [];
+  const unearnedMedals: Medal[] = []; // Aqui você pode implementar uma lógica para buscar medalhas não conquistadas
   
   // Progress para o próximo nível
   const progressToNextLevel = Math.min(((user?.points || 0) % 500) / 5, 100);

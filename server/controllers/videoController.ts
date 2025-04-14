@@ -1,139 +1,77 @@
 import { Request, Response } from 'express';
-import { Video } from '../models/Video';
-import { logger } from '../utils/logger';
+import Video from '../models/Video';
+import logger from '../utils/logger';
 
 // Buscar todos os vídeos
 export const getVideos = async (req: Request, res: Response) => {
   try {
-    const videos = await Video.find().sort({ createdAt: -1 });
-    logger.info(`Recuperados ${videos.length} vídeos com sucesso`);
+    const videos = await Video.find();
+    logger.info('Vídeos recuperados com sucesso', { count: videos.length });
     res.json(videos);
   } catch (error) {
-    logger.error('Erro ao buscar vídeos:', { error });
-    res.status(500).json({ 
-      message: 'Erro ao buscar vídeos',
-      details: error instanceof Error ? error.message : 'Erro desconhecido'
-    });
+    logger.error('Erro ao recuperar vídeos', { error });
+    res.status(500).json({ message: 'Erro ao recuperar vídeos' });
   }
 };
 
 // Buscar um vídeo específico
 export const getVideoById = async (req: Request, res: Response) => {
   try {
-    if (!req.params.id) {
-      logger.warn('Tentativa de buscar vídeo sem ID');
-      return res.status(400).json({ message: 'ID do vídeo é obrigatório' });
-    }
-
-    const video = await Video.findOne({ id: req.params.id });
+    const video = await Video.findById(req.params.id);
     if (!video) {
-      logger.warn(`Vídeo não encontrado com ID: ${req.params.id}`);
+      logger.warn('Vídeo não encontrado', { id: req.params.id });
       return res.status(404).json({ message: 'Vídeo não encontrado' });
     }
-
-    logger.info(`Vídeo recuperado com sucesso: ${video.id}`);
+    logger.info('Vídeo recuperado com sucesso', { id: video._id });
     res.json(video);
   } catch (error) {
-    logger.error('Erro ao buscar vídeo por ID:', { 
-      error,
-      videoId: req.params.id 
-    });
-    res.status(500).json({ 
-      message: 'Erro ao buscar vídeo',
-      details: error instanceof Error ? error.message : 'Erro desconhecido'
-    });
+    logger.error('Erro ao recuperar vídeo', { id: req.params.id, error });
+    res.status(500).json({ message: 'Erro ao recuperar vídeo' });
   }
 };
 
 // Criar um novo vídeo
 export const createVideo = async (req: Request, res: Response) => {
   try {
-    // Verificar se já existe um vídeo com o mesmo título
-    const existingVideoByTitle = await Video.findOne({ title: req.body.title });
-    if (existingVideoByTitle) {
-      logger.warn(`Tentativa de criar vídeo com título duplicado: ${req.body.title}`);
-      return res.status(400).json({ 
-        message: 'Já existe um vídeo com este título',
-        existingVideo: existingVideoByTitle
-      });
-    }
-
-    // Verificar se já existe um vídeo com a mesma URL
-    const existingVideoByUrl = await Video.findOne({ url: req.body.url });
-    if (existingVideoByUrl) {
-      logger.warn(`Tentativa de criar vídeo com URL duplicada: ${req.body.url}`);
-      return res.status(400).json({ 
-        message: 'Já existe um vídeo com esta URL',
-        existingVideo: existingVideoByUrl
-      });
-    }
-
     const video = new Video(req.body);
     await video.save();
-    
-    logger.info(`Novo vídeo criado: ${video.id}`, {
-      title: video.title,
-      category: video.category,
-      zone: video.zone
-    });
-    
+    logger.info('Vídeo criado com sucesso', { id: video._id });
     res.status(201).json(video);
   } catch (error) {
-    logger.error('Erro ao criar vídeo:', error);
-    res.status(400).json({ 
-      message: 'Erro ao criar vídeo',
-      details: error instanceof Error ? error.message : 'Erro desconhecido'
-    });
+    logger.error('Erro ao criar vídeo', { error });
+    res.status(500).json({ message: 'Erro ao criar vídeo' });
   }
 };
 
 // Atualizar um vídeo
 export const updateVideo = async (req: Request, res: Response) => {
   try {
-    const video = await Video.findOneAndUpdate(
-      { id: req.params.id },
-      req.body,
-      { new: true, runValidators: true }
-    );
-
+    const video = await Video.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!video) {
-      logger.warn(`Vídeo não encontrado para atualização: ${req.params.id}`);
+      logger.warn('Vídeo não encontrado para atualização', { id: req.params.id });
       return res.status(404).json({ message: 'Vídeo não encontrado' });
     }
-
-    logger.info(`Vídeo atualizado com sucesso: ${video.id}`);
+    logger.info('Vídeo atualizado com sucesso', { id: video._id });
     res.json(video);
   } catch (error) {
-    logger.error('Erro ao atualizar vídeo:', {
-      error,
-      videoId: req.params.id
-    });
-    res.status(400).json({ 
-      message: 'Erro ao atualizar vídeo',
-      details: error instanceof Error ? error.message : 'Erro desconhecido'
-    });
+    logger.error('Erro ao atualizar vídeo', { id: req.params.id, error });
+    res.status(500).json({ message: 'Erro ao atualizar vídeo' });
   }
 };
 
 // Excluir um vídeo
 export const deleteVideo = async (req: Request, res: Response) => {
   try {
-    const video = await Video.findOneAndDelete({ id: req.params.id });
+    const video = await Video.findByIdAndDelete(req.params.id);
     if (!video) {
-      logger.warn(`Vídeo não encontrado para exclusão: ${req.params.id}`);
+      logger.warn('Vídeo não encontrado para exclusão', { id: req.params.id });
       return res.status(404).json({ message: 'Vídeo não encontrado' });
     }
-    logger.info(`Vídeo excluído com sucesso: ${video.id}`);
+    logger.info('Vídeo excluído com sucesso', { id: req.params.id });
     res.json({ message: 'Vídeo excluído com sucesso' });
   } catch (error) {
-    logger.error('Erro ao excluir vídeo:', {
-      error,
-      videoId: req.params.id
-    });
-    res.status(500).json({ 
-      message: 'Erro ao excluir vídeo',
-      details: error instanceof Error ? error.message : 'Erro desconhecido'
-    });
+    logger.error('Erro ao excluir vídeo', { id: req.params.id, error });
+    res.status(500).json({ message: 'Erro ao excluir vídeo' });
   }
 };
 

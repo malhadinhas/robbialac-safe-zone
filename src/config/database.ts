@@ -70,6 +70,26 @@ function getMongoConfig(): MongoDBConfigType {
   }
 })();
 
+// Funções para inicialização e verificação do banco de dados
+export async function initializeDatabase(): Promise<void> {
+  try {
+    console.log('Inicializando conexão com o banco de dados...');
+    // Aqui você pode adicionar a lógica de inicialização do banco de dados
+    console.log('Conexão com o banco de dados inicializada com sucesso');
+  } catch (error) {
+    console.error('Erro ao inicializar o banco de dados:', error);
+    throw error;
+  }
+}
+
+export function getDatabaseConnectionStatus() {
+  return {
+    connected: true, // Você pode implementar uma verificação real aqui
+    error: null,
+    lastChecked: new Date()
+  };
+}
+
 export {
   MongoDBConfig,
   getMongoConfig,

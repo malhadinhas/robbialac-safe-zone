@@ -63,9 +63,7 @@ export async function getVideoById(id: string): Promise<Video | null> {
   try {
     const response = await fetch(`/api/videos/${id}`);
     if (!response.ok) {
-      if (response.status === 404) {
-        return null;
-      }
+      if (response.status === 404) return null;
       throw new Error('Erro ao buscar vídeo');
     }
     const video = await response.json();
@@ -74,57 +72,41 @@ export async function getVideoById(id: string): Promise<Video | null> {
       uploadDate: new Date(video.uploadDate)
     };
   } catch (error) {
-    console.error("Erro ao buscar vídeo por ID:", error);
+    console.error("Erro ao buscar vídeo:", error);
     throw error;
   }
 }
 
-export async function incrementVideoViews(id: string): Promise<void> {
+export async function incrementVideoViews(videoId: string): Promise<void> {
   try {
-    const response = await fetch(`/api/videos/${id}/views`, {
+    const response = await fetch(`/api/videos/${videoId}/views`, {
       method: 'POST'
     });
     if (!response.ok) {
       throw new Error('Erro ao incrementar visualizações');
     }
-    console.log(`Visualizações incrementadas para o vídeo ID: ${id}`);
   } catch (error) {
-    console.error("Erro ao incrementar visualizações do vídeo:", error);
+    console.error("Erro ao incrementar visualizações:", error);
     throw error;
   }
 }
 
 export async function getLastViewedVideosByCategory(category: string, limit: number = 5): Promise<Video[]> {
   try {
-    // Normaliza a categoria antes de fazer a chamada
-    const normalizedCategory = normalizeCategory(category);
-    const encodedCategory = encodeURIComponent(normalizedCategory);
+    const normalizedCategory = encodeURIComponent(category);
+    const response = await fetch(`/api/videos/category/${normalizedCategory}/most-viewed?limit=${limit}`);
     
-    console.log('Buscando vídeos para categoria:', {
-      original: category,
-      normalized: normalizedCategory,
-      encoded: encodedCategory
-    });
-    
-    const response = await fetch(`/api/videos/category/${encodedCategory}/most-viewed?limit=${limit}`);
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Erro na resposta da API:', {
-        status: response.status,
-        statusText: response.statusText,
-        data: errorData
-      });
-      throw new Error(`Erro ao buscar vídeos por categoria: ${response.status} ${response.statusText}`);
+      throw new Error(`Erro ao buscar vídeos por categoria: ${response.status}`);
     }
     
     const videos = await response.json();
-    console.log(`Recuperados ${videos.length} vídeos mais visualizados da categoria ${category}`);
     return videos.map((video: Video) => ({
       ...video,
       uploadDate: new Date(video.uploadDate)
     }));
   } catch (error) {
-    console.error("Erro ao buscar vídeos mais visualizados por categoria:", error);
+    console.error("Erro ao buscar vídeos por categoria:", error);
     throw error;
   }
 }
@@ -157,39 +139,56 @@ export async function getNextVideoToWatch(category: string, viewedVideoIds: stri
 
 export async function createVideo(video: Omit<Video, "id" | "uploadDate" | "views">): Promise<Video> {
   try {
-    // Primeiro, verifica se já existe um vídeo com o mesmo título
+    // Normalizar o título para comparação
+    const normalizedTitle = video.title.toLowerCase().trim();
+    const normalizedUrl = video.url.trim();
+
+    // Primeiro, verifica se já existe um vídeo com o mesmo título ou URL
     const videos = await getVideos();
-    const existingVideo = videos.find(v => 
-      v.title.toLowerCase() === video.title.toLowerCase() ||
-      v.url === video.url
+    
+    // Verificar título duplicado (ignorando case e espaços)
+    const existingVideoByTitle = videos.find(v => 
+      v.title.toLowerCase().trim() === normalizedTitle
     );
 
-    if (existingVideo) {
-      const errorMessage = existingVideo.title.toLowerCase() === video.title.toLowerCase()
-        ? `Já existe um vídeo com o título "${video.title}"`
-        : `Já existe um vídeo com a URL fornecida`;
-      
-      throw new Error(errorMessage);
+    if (existingVideoByTitle) {
+      throw new Error(`Já existe um vídeo com o título "${video.title}"`);
     }
 
+    // Verificar URL duplicada
+    const existingVideoByUrl = videos.find(v => 
+      v.url.trim() === normalizedUrl
+    );
+
+    if (existingVideoByUrl) {
+      throw new Error(`Já existe um vídeo com a URL fornecida`);
+    }
+
+    // Verificar se a categoria é válida
+    const validCategories = ['Segurança', 'Qualidade', 'Procedimentos e Regras'];
+    if (!validCategories.includes(video.category)) {
+      throw new Error(`Categoria inválida. Deve ser uma das seguintes: ${validCategories.join(', ')}`);
+    }
+
+    // Se passou por todas as verificações, criar o vídeo
     const response = await fetch('/api/videos', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(video)
+      body: JSON.stringify({
+        ...video,
+        title: video.title.trim(), // Garantir que não há espaços extras
+        url: video.url.trim()
+      })
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      if (errorData.existingVideo) {
-        throw new Error(errorData.message);
-      }
-      throw new Error('Erro ao criar vídeo: ' + (errorData.details || errorData.message || 'Erro desconhecido'));
+      throw new Error(errorData.message || 'Erro ao criar vídeo');
     }
 
     const newVideo = await response.json();
-    console.log(`Novo vídeo criado com ID: ${newVideo.id}`);
     return {
       ...newVideo,
       uploadDate: new Date(newVideo.uploadDate)
@@ -205,10 +204,14 @@ export async function createVideo(video: Omit<Video, "id" | "uploadDate" | "view
  */
 export async function getVideoStreamUrl(videoId: string): Promise<string> {
   try {
-    const signedUrl = await generateSignedUrl(videoId);
+    const video = await getVideoById(videoId);
+    if (!video) throw new Error('Vídeo não encontrado');
+    
+    // Gerar URL assinada do Cloudflare R2
+    const signedUrl = await generateSignedUrl(video.url);
     return signedUrl;
   } catch (error) {
-    console.error("Erro ao obter URL de streaming para o vídeo:", error);
-    throw new Error("Não foi possível obter a URL do vídeo");
+    console.error("Erro ao obter URL do vídeo:", error);
+    throw error;
   }
 }

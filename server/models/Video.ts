@@ -144,4 +144,6 @@ videoSchema.methods.incrementViews = function() {
   return this.save();
 };
 
-export const Video = mongoose.model<IVideo>('Video', videoSchema); 
+// Criar e exportar o modelo
+const Video = mongoose.model<IVideo>('Video', videoSchema);
+export default Video; 

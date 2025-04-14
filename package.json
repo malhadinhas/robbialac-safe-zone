@@ -9,7 +9,11 @@
     "build": "tsc && vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:departments": "tsx server/scripts/seedDepartments.ts",
+    "seed:medals": "tsx server/scripts/seedMedals.ts",
+    "seed:zone-stats": "tsx server/scripts/seedZoneStats.ts",
+    "seed:all": "npm run seed:departments && npm run seed:medals && npm run seed:zone-stats"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.787.0",
@@ -47,6 +51,7 @@
     "@tanstack/react-query": "^5.56.2",
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.6",
+    "axios": "^1.8.4",
     "bcrypt": "^5.1.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -77,6 +82,7 @@
     "tailwindcss-animate": "^1.0.7",
     "three": "0.143.0",
     "vaul": "^0.9.3",
+    "winston": "^3.17.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

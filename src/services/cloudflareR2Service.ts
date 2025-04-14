@@ -23,44 +23,58 @@ const getR2Client = () => {
 
 export const generateSignedUrl = async (key: string): Promise<string> => {
   try {
-    console.log('Gerando URL assinada para chave:', key);
     const config = getR2Config();
     const client = getR2Client();
+    
+    // Se a key já é uma URL completa, extrair apenas o caminho
+    const videoKey = key.startsWith('http') 
+      ? new URL(key).pathname.slice(1) // Remove a barra inicial
+      : key;
+    
     const command = new GetObjectCommand({
       Bucket: config.bucketName,
-      Key: key,
+      Key: videoKey,
     });
-    const signedUrl = await getSignedUrl(client, command, { expiresIn: 3600 });
-    console.log('URL assinada gerada com sucesso:', signedUrl);
+    
+    const signedUrl = await getSignedUrl(client, command, { 
+      expiresIn: 3600 // URL válida por 1 hora
+    });
+    
     return signedUrl;
   } catch (error) {
     console.error("Erro ao gerar URL assinada:", error);
-    throw error;
+    throw new Error("Não foi possível gerar a URL do vídeo");
   }
 };
 
 export const prepareVideoUpload = async (fileName: string): Promise<{ uploadUrl: string; key: string }> => {
   try {
-    console.log('Preparando upload para arquivo:', fileName);
     const config = getR2Config();
     const key = `videos/${Date.now()}-${fileName}`;
     const client = getR2Client();
+    
     const command = new PutObjectCommand({
       Bucket: config.bucketName,
       Key: key,
+      ContentType: 'video/mp4', // Definir o tipo de conteúdo apropriado
     });
-    const uploadUrl = await getSignedUrl(client, command, { expiresIn: 3600 });
-    console.log('URL de upload gerada:', { key, uploadUrl });
-    return { uploadUrl, key };
+    
+    const uploadUrl = await getSignedUrl(client, command, { 
+      expiresIn: 3600 // URL válida por 1 hora
+    });
+    
+    return { 
+      uploadUrl, 
+      key: `${config.publicUrl}/${key}` // Retorna a URL completa
+    };
   } catch (error) {
     console.error("Erro ao preparar upload do vídeo:", error);
-    throw error;
+    throw new Error("Não foi possível preparar o upload do vídeo");
   }
 };
 
 export const completeVideoUpload = async (videoData: Partial<Video>): Promise<Video> => {
   try {
-    console.log('Completando upload do vídeo:', videoData);
     const response = await fetch("/api/videos", {
       method: "POST",
       headers: {
@@ -70,20 +84,13 @@ export const completeVideoUpload = async (videoData: Partial<Video>): Promise<Vi
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Erro na resposta da API:', {
-        status: response.status,
-        statusText: response.statusText,
-        data: errorData
-      });
       throw new Error("Erro ao salvar metadados do vídeo");
     }
 
     const video = await response.json();
-    console.log('Vídeo salvo com sucesso:', video);
     return video;
   } catch (error) {
     console.error("Erro ao completar upload do vídeo:", error);
-    throw error;
+    throw new Error("Não foi possível completar o upload do vídeo");
   }
 };

@@ -3,13 +3,13 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { mockStatsByZone } from "@/services/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Factory3DModelManager, { FactoryZone } from "@/components/Factory3DModelManager";
 import VideosCategoryCard from '@/components/VideosCategoryCard';
 import { NoScrollLayout } from '@/components/NoScrollLayout';
 import { useIsCompactView } from '@/hooks/use-mobile';
+import { getZoneStats, ZoneStats } from '@/services/zoneStatsService';
 
 const factoryZones = [
   { zone: 'Enchimento', color: '#3B82F6' },
@@ -28,10 +28,29 @@ export default function Formacoes() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [useSimpleView, setUseSimpleView] = useState(false);
   const isCompactView = useIsCompactView();
+  const [zoneStats, setZoneStats] = useState<ZoneStats[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     setIsAdmin(user?.role === 'admin_app');
   }, [user]);
+  
+  useEffect(() => {
+    const fetchZoneStats = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getZoneStats();
+        setZoneStats(data);
+      } catch (error) {
+        console.error("Erro ao buscar estatísticas das zonas:", error);
+        toast.error("Erro ao carregar estatísticas. Tente novamente.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchZoneStats();
+  }, []);
   
   const handleZoneClick = (zone: string) => {
     navigate(`/videos/${zone.toLowerCase()}`);
