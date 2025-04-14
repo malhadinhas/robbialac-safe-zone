@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
-import { Image, MessageSquare, Send, Calendar as CalendarIcon } from "lucide-react";
+import { Image, MessageSquare, Send, Calendar as CalendarIcon, HelpCircle } from "lucide-react";
 import { Incident, Department } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
@@ -38,7 +38,8 @@ enum ChatStep {
   DESCRIPTION,
   SUGGESTION,
   SEVERITY,
-  CONFIRMATION
+  CONFIRMATION,
+  HELP
 }
 
 export default function ChatbotModal({
@@ -52,6 +53,7 @@ export default function ChatbotModal({
   const [newMessage, setNewMessage] = useState("");
   const [currentIncident, setCurrentIncident] = useState<Partial<Incident>>({});
   const [currentStep, setCurrentStep] = useState<ChatStep>(ChatStep.NAME);
+  const [previousStep, setPreviousStep] = useState<ChatStep>(ChatStep.NAME);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const chatEndRef = useRef<HTMLDivElement>(null);
   
@@ -70,6 +72,7 @@ export default function ChatbotModal({
     ]);
     setCurrentIncident({});
     setCurrentStep(ChatStep.NAME);
+    setPreviousStep(ChatStep.NAME);
     setDate(new Date());
   };
   
@@ -86,8 +89,51 @@ export default function ChatbotModal({
     processUserInput(newMessage);
     setNewMessage("");
   };
+
+  const showHelpInformation = () => {
+    setPreviousStep(currentStep);
+    setCurrentStep(ChatStep.HELP);
+    
+    setChatMessages(prev => [...prev, { 
+      text: "Aqui estão algumas informações úteis sobre os parâmetros dos Quase Acidentes (QA):\n\n" +
+            "📊 **Parâmetros de Quase Acidentes**\n\n" +
+            "**1. Gravidade (atribuído pelo admin)**\n" +
+            "- Baixo (valor 1): Situação com potencial de causar incidentes leves\n" +
+            "- Médio (valor 4): Situação com potencial de causar incidentes moderados\n" +
+            "- Alto (valor 7): Situação com potencial de causar incidentes graves\n\n" +
+            "**2. Frequência (atribuído pelo admin)**\n" +
+            "- Baixa (valor 2): Ocorrência rara ou primeira vez\n" +
+            "- Moderada (valor 6): Ocorrência ocasional\n" +
+            "- Alta (valor 8): Ocorrência frequente\n\n" +
+            "**3. Risco (calculado automaticamente)**\n" +
+            "- Valor = Gravidade × Frequência\n" +
+            "- Baixo: < 8 pontos\n" +
+            "- Médio: 8-24 pontos\n" +
+            "- Alto: > 24 pontos\n\n" +
+            "**4. Qualidade QA (calculado automaticamente)**\n" +
+            "Baseado no valor do Risco:\n" +
+            "- Baixa: Risco < 8\n" +
+            "- Média: Risco entre 8 e 24\n" +
+            "- Alta: Risco > 24\n\n" +
+            "**5. Campos obrigatórios:**\n" +
+            "- Título, Descrição, Local, Data, Status, Departamento e Sugestão de Correção\n\n" +
+            "O que mais posso ajudar?", 
+      isBot: true,
+      options: ["Continuar", "Recomeçar"]
+    }]);
+  };
   
   const processUserInput = (message: string) => {
+    if (currentStep === ChatStep.HELP) {
+      if (message.toLowerCase().includes("recomeçar")) {
+        resetChat();
+        return;
+      } else {
+        setCurrentStep(previousStep);
+        return;
+      }
+    }
+    
     switch (currentStep) {
       case ChatStep.NAME:
         setCurrentIncident(prev => ({ ...prev, reporterName: message }));
@@ -147,7 +193,7 @@ export default function ChatbotModal({
         setCurrentIncident(prev => ({ ...prev, description: message }));
         setTimeout(() => {
           setChatMessages(prev => [...prev, { 
-            text: "Que sugestão você tem para corrigir ou prevenir esta situação?", 
+            text: "Que sugestão você tem para corrigir ou prevenir esta situação? (Este campo é obrigatório)", 
             isBot: true 
           }]);
           setCurrentStep(ChatStep.SUGGESTION);
@@ -155,6 +201,16 @@ export default function ChatbotModal({
         break;
         
       case ChatStep.SUGGESTION:
+        if (!message.trim() || message.length < 5) {
+          setTimeout(() => {
+            setChatMessages(prev => [...prev, { 
+              text: "Por favor, forneça uma sugestão mais detalhada para correção. Este campo é obrigatório para registrar o quase acidente.", 
+              isBot: true 
+            }]);
+          }, 500);
+          return;
+        }
+        
         setCurrentIncident(prev => ({ ...prev, suggestionToFix: message }));
         setTimeout(() => {
           setChatMessages(prev => [...prev, { 
@@ -190,6 +246,7 @@ export default function ChatbotModal({
         const incidentDescription = currentIncident.description || "Sem descrição";
         const incidentLocation = currentIncident.location || "Local não especificado";
         const departmentName = currentIncident.department || departments[0].name;
+        const suggestionToFix = currentIncident.suggestionToFix || "Sem sugestão";
         
         const finalIncident: Incident = {
           ...currentIncident as Partial<Incident>,
@@ -210,6 +267,7 @@ export default function ChatbotModal({
           qaQuality,
           resolutionDays,
           resolutionDeadline,
+          suggestionToFix,
           images: []
         };
         
@@ -373,8 +431,14 @@ export default function ChatbotModal({
         
         <div className="p-4 border-t">
           <div className="flex items-center">
-            <Button variant="outline" size="icon" className="mr-2">
-              <Image className="h-5 w-5" />
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="mr-2"
+              onClick={showHelpInformation}
+              title="Preciso de ajuda"
+            >
+              <HelpCircle className="h-5 w-5" />
             </Button>
             <input
               type="text"
@@ -393,9 +457,19 @@ export default function ChatbotModal({
               <Send className="h-5 w-5" />
             </Button>
           </div>
-          <p className="text-xs text-gray-500 mt-2 text-center">
-            O chatbot ajudará a coletar todas as informações necessárias
-          </p>
+          <div className="flex justify-between items-center mt-2">
+            <p className="text-xs text-gray-500 text-center">
+              O chatbot ajudará a coletar todas as informações necessárias
+            </p>
+            <Button 
+              variant="link" 
+              size="sm" 
+              className="text-xs text-robbialac p-0"
+              onClick={showHelpInformation}
+            >
+              Preciso de ajuda
+            </Button>
+          </div>
         </div>
       </div>
     </div>

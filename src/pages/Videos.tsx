@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Play } from 'lucide-react';
 import { getVideos } from '@/services/videoService';
 import { toast } from 'sonner';
+import logger from '@/utils/logger';
 
 export default function Videos() {
   const { zone } = useParams<{ zone: string }>();
@@ -19,7 +20,7 @@ export default function Videos() {
   const [loading, setLoading] = useState(true);
   
   const capitalizeFirstLetter = (string: string) => {
-    return string.charAt(0).toUpperCase() + string.slice(1);
+    return string?.charAt(0).toUpperCase() + string?.slice(1).toLowerCase() || '';
   };
   
   const zoneTitle = zone ? capitalizeFirstLetter(zone) : '';
@@ -29,17 +30,36 @@ export default function Videos() {
       try {
         setLoading(true);
         const allVideos = await getVideos();
+        
+        if (!Array.isArray(allVideos)) {
+          logger.error('Dados de vídeos inválidos', { received: allVideos });
+          toast.error('Erro ao carregar vídeos: formato inválido');
+          setVideos([]);
+          return;
+        }
+
         if (zone) {
-          const filteredVideos = allVideos.filter(
-            video => video.zone.toLowerCase() === zone.toLowerCase()
+          const normalizedZone = zone.charAt(0).toUpperCase() + zone.slice(1).toLowerCase();
+          const filteredVideos = allVideos.filter(video => 
+            video.zone && video.zone.toLowerCase() === zone.toLowerCase()
           );
+          
+          if (filteredVideos.length === 0) {
+            logger.warn('Nenhum vídeo encontrado para a zona', { zone, totalVideos: allVideos.length });
+          }
+          
           setVideos(filteredVideos);
         } else {
           setVideos(allVideos);
         }
       } catch (error) {
-        console.error('Erro ao carregar vídeos:', error);
-        toast.error('Erro ao carregar vídeos');
+        logger.error('Erro ao carregar vídeos', { 
+          error,
+          zone,
+          message: error instanceof Error ? error.message : 'Erro desconhecido'
+        });
+        toast.error('Erro ao carregar vídeos. Por favor, tente novamente.');
+        setVideos([]);
       } finally {
         setLoading(false);
       }
@@ -64,6 +84,26 @@ export default function Videos() {
     }
     videosByCategory[video.category].push(video);
   });
+
+  // Se não houver vídeos, mostrar mensagem apropriada
+  if (!loading && videos.length === 0) {
+    return (
+      <Layout>
+        <div className="container mx-auto py-6">
+          <div className="flex items-center mb-6">
+            <Button variant="ghost" onClick={handleBackClick} className="mr-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Button>
+            <h1 className="text-2xl font-bold">Vídeos - {zoneTitle}</h1>
+          </div>
+          <div className="text-center py-12 border rounded-lg bg-gray-50">
+            <p className="text-gray-500">Nenhum vídeo disponível para esta zona.</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
   
   return (
     <Layout>

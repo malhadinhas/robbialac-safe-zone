@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import path from 'path';
 import { connectToDatabase, getDatabaseStatus } from './services/database';
 import incidentRoutes from './routes/incidents';
 import videoRoutes from './routes/videos';
@@ -9,9 +11,13 @@ import zoneRoutes from './routes/zones';
 import statsRoutes from './routes/statsRoutes';
 import activityRoutes from './routes/activityRoutes';
 import logger from './utils/logger';
+import authRoutes from './routes/authRoutes';
 
 const app = express();
 const port = 3000;
+
+// Diretório para arquivos temporários
+const TEMP_DIR = path.join(process.cwd(), 'temp');
 
 // Middleware para logar todas as requisições
 app.use((req, res, next) => {
@@ -23,8 +29,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// Aumentar limite de tamanho do corpo da requisição para 50MB
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Configurações de segurança e CORS
+app.use(helmet());
 app.use(cors());
-app.use(express.json());
+
+// Servir arquivos estáticos do diretório temp
+app.use('/videos', express.static(TEMP_DIR));
+
+// Servir arquivos estáticos
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use('/assets', express.static(path.join(process.cwd(), 'assets')));
 
 // Middleware para tratar erros
 app.use((err: any, req: any, res: any, next: any) => {
@@ -40,6 +58,7 @@ app.use('/api/medals', medalRoutes);
 app.use('/api/zones', zoneRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/activities', activityRoutes);
+app.use('/api/auth', authRoutes);
 
 // Rota para verificar status do banco
 app.get('/api/database/status', (req, res) => {

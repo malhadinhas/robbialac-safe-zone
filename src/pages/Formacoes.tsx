@@ -10,6 +10,8 @@ import VideosCategoryCard from '@/components/VideosCategoryCard';
 import { NoScrollLayout } from '@/components/NoScrollLayout';
 import { useIsCompactView } from '@/hooks/use-mobile';
 import { getZoneStats, ZoneStats } from '@/services/zoneStatsService';
+import { Progress } from "@/components/ui/progress";
+import { uploadVideo } from '@/services/videoService';
 
 const factoryZones = [
   { zone: 'Enchimento', color: '#3B82F6' },
@@ -30,6 +32,16 @@ export default function Formacoes() {
   const isCompactView = useIsCompactView();
   const [zoneStats, setZoneStats] = useState<ZoneStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [videoData, setVideoData] = useState({
+    title: '',
+    description: '',
+    category: '',
+    zone: '',
+    file: null as File | null
+  });
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState('');
   
   useEffect(() => {
     setIsAdmin(user?.role === 'admin_app');
@@ -64,10 +76,118 @@ export default function Formacoes() {
     setIsModalOpen(false);
   };
   
-  const handleVideoUpload = (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setVideoData({ ...videoData, [name]: value });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tamanho do arquivo (500MB)
+    const maxSize = 500 * 1024 * 1024; // 500MB em bytes
+    if (file.size > maxSize) {
+      toast.error('O arquivo é muito grande. O tamanho máximo permitido é 500MB.');
+      e.target.value = ''; // Limpa o input
+      return;
+    }
+
+    // Validar tipo do arquivo
+    const validTypes = ['video/mp4', 'video/x-m4v', 'video/quicktime', 'video/x-msvideo'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Formato de arquivo inválido. Por favor, use MP4, MOV ou AVI.');
+      e.target.value = '';
+      return;
+    }
+
+    setVideoData(prev => ({ ...prev, file }));
+  };
+
+  const handleVideoUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Vídeo enviado com sucesso para Cloudflare R2!");
-    setIsModalOpen(false);
+    
+    try {
+      // Validações do formulário
+      if (!videoData.title.trim()) {
+        toast.error('Por favor, insira um título para o vídeo.');
+        return;
+      }
+      if (!videoData.description.trim()) {
+        toast.error('Por favor, insira uma descrição para o vídeo.');
+        return;
+      }
+      if (!videoData.category) {
+        toast.error('Por favor, selecione uma categoria.');
+        return;
+      }
+      if (!videoData.zone) {
+        toast.error('Por favor, selecione uma zona da fábrica.');
+        return;
+      }
+      if (!videoData.file) {
+        toast.error('Por favor, selecione um arquivo de vídeo.');
+        return;
+      }
+
+      setIsUploading(true);
+      setUploadStatus('Preparando upload...');
+      setUploadProgress(0);
+
+      const result = await uploadVideo(
+        videoData.file,
+        {
+          title: videoData.title.trim(),
+          description: videoData.description.trim(),
+          category: videoData.category,
+          zone: videoData.zone
+        },
+        (progress) => {
+          setUploadProgress(progress.percentage);
+          setUploadStatus(progress.status === 'uploading' 
+            ? `Enviando parte ${progress.currentChunk} de ${progress.totalChunks}...`
+            : progress.status === 'processing'
+            ? 'Processando vídeo...'
+            : 'Concluindo upload...'
+          );
+        }
+      );
+
+      if (result.success) {
+        toast.success('Vídeo enviado com sucesso!');
+        setIsModalOpen(false);
+        // Atualizar a lista de vídeos se necessário
+        // fetchVideos();
+      } else {
+        throw new Error(result.error || 'Erro ao enviar o vídeo');
+      }
+    } catch (error) {
+      console.error('Erro no upload:', error);
+      let errorMessage = 'Ocorreu um erro ao enviar o vídeo.';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        if (error.message.includes('network')) {
+          errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'O upload demorou muito tempo. Tente novamente.';
+        }
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setIsUploading(false);
+      setUploadStatus('');
+      setUploadProgress(0);
+      // Limpar o formulário
+      setVideoData({
+        title: '',
+        description: '',
+        category: '',
+        zone: '',
+        file: null
+      });
+    }
   };
 
   const handleToggleView = () => {
@@ -196,74 +316,115 @@ export default function Formacoes() {
                 <h2 className="text-xl font-semibold">Importar Novo Vídeo</h2>
               </div>
               
-              <form onSubmit={handleVideoUpload}>
-                <div className="p-4 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Nome do Vídeo
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border rounded-md p-2"
-                      placeholder="Ex: Procedimentos de Segurança"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Arquivo de Vídeo
-                    </label>
-                    <input
-                      type="file"
-                      accept="video/*"
-                      className="w-full border rounded-md p-2"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Zona da Fábrica
-                    </label>
-                    <select className="w-full border rounded-md p-2" required>
-                      <option value="">Selecione...</option>
-                      <option value="enchimento">Enchimento</option>
-                      <option value="fabrico">Fabrico</option>
-                      <option value="robbialac">Robbialac</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Categoria
-                    </label>
-                    <select className="w-full border rounded-md p-2" required>
-                      <option value="">Selecione...</option>
-                      <option value="seguranca">Segurança</option>
-                      <option value="qualidade">Qualidade</option>
-                      <option value="procedimentos">Procedimentos e Regras</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Descrição
-                    </label>
-                    <textarea
-                      className="w-full border rounded-md p-2"
-                      rows={3}
-                      placeholder="Descreva brevemente o conteúdo do vídeo"
-                    ></textarea>
-                  </div>
+              <form onSubmit={handleVideoUpload} className="p-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Título do Vídeo
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={videoData.title}
+                    onChange={handleInputChange}
+                    className="w-full border rounded-md p-2"
+                    placeholder="Ex: Procedimentos de Segurança"
+                    required
+                  />
                 </div>
-                
-                <div className="p-4 border-t bg-gray-50 flex justify-end space-x-2 rounded-b-lg">
-                  <Button variant="outline" type="button" onClick={closeModal}>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Descrição
+                  </label>
+                  <textarea
+                    name="description"
+                    value={videoData.description}
+                    onChange={handleInputChange}
+                    className="w-full border rounded-md p-2"
+                    rows={3}
+                    placeholder="Descreva o conteúdo do vídeo"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Categoria
+                  </label>
+                  <select
+                    name="category"
+                    value={videoData.category}
+                    onChange={handleInputChange}
+                    className="w-full border rounded-md p-2"
+                    required
+                  >
+                    <option value="">Selecione uma categoria</option>
+                    <option value="Segurança">Segurança</option>
+                    <option value="Qualidade">Qualidade</option>
+                    <option value="Procedimentos e Regras">Procedimentos e Regras</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Zona da Fábrica
+                  </label>
+                  <select
+                    name="zone"
+                    value={videoData.zone}
+                    onChange={handleInputChange}
+                    className="w-full border rounded-md p-2"
+                    required
+                  >
+                    <option value="">Selecione uma zona</option>
+                    {factoryZones.map((zone) => (
+                      <option key={zone.zone} value={zone.zone}>
+                        {zone.zone}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Arquivo de Vídeo
+                  </label>
+                  <input
+                    type="file"
+                    name="video"
+                    onChange={handleFileChange}
+                    accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska"
+                    className="w-full border rounded-md p-2"
+                    required
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Formatos aceitos: MP4, MOV, AVI, MKV (máx. 500MB)
+                  </p>
+                </div>
+
+                {isUploading && (
+                  <div>
+                    <Progress value={uploadProgress} className="h-2" />
+                    <p className="text-sm text-gray-500 mt-1">
+                      {uploadProgress}% - {uploadStatus}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-2 pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsModalOpen(false)}
+                    disabled={isUploading}
+                  >
                     Cancelar
                   </Button>
-                  <Button type="submit" className="bg-robbialac hover:bg-robbialac-dark">
-                    Importar
+                  <Button
+                    type="submit"
+                    disabled={isUploading}
+                  >
+                    {isUploading ? 'Enviando...' : 'Enviar Vídeo'}
                   </Button>
                 </div>
               </form>

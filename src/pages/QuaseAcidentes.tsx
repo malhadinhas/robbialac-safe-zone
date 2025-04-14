@@ -98,6 +98,12 @@ const QuaseAcidentes = () => {
     }
   }, [selectedIncident, isEditModalOpen]);
 
+  useEffect(() => {
+    if (!isEditModalOpen && selectedIncident) {
+      refetch();
+    }
+  }, [isEditModalOpen, refetch]);
+
   const handleIncidentClick = (incident: Incident) => {
     setSelectedIncident(incident);
     setIsViewModalOpen(true);
@@ -337,9 +343,13 @@ const QuaseAcidentes = () => {
                   className="flex items-center gap-4 p-4 cursor-pointer hover:bg-slate-50"
                   onClick={() => handleIncidentClick(incident)}
                 >
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0 w-16 h-16">
                     {incident.images && incident.images.length > 0 ? (
-                      <ImageGallery images={incident.images} showOnlyFirstImage={true} />
+                      <ImageGallery 
+                        images={incident.images} 
+                        showOnlyFirstImage={true} 
+                        className="m-0 h-full w-full"
+                      />
                     ) : (
                       <div className="w-16 h-16 bg-slate-200 rounded-md flex items-center justify-center text-xs text-slate-500">
                         Sem imagem

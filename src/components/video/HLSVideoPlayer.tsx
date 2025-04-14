@@ -1,6 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { setupHlsPlayer, PlayerOptions, isHlsSupported } from '@/services/videoPlayerService';
-import { toast } from 'sonner';
+import { useEffect, useRef, useState } from 'react';
+import Hls from 'hls.js';
 
 interface HLSVideoPlayerProps {
   videoUrl: string;
@@ -8,13 +7,13 @@ interface HLSVideoPlayerProps {
   controls?: boolean;
   muted?: boolean;
   startAt?: number;
-  onProgress?: (progress: number, currentTime: number) => void;
+  onProgress?: (progressPercent: number, currentTime: number) => void;
   onEnd?: () => void;
   className?: string;
   thumbnail?: string;
 }
 
-export const HLSVideoPlayer = ({
+export default function HLSVideoPlayer({
   videoUrl,
   autoPlay = false,
   controls = true,
@@ -24,112 +23,107 @@ export const HLSVideoPlayer = ({
   onEnd,
   className = '',
   thumbnail
-}: HLSVideoPlayerProps) => {
+}: HLSVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [error, setError] = useState<Error | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  
+  const hlsRef = useRef<Hls | null>(null);
+  const [isError, setIsError] = useState(false);
+
   useEffect(() => {
-    if (!videoRef.current || !videoUrl) return;
-    
-    const options: PlayerOptions = {
-      autoplay: autoPlay,
-      controls: controls,
-      muted: muted,
-      startTime: startAt
-    };
-    
-    try {
-      console.log('Iniciando player com URL:', videoUrl);
-      const { attachPlayer, destroyPlayer } = setupHlsPlayer();
-      attachPlayer(videoRef.current, videoUrl, options);
-      
-      const videoElement = videoRef.current;
-      
-      // Event handlers
-      const handleProgress = () => {
-        if (!videoElement) return;
-        
-        const duration = videoElement.duration || 0;
-        if (duration > 0) {
-          const progressPercent = (videoElement.currentTime / duration) * 100;
-          onProgress?.(progressPercent, videoElement.currentTime);
-        }
-      };
-      
-      const handleEnded = () => {
-        onEnd?.();
-      };
-      
-      const handleError = (e: ErrorEvent) => {
-        console.error('Erro no player de vídeo:', e);
-        setError(new Error('Erro ao reproduzir o vídeo'));
-        toast.error('Erro ao reproduzir o vídeo. Tentando novamente...');
-      };
-      
-      const handleLoadedData = () => {
-        setIsLoading(false);
-        console.log('Vídeo carregado com sucesso');
-      };
-      
-      // Attach events
-      videoElement.addEventListener('timeupdate', handleProgress);
-      videoElement.addEventListener('ended', handleEnded);
-      videoElement.addEventListener('error', handleError);
-      videoElement.addEventListener('loadeddata', handleLoadedData);
-      
-      return () => {
-        videoElement.removeEventListener('timeupdate', handleProgress);
-        videoElement.removeEventListener('ended', handleEnded);
-        videoElement.removeEventListener('error', handleError);
-        videoElement.removeEventListener('loadeddata', handleLoadedData);
-        destroyPlayer();
-      };
-    } catch (err) {
-      console.error('Erro ao configurar player:', err);
-      setError(err instanceof Error ? err : new Error('Erro ao configurar player'));
-      toast.error('Erro ao configurar player de vídeo');
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Limpar instância anterior do HLS
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
     }
-  }, [videoUrl, autoPlay, controls, muted, startAt, onProgress, onEnd]);
-  
-  if (error || !isHlsSupported()) {
+
+    // Verificar se o navegador suporta HLS nativamente
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = videoUrl;
+    }
+    // Se não suporta, usar hls.js
+    else if (Hls.isSupported()) {
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 90
+      });
+
+      hls.loadSource(videoUrl);
+      hls.attachMedia(video);
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        if (autoPlay) {
+          video.play().catch(console.error);
+        }
+      });
+
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              console.error('HLS network error');
+              hls.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              console.error('HLS media error');
+              hls.recoverMediaError();
+              break;
+            default:
+              console.error('HLS fatal error');
+              setIsError(true);
+              break;
+          }
+        }
+      });
+
+      hlsRef.current = hls;
+    }
+
+    // Configurar o vídeo
+    video.currentTime = startAt;
+    video.muted = muted;
+
+    // Adicionar event listeners
+    const handleTimeUpdate = () => {
+      if (onProgress && video.duration) {
+        const progressPercent = (video.currentTime / video.duration) * 100;
+        onProgress(progressPercent, video.currentTime);
+      }
+    };
+
+    const handleEnded = () => {
+      onEnd?.();
+    };
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('ended', handleEnded);
+
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('ended', handleEnded);
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+      }
+    };
+  }, [videoUrl, autoPlay, muted, startAt, onProgress, onEnd]);
+
+  if (isError) {
     return (
-      <div className={`relative ${className}`}>
-        {thumbnail && (
-          <img 
-            src={thumbnail} 
-            alt="Video thumbnail" 
-            className="w-full h-full object-contain"
-          />
-        )}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white text-center p-4">
-          <p>
-            {error ? 
-              'Erro ao reproduzir o vídeo. Por favor, tente novamente mais tarde.' :
-              'Seu navegador não suporta a reprodução deste formato de vídeo.'
-            }
-          </p>
-        </div>
+      <div className="w-full h-full flex items-center justify-center bg-gray-900 text-white">
+        <p>Erro ao carregar o vídeo. Por favor, tente novamente mais tarde.</p>
       </div>
     );
   }
-  
-  if (isLoading) {
-    return (
-      <div className={`flex items-center justify-center ${className}`}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-robbialac"></div>
-      </div>
-    );
-  }
-  
+
   return (
     <video
       ref={videoRef}
-      className={`w-full h-full ${className}`}
+      className={className}
+      controls={controls}
       playsInline
+      poster={thumbnail}
     />
   );
-};
-
-export default HLSVideoPlayer;
+}
 

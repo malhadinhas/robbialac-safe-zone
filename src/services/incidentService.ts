@@ -76,12 +76,41 @@ export async function updateIncident(incident: Incident): Promise<void> {
     });
     
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Erro ao atualizar incidente');
+      let errorMessage = 'Erro ao atualizar incidente';
+      
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.details || errorData.error || errorMessage;
+      } catch (e) {
+        // Se não conseguir extrair o JSON, usa o status text
+        errorMessage = response.statusText || errorMessage;
+      }
+      
+      // Cria um erro mais detalhado que mantém a resposta original
+      const error: any = new Error(errorMessage);
+      error.response = {
+        status: response.status,
+        data: { error: errorMessage }
+      };
+      
+      throw error;
     }
   } catch (error) {
     console.error("Erro ao atualizar incidente:", error);
-    throw error;
+    
+    // Se o erro já tiver uma propriedade response, propagamos como está
+    if ((error as any).response) {
+      throw error;
+    }
+    
+    // Caso contrário, criamos um erro com o formato esperado
+    const enhancedError: any = new Error(error instanceof Error ? error.message : 'Erro desconhecido');
+    enhancedError.response = {
+      status: 500,
+      data: { error: enhancedError.message }
+    };
+    
+    throw enhancedError;
   }
 }
 

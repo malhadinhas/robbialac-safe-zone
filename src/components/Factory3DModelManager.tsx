@@ -220,7 +220,7 @@ const Factory3DModelManager = ({ onZoneClick }: { onZoneClick: (zone: string) =>
     <div className="aspect-video bg-gray-100 rounded-md">
       <ErrorBoundary>
         <Canvas
-          camera={{ position: [0, 5, 10], fov: 50 }}
+          camera={{ position: [0, 180, 300], fov: 35 }}
           style={{ width: '100%', height: '100%' }}
         >
           <Suspense fallback={<LoadingSpinner />}>
@@ -235,14 +235,19 @@ const Factory3DModelManager = ({ onZoneClick }: { onZoneClick: (zone: string) =>
             />
             <hemisphereLight intensity={0.3} groundColor="#b9b9b9" />
             
-            <PresentationControls
-              global
-              config={{ mass: 2, tension: 500 }}
-              snap={{ mass: 4, tension: 1500 }}
-              rotation={[0, -Math.PI / 4, 0]}
-              polar={[-Math.PI / 3, Math.PI / 3]}
-              azimuth={[-Math.PI / 1.4, Math.PI / 2]}
-            >
+            <OrbitControls
+              enableZoom={false}
+              enablePan={false}
+              enableRotate={true}
+              minPolarAngle={Math.PI / 3}
+              maxPolarAngle={Math.PI / 3}
+              minAzimuthAngle={-Math.PI}
+              maxAzimuthAngle={Math.PI}
+              target={[0, 0, 0]}
+              rotateSpeed={0.5}
+            />
+            
+            <group position={[0, -5, 0]} scale={1.2}>
               {!modelError && (
                 <FactoryModel
                   onZoneClick={onZoneClick as (zone: FactoryZone) => void}
@@ -258,7 +263,7 @@ const Factory3DModelManager = ({ onZoneClick }: { onZoneClick: (zone: string) =>
                   setHoveredZone={setHoveredZone}
                 />
               )}
-            </PresentationControls>
+            </group>
           </Suspense>
         </Canvas>
       </ErrorBoundary>

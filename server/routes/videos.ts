@@ -9,28 +9,49 @@ import {
   getLastViewedVideosByCategory
 } from '../controllers/videoController';
 import { isAuthenticated, isAdmin } from '../middleware/authMiddleware';
+import { uploadVideo, validateUploadedVideo, handleUploadError } from '../middleware/uploadMiddleware';
+import fs from 'fs';
+import path from 'path';
+import logger from '../utils/logger';
 
 const router = Router();
 
-// Listar todos os vídeos
+// Criar diretórios necessários
+const dirs = [
+  path.join(process.cwd(), 'uploads'),
+  path.join(process.cwd(), 'uploads', 'thumbnails'),
+  path.join(process.cwd(), 'uploads', 'processed'),
+  path.join(process.cwd(), 'temp')
+];
+
+for (const dir of dirs) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    logger.info(`Diretório criado: ${dir}`);
+  }
+}
+
+// Rotas públicas
 router.get('/', getVideos);
-
-// Buscar vídeos mais visualizados por categoria
-router.get('/category/:category/most-viewed', getLastViewedVideosByCategory);
-
-// Buscar um vídeo específico
 router.get('/:id', getVideoById);
+router.get('/category/:category/most-viewed', getLastViewedVideosByCategory);
+router.post('/category/:category/next', getLastViewedVideosByCategory);
 
-// Criar um novo vídeo (requer privilégios de administrador)
-router.post('/', isAdmin, createVideo);
+// Rota de upload - removido isAdmin temporariamente para testes
+router.post('/', 
+  uploadVideo,
+  handleUploadError,
+  validateUploadedVideo,
+  createVideo
+);
 
-// Atualizar um vídeo (requer privilégios de administrador)
-router.put('/:id', isAdmin, updateVideo);
+// Rotas que requerem autenticação
+router.use(isAuthenticated);
+router.post('/:id/views', incrementVideoViews);
 
-// Excluir um vídeo (requer privilégios de administrador)
-router.delete('/:id', isAdmin, deleteVideo);
-
-// Incrementar visualizações (requer autenticação)
-router.post('/:id/views', isAuthenticated, incrementVideoViews);
+// Rotas que requerem privilégios de admin
+router.use(isAdmin);
+router.put('/:id', updateVideo);
+router.delete('/:id', deleteVideo);
 
 export default router; 

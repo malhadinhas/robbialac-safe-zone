@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, Upload, X } from "lucide-react";
@@ -12,6 +11,50 @@ interface ImageUploaderProps {
   images?: string[];
   maxImages?: number;
 }
+
+// Função para redimensionar imagens
+const resizeImage = (base64Str: string, maxWidth = 800, maxHeight = 800, quality = 0.7): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = base64Str;
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      
+      // Calcular novas dimensões mantendo a proporção
+      if (width > height) {
+        if (width > maxWidth) {
+          height = Math.round(height * maxWidth / width);
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width = Math.round(width * maxHeight / height);
+          height = maxHeight;
+        }
+      }
+      
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(base64Str); // Se não conseguir redimensionar, retorna a imagem original
+        return;
+      }
+      
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Converter para JPEG com qualidade reduzida
+      const newBase64 = canvas.toDataURL("image/jpeg", quality);
+      resolve(newBase64);
+    };
+    img.onerror = () => {
+      resolve(base64Str); // Se houver erro, retorna a imagem original
+    };
+  });
+};
 
 export default function ImageUploader({ 
   onImagesSelected, 
@@ -39,8 +82,19 @@ export default function ImageUploader({
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (file.type.startsWith("image/")) {
+          // Converter para base64
           const base64 = await fileToBase64(file);
-          newImages.push(base64);
+          
+          // Redimensionar a imagem
+          const resizedBase64 = await resizeImage(base64);
+          
+          newImages.push(resizedBase64);
+          
+          // Verificar tamanho após redimensionamento
+          const sizeInMB = (resizedBase64.length * 0.75) / 1024 / 1024; // Estimativa de tamanho em MB
+          if (sizeInMB > 8) {
+            toast.warning(`A imagem ${file.name} ainda é grande (${sizeInMB.toFixed(2)}MB). Considere usar uma imagem menor.`);
+          }
         }
       }
       
@@ -77,7 +131,10 @@ export default function ImageUploader({
       const base64Image = await captureImage();
       
       if (base64Image) {
-        const updatedImages = [...uploadedImages, base64Image];
+        // Redimensionar a imagem capturada
+        const resizedBase64 = await resizeImage(base64Image);
+        
+        const updatedImages = [...uploadedImages, resizedBase64];
         setUploadedImages(updatedImages);
         
         // Support both callback methods

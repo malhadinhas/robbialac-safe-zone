@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getIncidentById, updateIncident } from "@/services/incidentService";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -80,6 +79,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
   const [formData, setFormData] = useState<FormIncidentData>({});
   const [images, setImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
   
   // Check if user has admin privileges
   const isAdmin = user?.role === "admin_qa" || user?.role === "admin_app";
@@ -177,7 +177,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.description || !formData.location || !formData.date || !formData.severity || !formData.status) {
+    if (!formData.title || !formData.description || !formData.location || !formData.date || !formData.status || !formData.department || !formData.suggestionToFix) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
@@ -195,10 +195,43 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
       
       await updateIncident(updatedIncident);
       toast.success("Quase acidente atualizado com sucesso");
+      
+      // Invalidar as queries para forçar a atualização dos dados
+      queryClient.invalidateQueries({ queryKey: ["incidents"] });
+      queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
+      
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating incident:", error);
-      toast.error("Erro ao atualizar quase acidente");
+      
+      // Tratamento de erros específicos
+      if (error.response) {
+        const status = error.response.status;
+        const errorData = error.response.data;
+        
+        // Erro 413 - Arquivo muito grande
+        if (status === 413) {
+          toast.error("Erro: Arquivo muito grande. O tamanho máximo permitido é 10MB.");
+          return;
+        }
+        
+        // Erro 400 - Validação
+        if (status === 400) {
+          const errorMessage = errorData.details || errorData.error || "Erro de validação";
+          toast.error(`Erro: ${errorMessage}`);
+          return;
+        }
+        
+        // Outros erros com resposta do servidor
+        const errorMessage = errorData.details || errorData.error || "Erro ao atualizar quase acidente";
+        toast.error(`Erro: ${errorMessage}`);
+      } else if (error.message) {
+        // Erros com mensagem definida
+        toast.error(`Erro: ${error.message}`);
+      } else {
+        // Fallback para erro genérico
+        toast.error("Erro ao atualizar quase acidente. Verifique sua conexão e tente novamente.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -309,53 +342,66 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                     />
                   </div>
                 </div>
+                
+                <div>
+                  <label htmlFor="suggestionToFix" className="block text-sm font-medium mb-1">
+                    Sugestão de Correção <span className="text-red-500">*</span>
+                  </label>
+                  <Textarea
+                    id="suggestionToFix"
+                    name="suggestionToFix"
+                    value={formData.suggestionToFix || ""}
+                    onChange={handleInputChange}
+                    rows={3}
+                    required
+                    className="resize-none"
+                  />
+                </div>
               </div>
               
               {/* Coluna 2: Status e detalhes  */}
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="severity" className="block text-sm font-medium mb-1">
-                      Gravidade <span className="text-red-500">*</span>
-                    </label>
-                    <Select
-                      value={formData.severity}
-                      onValueChange={(value) => handleSelectChange("severity", value)}
-                    >
-                      <SelectTrigger id="severity" className="bg-white">
-                        <SelectValue placeholder="Gravidade" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white z-[99999]">
-                        <SelectItem value="Baixo">Baixo (1)</SelectItem>
-                        <SelectItem value="Médio">Médio (4)</SelectItem>
-                        <SelectItem value="Alto">Alto (7)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label htmlFor="status" className="block text-sm font-medium mb-1">
-                      Status <span className="text-red-500">*</span>
-                    </label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value) => handleSelectChange("status", value)}
-                    >
-                      <SelectTrigger id="status" className="bg-white">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white z-[99999]">
-                        <SelectItem value="Reportado">Reportado</SelectItem>
-                        <SelectItem value="Em Análise">Em Análise</SelectItem>
-                        <SelectItem value="Resolvido">Resolvido</SelectItem>
-                        <SelectItem value="Arquivado">Arquivado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div>
+                  <label htmlFor="status" className="block text-sm font-medium mb-1">
+                    Status <span className="text-red-500">*</span>
+                  </label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) => handleSelectChange("status", value)}
+                  >
+                    <SelectTrigger id="status" className="bg-white">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-[99999]">
+                      <SelectItem value="Reportado">Reportado</SelectItem>
+                      <SelectItem value="Em Análise">Em Análise</SelectItem>
+                      <SelectItem value="Resolvido">Resolvido</SelectItem>
+                      <SelectItem value="Arquivado">Arquivado</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {isAdmin && (
                   <>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="severity" className="block text-sm font-medium mb-1">
+                          Gravidade
+                        </label>
+                        <Select
+                          value={formData.severity}
+                          onValueChange={(value) => handleSelectChange("severity", value)}
+                        >
+                          <SelectTrigger id="severity" className="bg-white">
+                            <SelectValue placeholder="Gravidade" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white z-[99999]">
+                            <SelectItem value="Baixo">Baixo (1)</SelectItem>
+                            <SelectItem value="Médio">Médio (4)</SelectItem>
+                            <SelectItem value="Alto">Alto (7)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div>
                         <label htmlFor="frequency" className="block text-sm font-medium mb-1">
                           Frequência
@@ -371,26 +417,6 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                             <SelectItem value="Baixa">Baixa (2)</SelectItem>
                             <SelectItem value="Moderada">Moderada (6)</SelectItem>
                             <SelectItem value="Alta">Alta (8)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label htmlFor="resolutionDays" className="block text-sm font-medium mb-1">
-                          Dias para Resolução
-                        </label>
-                        <Select
-                          value={formData.resolutionDays?.toString()}
-                          onValueChange={(value) => handleSelectChange("resolutionDays", value)}
-                        >
-                          <SelectTrigger id="resolutionDays" className="bg-white">
-                            <SelectValue placeholder="Selecione os dias" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-[99999]">
-                            {RESOLUTION_DAYS_OPTIONS.map((days) => (
-                              <SelectItem key={days} value={days.toString()}>
-                                {days} dias
-                              </SelectItem>
-                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -414,7 +440,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                         </div>
                       </div>
                     </div>
-
+                
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-1">
@@ -433,22 +459,29 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
                         </div>
                       </div>
                     </div>
+                    
+                    <div>
+                      <label htmlFor="resolutionDays" className="block text-sm font-medium mb-1">
+                        Dias para Resolução
+                      </label>
+                      <Select
+                        value={formData.resolutionDays?.toString()}
+                        onValueChange={(value) => handleSelectChange("resolutionDays", value)}
+                      >
+                        <SelectTrigger id="resolutionDays" className="bg-white">
+                          <SelectValue placeholder="Selecione os dias" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-[99999]">
+                          {RESOLUTION_DAYS_OPTIONS.map((days) => (
+                            <SelectItem key={days} value={days.toString()}>
+                              {days} dias
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </>
                 )}
-                
-                <div>
-                  <label htmlFor="suggestionToFix" className="block text-sm font-medium mb-1">
-                    Sugestão de Correção
-                  </label>
-                  <Textarea
-                    id="suggestionToFix"
-                    name="suggestionToFix"
-                    value={formData.suggestionToFix || ""}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="resize-none"
-                  />
-                </div>
               </div>
             </div>
             

@@ -31,6 +31,7 @@ export default function Dashboard() {
   const isCompactView = useIsCompactView();
   const [activeTab, setActiveTab] = useState<"videos" | "quaseAcidentes">("videos");
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+  const [qAChartTab, setQAChartTab] = useState<"severity" | "risk" | "frequency" | "quality">("severity");
   
   // Estados para dados da API
   const [videos, setVideos] = useState<Video[]>([]);
@@ -81,14 +82,15 @@ export default function Dashboard() {
       acc.push({
         category: video.category,
         count: 1,
-        color: video.category === 'Segurança' ? '#FF4444' : 
-               video.category === 'Qualidade' ? '#4444FF' : '#44FF44'
+        color: video.category === 'Segurança' ? '#44AA44' : // Verde 
+               video.category === 'Qualidade' ? '#4444FF' : // Azul
+               '#FF8800'  // Laranja para "Procedimentos e Regras"
       });
     }
     return acc;
   }, [] as { category: string; count: number; color: string }[]);
 
-  // Estatísticas por severidade
+  // Estatísticas por gravidade
   const statsBySeverity = incidents.reduce((acc, incident) => {
     const severity = acc.find(stat => stat.severity === incident.severity);
     if (severity) {
@@ -103,6 +105,67 @@ export default function Dashboard() {
     }
     return acc;
   }, [] as { severity: string; count: number; color: string }[]);
+
+  // Estatísticas por risco
+  const statsByRisk = incidents.reduce((acc, incident) => {
+    const riskLevel = incident.risk && incident.risk > 24 ? "Alto" : 
+                     incident.risk && incident.risk >= 8 ? "Médio" : "Baixo";
+    
+    const existingEntry = acc.find(stat => stat.risk === riskLevel);
+    if (existingEntry) {
+      existingEntry.count++;
+    } else {
+      acc.push({
+        risk: riskLevel,
+        count: 1,
+        color: riskLevel === 'Alto' ? '#FF4444' : 
+               riskLevel === 'Médio' ? '#FFAA44' : '#FFFF44'
+      });
+    }
+    return acc;
+  }, [] as { risk: string; count: number; color: string }[]);
+
+  // Estatísticas por qualidade QA
+  const statsByQAQuality = incidents.reduce((acc, incident) => {
+    if (!incident.qaQuality) return acc;
+    
+    const existingEntry = acc.find(stat => stat.quality === incident.qaQuality);
+    if (existingEntry) {
+      existingEntry.count++;
+    } else {
+      acc.push({
+        quality: incident.qaQuality,
+        count: 1,
+        color: incident.qaQuality === 'Alta' ? '#FF4444' : 
+               incident.qaQuality === 'Média' ? '#FFAA44' : '#44FF44'
+      });
+    }
+    return acc;
+  }, [] as { quality: string; count: number; color: string }[]);
+
+  // Estatísticas por frequência
+  const statsByFrequency = incidents.reduce((acc, incident) => {
+    if (!incident.frequency) return acc;
+    
+    const existingEntry = acc.find(stat => stat.frequency === incident.frequency);
+    if (existingEntry) {
+      existingEntry.count++;
+    } else {
+      acc.push({
+        frequency: incident.frequency,
+        count: 1,
+        color: incident.frequency === 'Alta' ? '#FF4444' : 
+               incident.frequency === 'Moderada' ? '#FFAA44' : '#44FF44'
+      });
+    }
+    return acc;
+  }, [] as { frequency: string; count: number; color: string }[]);
+
+  // Calcular estatísticas para cards
+  const totalViews = videos.reduce((sum, video) => sum + (video.views || 0), 0);
+  const totalIncidents = incidents.length;
+  const totalVideos = videos.length;
+  const totalMedalsAcquired = user?.medals?.filter(medal => medal.acquired)?.length || 0;
 
   // Custom label renderer for PieChart that shows only percentages
   const renderCustomPieChartLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
@@ -220,47 +283,114 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={statsByCategory}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="count"
-                  nameKey="category"
-                  label={renderCustomPieChartLabel}
-                >
+              <BarChart data={statsByCategory}>
+                <XAxis dataKey="category" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="count" name="Quantidade">
                   {statsByCategory.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
         
         <Card className="bg-white shadow">
           <CardHeader>
-            <CardTitle className="text-lg font-medium">Quase Acidentes por Severidade</CardTitle>
-            <CardDescription>Total de incidentes reportados por nível de severidade</CardDescription>
+            <CardTitle className="text-lg font-medium">Quase Acidentes por Parâmetros</CardTitle>
+            <CardDescription>Análise de incidentes por diferentes métricas</CardDescription>
+            <div className="flex mt-2 space-x-1">
+              <Button
+                variant={qAChartTab === "severity" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setQAChartTab("severity")}
+                className={qAChartTab === "severity" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
+              >
+                Gravidade
+              </Button>
+              <Button
+                variant={qAChartTab === "risk" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setQAChartTab("risk")}
+                className={qAChartTab === "risk" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
+              >
+                Risco
+              </Button>
+              <Button
+                variant={qAChartTab === "frequency" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setQAChartTab("frequency")}
+                className={qAChartTab === "frequency" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
+              >
+                Frequência
+              </Button>
+              <Button
+                variant={qAChartTab === "quality" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setQAChartTab("quality")}
+                className={qAChartTab === "quality" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
+              >
+                Qualidade QA
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={statsBySeverity}>
-                <XAxis dataKey="severity" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="count" name="Quantidade">
-                  {statsBySeverity.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
+              {qAChartTab === "severity" && (
+                <BarChart data={statsBySeverity}>
+                  <XAxis dataKey="severity" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="count" name="Quantidade">
+                    {statsBySeverity.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              )}
+              {qAChartTab === "risk" && (
+                <BarChart data={statsByRisk}>
+                  <XAxis dataKey="risk" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="count" name="Quantidade">
+                    {statsByRisk.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              )}
+              {qAChartTab === "frequency" && (
+                <BarChart data={statsByFrequency}>
+                  <XAxis dataKey="frequency" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="count" name="Quantidade">
+                    {statsByFrequency.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              )}
+              {qAChartTab === "quality" && (
+                <BarChart data={statsByQAQuality}>
+                  <XAxis dataKey="quality" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="count" name="Quantidade">
+                    {statsByQAQuality.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              )}
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -356,7 +486,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-500">Visualizações</p>
-                <p className="text-lg font-semibold">678</p>
+                <p className="text-lg font-semibold">{totalViews}</p>
               </div>
             </div>
           </CardContent>
@@ -370,7 +500,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-500">Quase Acidentes</p>
-                <p className="text-lg font-semibold">28</p>
+                <p className="text-lg font-semibold">{totalIncidents}</p>
               </div>
             </div>
           </CardContent>
@@ -384,7 +514,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-500">Formações</p>
-                <p className="text-lg font-semibold">12</p>
+                <p className="text-lg font-semibold">{totalVideos}</p>
               </div>
             </div>
           </CardContent>
@@ -402,7 +532,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-500">Medalhas</p>
-                <p className="text-lg font-semibold">3</p>
+                <p className="text-lg font-semibold">{totalMedalsAcquired}</p>
               </div>
             </div>
           </CardContent>
@@ -485,47 +615,114 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={statsByCategory}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="count"
-                      nameKey="category"
-                      label={renderCustomPieChartLabel}
-                    >
+                  <BarChart data={statsByCategory}>
+                    <XAxis dataKey="category" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="count" name="Quantidade">
                       {statsByCategory.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
             
             <Card className="bg-white shadow">
               <CardHeader>
-                <CardTitle className="text-lg font-medium">Quase Acidentes por Severidade</CardTitle>
-                <CardDescription>Total de incidentes reportados por nível de severidade</CardDescription>
+                <CardTitle className="text-lg font-medium">Quase Acidentes por Parâmetros</CardTitle>
+                <CardDescription>Análise de incidentes por diferentes métricas</CardDescription>
+                <div className="flex mt-2 space-x-1">
+                  <Button
+                    variant={qAChartTab === "severity" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setQAChartTab("severity")}
+                    className={qAChartTab === "severity" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
+                  >
+                    Gravidade
+                  </Button>
+                  <Button
+                    variant={qAChartTab === "risk" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setQAChartTab("risk")}
+                    className={qAChartTab === "risk" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
+                  >
+                    Risco
+                  </Button>
+                  <Button
+                    variant={qAChartTab === "frequency" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setQAChartTab("frequency")}
+                    className={qAChartTab === "frequency" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
+                  >
+                    Frequência
+                  </Button>
+                  <Button
+                    variant={qAChartTab === "quality" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setQAChartTab("quality")}
+                    className={qAChartTab === "quality" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
+                  >
+                    Qualidade QA
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={statsBySeverity}>
-                    <XAxis dataKey="severity" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="count" name="Quantidade">
-                      {statsBySeverity.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
+                  {qAChartTab === "severity" && (
+                    <BarChart data={statsBySeverity}>
+                      <XAxis dataKey="severity" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="count" name="Quantidade">
+                        {statsBySeverity.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  )}
+                  {qAChartTab === "risk" && (
+                    <BarChart data={statsByRisk}>
+                      <XAxis dataKey="risk" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="count" name="Quantidade">
+                        {statsByRisk.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  )}
+                  {qAChartTab === "frequency" && (
+                    <BarChart data={statsByFrequency}>
+                      <XAxis dataKey="frequency" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="count" name="Quantidade">
+                        {statsByFrequency.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  )}
+                  {qAChartTab === "quality" && (
+                    <BarChart data={statsByQAQuality}>
+                      <XAxis dataKey="quality" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="count" name="Quantidade">
+                        {statsByQAQuality.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  )}
                 </ResponsiveContainer>
               </CardContent>
             </Card>
@@ -634,7 +831,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Total Visualizações</p>
-                    <p className="text-2xl font-semibold">678</p>
+                    <p className="text-2xl font-semibold">{totalViews}</p>
                   </div>
                 </div>
               </CardContent>
@@ -648,7 +845,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Quase Acidentes</p>
-                    <p className="text-2xl font-semibold">28</p>
+                    <p className="text-2xl font-semibold">{totalIncidents}</p>
                   </div>
                 </div>
               </CardContent>
@@ -662,7 +859,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Formações Completas</p>
-                    <p className="text-2xl font-semibold">12</p>
+                    <p className="text-2xl font-semibold">{totalVideos}</p>
                   </div>
                 </div>
               </CardContent>
@@ -680,7 +877,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Medalhas Ganhas</p>
-                    <p className="text-2xl font-semibold">3</p>
+                    <p className="text-2xl font-semibold">{totalMedalsAcquired}</p>
                   </div>
                 </div>
               </CardContent>
