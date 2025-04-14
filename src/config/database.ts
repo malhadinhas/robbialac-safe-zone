@@ -2,18 +2,18 @@
  * MongoDB Atlas configuration
  * Enhanced with better error handling and validation
  */
-interface MongoDBConfigType {
+export interface MongoDBConfigType {
   uri: string;
   dbName: string;
 }
 
-const MongoDBConfig: MongoDBConfigType = {
+export const MongoDBConfig: MongoDBConfigType = {
   uri: 'mongodb+srv://RobbialacSeguranca:L4QZLeo7U0EwsKw8@workplace-safety.j7o51.mongodb.net/workplace-safety',
   dbName: 'workplace-safety'
 };
 
 // Validate configuration
-function validateConfig(config: MongoDBConfigType): void {
+export function validateConfig(config: MongoDBConfigType): void {
   if (!config.uri) {
     throw new Error("MongoDB Config Validation Error: Missing URI");
   } 
@@ -31,7 +31,7 @@ let mongoConfig: MongoDBConfigType = { ...MongoDBConfig };
 /**
  * Initialize MongoDB Atlas configuration
  */
-function initializeMongoConfig(config: MongoDBConfigType): void {
+export function initializeMongoConfig(config: MongoDBConfigType): void {
   try {
     console.log("MongoDB Config: Updating configuration:", {
       uri: config.uri.substring(0, 20) + "...", // Mask full connection string
@@ -51,7 +51,7 @@ function initializeMongoConfig(config: MongoDBConfigType): void {
 /**
  * Get MongoDB Atlas configuration
  */
-function getMongoConfig(): MongoDBConfigType {
+export function getMongoConfig(): MongoDBConfigType {
   if (!mongoConfig.uri || !mongoConfig.dbName) {
     throw new Error("MongoDB Config: Configuration not initialized");
   }
@@ -89,10 +89,3 @@ export function getDatabaseConnectionStatus() {
     lastChecked: new Date()
   };
 }
-
-export {
-  MongoDBConfig,
-  getMongoConfig,
-  initializeMongoConfig,
-  MongoDBConfigType
-};

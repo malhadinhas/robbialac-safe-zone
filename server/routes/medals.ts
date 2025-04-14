@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getMedals, getUserMedals, getUserUnacquiredMedals } from '../controllers/medalController';
+import { getMedals, getUserMedals, getUserUnacquiredMedals, assignMedalToUser } from '../controllers/medalController';
 
 const router = Router();
 
@@ -11,5 +11,8 @@ router.get('/user/:userId', getUserMedals);
 
 // Buscar medalhas não conquistadas por um usuário
 router.get('/user/:userId/unacquired', getUserUnacquiredMedals);
+
+// Atribuir manualmente uma medalha a um usuário
+router.post('/assign/:userId/:medalId', assignMedalToUser);
 
 export default router; 

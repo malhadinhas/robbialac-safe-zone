@@ -4,99 +4,91 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
-import { getUserMedals, Medal } from "@/services/medalService";
+import { getUserMedals, getUnacquiredMedals, Medal } from "@/services/medalService";
 import { getUserPointsBreakdown, UserPointsBreakdown, getUserRanking, UserRanking } from "@/services/statsService";
-import { format } from 'date-fns';
+import { getUserActivities, UserActivity } from "@/services/activityService";
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NoScrollLayout } from "@/components/NoScrollLayout";
 import { useIsCompactView } from "@/hooks/use-mobile";
+import MedalCard from "@/components/MedalCard";
 
 export default function Pontuacao() {
   const { user } = useAuth();
   const isCompactView = useIsCompactView();
   const [medals, setMedals] = useState<Medal[]>([]);
+  const [unacquiredMedals, setUnacquiredMedals] = useState<Medal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pointsBreakdown, setPointsBreakdown] = useState<UserPointsBreakdown[]>([]);
   const [userRanking, setUserRanking] = useState<UserRanking>({ position: 0, totalUsers: 0, points: 0 });
+  const [activities, setActivities] = useState<UserActivity[]>([]);
   
   useEffect(() => {
+    console.log("Pontuacao.tsx: useEffect triggered. User:", user);
     const fetchData = async () => {
+      console.log("Pontuacao.tsx: fetchData starting...");
       try {
         setIsLoading(true);
-        // Buscar medalhas
-        const medalsData = await getUserMedals(user?.id);
+        console.log("Pontuacao.tsx: Fetching data...");
+        // Buscar medalhas conquistadas
+        const medalsData = await getUserMedals(user?._id);
         setMedals(medalsData);
+        console.log("Pontuacao.tsx: Medals fetched.", medalsData);
+        
+        // Buscar medalhas não conquistadas
+        const unacquiredMedalsData = await getUnacquiredMedals(user?._id);
+        setUnacquiredMedals(unacquiredMedalsData);
+        console.log("Pontuacao.tsx: Unacquired medals fetched.", unacquiredMedalsData);
         
         // Buscar distribuição de pontos
-        const pointsData = await getUserPointsBreakdown(user?.id);
+        const pointsData = await getUserPointsBreakdown(user?._id);
         setPointsBreakdown(pointsData);
+        console.log("Pontuacao.tsx: Points breakdown fetched.", pointsData);
         
         // Buscar ranking do usuário
-        const rankingData = await getUserRanking(user?.id);
+        const rankingData = await getUserRanking(user?._id);
         setUserRanking(rankingData);
+        console.log("Pontuacao.tsx: Ranking fetched.", rankingData);
+        
+        // Buscar histórico de atividades
+        const activitiesData = await getUserActivities(user?._id, 20);
+        setActivities(activitiesData);
+        console.log("Pontuacao.tsx: Activities fetched.", activitiesData);
       } catch (error) {
-        console.error("Erro ao buscar dados:", error);
+        console.error("Pontuacao.tsx: Erro ao buscar dados:", error);
       } finally {
+        console.log("Pontuacao.tsx: Fetch data finished, setting loading to false.");
         setIsLoading(false);
       }
     };
 
-    if (user?.id) {
+    if (user?._id) {
+      console.log("Pontuacao.tsx: User _ID found, calling fetchData.");
       fetchData();
+    } else {
+      console.log("Pontuacao.tsx: User _ID not found yet.");
+      // Se não houver user._id, podemos querer parar o loading após um tempo
+       setTimeout(() => {
+         if (!user?._id) { // Verifica novamente se o ID ainda não chegou
+           console.log("Pontuacao.tsx: Timeout - User _ID still not available, stopping loading.");
+           setIsLoading(false);
+         }
+       }, 3000); // Espera 3 segundos
     }
-  }, [user?.id]);
+  }, [user?._id]);
   
   // Cálculo da próxima medalha e progresso
   const earnedMedals = medals || [];
-  const unearnedMedals: Medal[] = []; // Aqui você pode implementar uma lógica para buscar medalhas não conquistadas
   
   // Progress para o próximo nível
   const progressToNextLevel = Math.min(((user?.points || 0) % 500) / 5, 100);
   const currentLevel = user?.level || 1;
   const pointsToNextLevel = 500 - ((user?.points || 0) % 500);
   
-  const activityHistory = [
-    { 
-      id: "1", 
-      description: "Completou formação: 'Segurança no Enchimento'", 
-      date: new Date("2024-04-01"), 
-      points: 50,
-      type: "formacao"
-    },
-    { 
-      id: "2", 
-      description: "Reportou quase acidente: 'Derrame de solvente'", 
-      date: new Date("2024-03-25"), 
-      points: 75,
-      type: "incidente"
-    },
-    { 
-      id: "3", 
-      description: "Medalha desbloqueada: 'Vigilante da Segurança'", 
-      date: new Date("2024-03-15"), 
-      points: 100,
-      type: "medalha"
-    },
-    { 
-      id: "4", 
-      description: "Assistiu 5 vídeos de segurança", 
-      date: new Date("2024-03-10"), 
-      points: 100,
-      type: "video"
-    },
-    { 
-      id: "5", 
-      description: "Reportou quase acidente: 'Painel elétrico aberto'", 
-      date: new Date("2024-02-28"), 
-      points: 100,
-      type: "incidente"
-    }
-  ];
-  
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'formacao':
+  const getTypeIcon = (category: string) => {
+    switch (category) {
+      case 'training':
         return (
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" 
               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
@@ -104,7 +96,7 @@ export default function Pontuacao() {
             <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
           </svg>
         );
-      case 'incidente':
+      case 'incident':
         return (
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" 
               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
@@ -114,7 +106,7 @@ export default function Pontuacao() {
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
         );
-      case 'medalha':
+      case 'medal':
         return (
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" 
               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
@@ -255,83 +247,139 @@ export default function Pontuacao() {
     </div>
   );
   
+  const medalsTab = (
+    <div className="space-y-10">
+      <div>
+        <h2 className="text-2xl font-bold mb-6">Medalhas Conquistadas</h2>
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-200 rounded-lg h-40 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-full"></div>
+              </div>
+            ))}
+          </div>
+        ) : medals.length === 0 ? (
+          <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+            <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">Sem medalhas ainda</h3>
+            <p className="mt-1 text-sm text-gray-500">Complete atividades de segurança para ganhar medalhas.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {medals.map((medal) => (
+              <MedalCard 
+                key={medal.id} 
+                medal={medal} 
+                isAcquired={true} 
+                userPoints={user?.points || 0} 
+              />
+            ))}
+          </div>
+        )}
+      </div>
+      
+      <div>
+        <h2 className="text-2xl font-bold mb-6">Próximas Conquistas</h2>
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-200 rounded-lg h-40 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-full"></div>
+              </div>
+            ))}
+          </div>
+        ) : unacquiredMedals.length === 0 ? (
+          <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+            <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">Parabéns!</h3>
+            <p className="mt-1 text-sm text-gray-500">Você conquistou todas as medalhas disponíveis.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {unacquiredMedals.map((medal) => (
+              <MedalCard 
+                key={medal.id} 
+                medal={medal} 
+                isAcquired={false} 
+                userPoints={user?.points || 0} 
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+  
+  const historyTab = (
+    <div>
+      <h2 className="text-2xl font-bold mb-6">Histórico de Atividades</h2>
+      
+      {isLoading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex items-start p-4 border border-gray-100 rounded-lg shadow-sm bg-white animate-pulse">
+              <div className="w-8 h-8 bg-gray-200 rounded-full mr-4"></div>
+              <div className="flex-1">
+                <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+              </div>
+              <div className="w-16 h-8 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+      ) : activities.length === 0 ? (
+        <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+          <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Sem atividades recentes</h3>
+          <p className="mt-1 text-sm text-gray-500">Suas atividades aparecerão aqui quando você começar a interagir com a plataforma.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {activities.map((activity) => (
+            <div key={activity.id} className="flex items-start p-4 border border-gray-100 rounded-lg shadow-sm bg-white">
+              <div className="mr-4 mt-1">{getTypeIcon(activity.category)}</div>
+              <div className="flex-1">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-medium">{activity.description}</div>
+                    <div className="text-sm text-gray-500">
+                      {format(parseISO(activity.date), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    </div>
+                  </div>
+                  <div className="px-2 py-1 bg-gray-100 rounded text-sm font-medium text-gray-800">
+                    +{activity.points} pts
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+  
   const tabsSection = (
     <Tabs defaultValue="medals" className="mb-8">
       <TabsList className="mb-6">
         <TabsTrigger value="medals" className="px-6">Medalhas</TabsTrigger>
         <TabsTrigger value="history" className="px-6">Histórico</TabsTrigger>
       </TabsList>
-      
       <TabsContent value="medals">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-4">Medalhas Conquistadas</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {earnedMedals.map((medal) => (
-              <Card key={medal.id} className="bg-gradient-to-br from-white to-gray-50 border-2 border-yellow-300">
-                <CardContent className="p-6 flex items-center">
-                  <div className="text-5xl mr-4">{medal.image}</div>
-                  <div>
-                    <h3 className="font-bold text-lg">{medal.name}</h3>
-                    <p className="text-gray-600 text-sm">{medal.description}</p>
-                    <p className="text-gray-500 text-xs mt-1">
-                      Conquistada em {medal.acquiredDate && format(new Date(medal.acquiredDate), 'dd/MM/yyyy')}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-        
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Próximas Conquistas</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {unearnedMedals.map((medal) => (
-              <Card key={medal.id} className="bg-gray-50 opacity-80">
-                <CardContent className="p-6 flex items-center">
-                  <div className="text-5xl mr-4 opacity-50">{medal.image}</div>
-                  <div>
-                    <h3 className="font-bold text-lg">{medal.name}</h3>
-                    <p className="text-gray-600 text-sm">{medal.description}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        {medalsTab}
       </TabsContent>
-      
       <TabsContent value="history">
-        <Card>
-          <CardHeader>
-            <CardTitle>Histórico de Atividades</CardTitle>
-            <CardDescription>Suas ações e pontos ganhos</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {activityHistory.map((activity) => (
-                <div key={activity.id} className="flex items-start">
-                  <div className="bg-gray-100 p-2 rounded-full mr-4 mt-1">
-                    {getTypeIcon(activity.type)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium">{activity.description}</p>
-                        <p className="text-sm text-gray-500">
-                          {format(new Date(activity.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                        </p>
-                      </div>
-                      <span className="bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded">
-                        +{activity.points} pts
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        {historyTab}
       </TabsContent>
     </Tabs>
   );

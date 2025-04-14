@@ -1,19 +1,23 @@
 import { Request, Response } from 'express';
 import { getCollection } from '../services/database';
 import logger from '../utils/logger';
+import { ObjectId } from 'mongodb';
 
 export interface Medal {
+  _id?: ObjectId;
   id: string;
   name: string;
   description: string;
   imageSrc: string;
-  category: string;
+  triggerAction: 'incidentReported' | 'videoWatched' | 'trainingCompleted';
+  triggerCategory?: string;
+  requiredCount: number;
   created_at?: Date;
   updated_at?: Date;
 }
 
 export interface UserMedal {
-  id: string;
+  _id?: ObjectId;
   userId: string;
   medalId: string;
   dateEarned: Date;
@@ -103,5 +107,198 @@ export const getUserUnacquiredMedals = async (req: Request, res: Response) => {
   } catch (error) {
     logger.error('Erro ao recuperar medalhas não conquistadas', { userId: req.params.userId, error });
     res.status(500).json({ message: 'Erro ao recuperar medalhas não conquistadas' });
+  }
+};
+
+/**
+ * Verifica e atribui medalhas baseadas em contagem de ações após uma nova atividade ser registrada.
+ * @param userId ID do usuário que realizou a atividade.
+ * @param activityCategory Categoria da atividade registrada ('video', 'incident', 'training').
+ * @param activityDetails Detalhes da atividade (necessário para 'video' e 'training' para verificar a categoria).
+ * @returns Array de medalhas recém-conquistadas (se houver).
+ */
+export const checkActionBasedMedals = async (
+  userId: string,
+  activityCategory: 'video' | 'incident' | 'training',
+  activityDetails?: any
+): Promise<Medal[]> => {
+  try {
+    logger.info(`Verificando medalhas baseadas em ação para ${userId} após atividade ${activityCategory}`);
+
+    // 1. Determinar o tipo de ação correspondente para buscar medalhas
+    let targetTriggerAction: Medal['triggerAction'] | null = null;
+    if (activityCategory === 'incident') targetTriggerAction = 'incidentReported';
+    else if (activityCategory === 'video') targetTriggerAction = 'videoWatched';
+    else if (activityCategory === 'training') targetTriggerAction = 'trainingCompleted';
+
+    if (!targetTriggerAction) {
+      logger.warn(`Categoria de atividade não mapeada para trigger de medalha: ${activityCategory}`);
+      return [];
+    }
+
+    // 2. Buscar todas as medalhas que são acionadas por esta ação
+    const medalsCollection = await getCollection<Medal>('medals');
+    const potentialMedals = await medalsCollection.find({ triggerAction: targetTriggerAction }).toArray();
+
+    if (potentialMedals.length === 0) {
+      logger.info(`Nenhuma medalha encontrada para o trigger ${targetTriggerAction}`);
+      return [];
+    }
+
+    // 3. Buscar as medalhas que o usuário JÁ possui para evitar re-atribuição
+    const userMedalsCollection = await getCollection<UserMedal>('user_medals');
+    const userEarnedMedals = await userMedalsCollection.find({ userId }).toArray();
+    const earnedMedalIds = userEarnedMedals.map(um => um.medalId);
+
+    // 4. Filtrar medalhas potenciais para obter apenas as que o usuário AINDA NÃO tem
+    const medalsToCheck = potentialMedals.filter(medal => !earnedMedalIds.includes(medal.id));
+
+    if (medalsToCheck.length === 0) {
+      logger.info(`Usuário ${userId} já possui todas as medalhas para ${targetTriggerAction}`);
+      return [];
+    }
+
+    // 5. Contar as atividades relevantes do usuário
+    const activitiesCollection = await getCollection('user_activities');
+    let userActionCount = 0;
+
+    if (targetTriggerAction === 'incidentReported') {
+      userActionCount = await activitiesCollection.countDocuments({ userId, category: 'incident' });
+    } else if (targetTriggerAction === 'videoWatched') {
+      // Para vídeos, precisamos filtrar pela categoria do vídeo DENTRO dos detalhes da atividade
+      const videoCategory = activityDetails?.category; // Assumindo que details.category contém o nome da categoria
+      if (!videoCategory) {
+         logger.warn(`Detalhes da atividade de vídeo não contêm categoria para ${userId}`);
+         // Não podemos verificar medalhas baseadas em categoria de vídeo sem a categoria
+      } else {
+          // Conta atividades de vídeo PARA ESTE USUÁRIO cuja categoria nos detalhes corresponde
+           userActionCount = await activitiesCollection.countDocuments({ 
+                userId, 
+                category: 'video', 
+                'details.category': videoCategory 
+            });
+             logger.info(`Contagem de vídeos da categoria '${videoCategory}' para ${userId}: ${userActionCount}`);
+      }
+    } else if (targetTriggerAction === 'trainingCompleted') {
+       // Similar a vídeo, pode precisar filtrar por categoria de treino se houver
+       const trainingCategory = activityDetails?.category; 
+       if (trainingCategory) {
+            userActionCount = await activitiesCollection.countDocuments({ userId, category: 'training', 'details.category': trainingCategory });
+             logger.info(`Contagem de treinos da categoria '${trainingCategory}' para ${userId}: ${userActionCount}`);
+       } else {
+            // Contar todos os treinos se não houver categoria específica
+             userActionCount = await activitiesCollection.countDocuments({ userId, category: 'training' });
+             logger.info(`Contagem total de treinos para ${userId}: ${userActionCount}`);
+       }
+    }
+
+    logger.info(`Contagem total da ação ${targetTriggerAction} para ${userId}: ${userActionCount}`);
+
+    // 6. Verificar quais das medalhas pendentes foram alcançadas com esta contagem
+    const newlyEarnedMedals: Medal[] = [];
+    for (const medal of medalsToCheck) {
+      // Se for medalha de vídeo/treino com categoria específica, só conta se a categoria da atividade bate com a da medalha
+      if ((medal.triggerAction === 'videoWatched' || medal.triggerAction === 'trainingCompleted') && medal.triggerCategory) {
+          if (activityDetails?.category !== medal.triggerCategory) {
+              logger.debug(`Skipping medal ${medal.id}: category mismatch ('${activityDetails?.category}' vs '${medal.triggerCategory}')`);
+              continue; // Pula esta medalha se a categoria não for a correta
+          }
+      }
+
+      // Verifica se a contagem total da ação atinge o necessário para a medalha
+      if (userActionCount >= medal.requiredCount) {
+        logger.info(`Usuário ${userId} alcançou a medalha ${medal.name} (ID: ${medal.id}) com ${userActionCount}/${medal.requiredCount} ${medal.triggerAction}`);
+        newlyEarnedMedals.push(medal);
+
+        // Atribuir a medalha imediatamente no banco de dados
+        await userMedalsCollection.insertOne({
+          userId,
+          medalId: medal.id,
+          dateEarned: new Date(),
+        });
+        logger.info(`Medalha ${medal.id} atribuída a ${userId} no banco de dados.`);
+      }
+    }
+
+    return newlyEarnedMedals;
+
+  } catch (error) {
+    logger.error(`Erro ao verificar medalhas baseadas em ação para ${userId}`, { error });
+    return []; // Retorna array vazio em caso de erro
+  }
+};
+
+/**
+ * Atribui manualmente uma medalha a um usuário
+ */
+export const assignMedalToUser = async (req: Request, res: Response) => {
+  try {
+    const { userId, medalId } = req.params;
+    
+    if (!userId || !medalId) {
+      logger.warn('Tentativa de atribuir medalha sem ID de usuário ou medalha', { userId, medalId });
+      return res.status(400).json({ message: 'IDs de usuário e medalha são obrigatórios' });
+    }
+    
+    // Verificar se a medalha existe
+    const medalsCollection = await getCollection<Medal>('medals');
+    const medal = await medalsCollection.findOne({ id: medalId });
+    
+    if (!medal) {
+      logger.warn(`Medalha não encontrada: ${medalId}`);
+      return res.status(404).json({ message: 'Medalha não encontrada' });
+    }
+    
+    // Verificar se o usuário já possui esta medalha
+    const userMedalsCollection = await getCollection<UserMedal>('user_medals');
+    const existingMedal = await userMedalsCollection.findOne({ userId, medalId });
+    
+    if (existingMedal) {
+      logger.info(`Usuário ${userId} já possui a medalha ${medalId}`);
+      return res.status(200).json({ 
+        message: 'Usuário já possui esta medalha', 
+        dateEarned: existingMedal.dateEarned 
+      });
+    }
+    
+    // Atribuir a medalha ao usuário
+    const userMedal = {
+      userId,
+      medalId,
+      dateEarned: new Date()
+    };
+    
+    await userMedalsCollection.insertOne(userMedal);
+    
+    logger.info(`Medalha ${medalId} atribuída manualmente ao usuário ${userId}`);
+    
+    // Registrar como atividade
+    const activitiesCollection = await getCollection('user_activities');
+    await activitiesCollection.insertOne({
+      userId,
+      category: 'medal',
+      activityId: medalId,
+      points: 0,
+      timestamp: new Date(),
+      details: {
+        name: medal.name,
+        description: medal.description,
+        imageSrc: medal.imageSrc,
+        manual: true
+      }
+    });
+    
+    res.status(201).json({
+      message: 'Medalha atribuída com sucesso',
+      medal: {
+        id: medal.id,
+        name: medal.name,
+        dateEarned: userMedal.dateEarned
+      }
+    });
+    
+  } catch (error) {
+    logger.error('Erro ao atribuir medalha ao usuário', { error });
+    res.status(500).json({ message: 'Erro ao atribuir medalha ao usuário' });
   }
 }; 

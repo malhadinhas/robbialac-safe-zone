@@ -61,7 +61,7 @@ export async function createUser(req: Request, res: Response) {
     const newUser: User = {
       ...userData,
       id: crypto.randomUUID(),
-      points: 0,
+      points: 100,
       level: 1,
       medals: [],
       viewedVideos: [],

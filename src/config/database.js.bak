@@ -1,0 +1,12 @@
+// Este arquivo foi substituído por database.ts
+// Redirecionando todas as exportações para o arquivo TypeScript compilado
+
+import * as databaseModule from './database.ts';
+
+export const MongoDBConfig = databaseModule.MongoDBConfig;
+export const initializeDatabase = databaseModule.initializeDatabase;
+export const getDatabaseConnectionStatus = databaseModule.getDatabaseConnectionStatus;
+export const getMongoConfig = databaseModule.getMongoConfig;
+export const initializeMongoConfig = databaseModule.initializeMongoConfig;
+export const validateConfig = databaseModule.validateConfig;
+export const MongoDBConfigType = databaseModule.MongoDBConfigType;

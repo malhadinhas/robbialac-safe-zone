@@ -24,6 +24,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const loadUser = async () => {
       try {
         const currentUser = getCurrentUser();
+        
+        // Garantir que o usuário tenha pontos iniciais
+        if (currentUser && (!currentUser.points || currentUser.points === 0)) {
+          const initialPoints = 100;
+          currentUser.points = initialPoints;
+          currentUser.level = currentUser.level || 1;
+          
+          // Atualizar no localStorage
+          localStorage.setItem('robbialac_user', JSON.stringify(currentUser));
+        }
+        
         setUser(currentUser);
       } catch (error) {
         console.error("Erro ao carregar usuário:", error);
