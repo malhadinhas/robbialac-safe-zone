@@ -24,18 +24,31 @@ api.interceptors.response.use(
   (error) => {
     if (error.response) {
       // O servidor respondeu com um status de erro
-      console.error('Erro na resposta:', error.response.data);
+      console.error('Erro na resposta API:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+        url: error.config?.url,
+        method: error.config?.method
+      });
+      
       if (error.response.status === 401) {
         // Token expirado ou inválido
         localStorage.removeItem('token');
-        window.location.href = '/login';
+        // Comentado para não redirecionar durante desenvolvimento
+        // window.location.href = '/login';
+        console.warn('Token expirado ou inválido. Você será redirecionado para o login.');
       }
     } else if (error.request) {
       // A requisição foi feita mas não houve resposta
-      console.error('Erro na requisição:', error.request);
+      console.error('Erro na requisição (sem resposta do servidor):', {
+        url: error.config?.url,
+        method: error.config?.method,
+        request: error.request
+      });
     } else {
       // Algo aconteceu na configuração da requisição
-      console.error('Erro:', error.message);
+      console.error('Erro na configuração da requisição:', error.message);
     }
     return Promise.reject(error);
   }

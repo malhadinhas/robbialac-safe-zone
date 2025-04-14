@@ -25,44 +25,55 @@ async function seedInitialData() {
       
       const medalData = [
         {
-          id: "1",
+          id: "observador-iniciante",
           name: "Observador Iniciante",
           description: "Completou o treinamento básico de observação de riscos",
           imageSrc: "/src/assets/medals/observador-iniciante.png",
-          category: "observacao",
-          requiredPoints: 0
+          triggerAction: "trainingCompleted",
+          triggerCategory: "Introdução",
+          requiredCount: 1,
+          created_at: new Date(),
+          updated_at: new Date()
         },
         {
-          id: "2",
+          id: "vigilante-ativo",
           name: "Vigilante Ativo",
           description: "Reportou 5 situações potencialmente perigosas",
           imageSrc: "/src/assets/medals/vigilante-ativo.png",
-          category: "seguranca",
-          requiredPoints: 100
+          triggerAction: "incidentReported",
+          requiredCount: 5,
+          created_at: new Date(),
+          updated_at: new Date()
         },
         {
-          id: "3",
+          id: "vigilante-dedicado",
           name: "Vigilante Dedicado",
           description: "Reportou 10 situações potencialmente perigosas",
           imageSrc: "/src/assets/medals/vigilante-dedicado.png",
-          category: "seguranca",
-          requiredPoints: 200
+          triggerAction: "incidentReported",
+          requiredCount: 10,
+          created_at: new Date(),
+          updated_at: new Date()
         },
         {
-          id: "4",
+          id: "observador-consistente",
           name: "Observador Consistente",
           description: "Identificou 15 riscos no ambiente de trabalho",
           imageSrc: "/src/assets/medals/observador-consistente.png",
-          category: "observacao",
-          requiredPoints: 300
+          triggerAction: "incidentReported",
+          requiredCount: 15,
+          created_at: new Date(),
+          updated_at: new Date()
         },
         {
-          id: "5",
+          id: "guardiao-prevencao",
           name: "Guardião da Prevenção",
           description: "Contribuiu para 30 dias sem acidentes na fábrica",
           imageSrc: "/src/assets/medals/guardiao-prevencao.png",
-          category: "seguranca",
-          requiredPoints: 400
+          triggerAction: "incidentReported",
+          requiredCount: 30,
+          created_at: new Date(),
+          updated_at: new Date()
         }
       ];
       
@@ -87,23 +98,28 @@ async function seedInitialData() {
         // Atribuir medalha inicial (Observador Iniciante)
         const initialMedal = {
           userId: user.id,
-          medalId: "1", // ID da medalha "Observador Iniciante"
+          medalId: "observador-iniciante", // ID descritivo
           dateEarned: new Date()
         };
         
         await userMedalsCollection.insertOne(initialMedal);
         totalMedalsAssigned++;
         
+        // Buscar dados completos da medalha
+        const medalData = await medalsCollection.findOne({ id: "observador-iniciante" });
+        
         // Registrar atividade da medalha
         const medalActivity = {
           userId: user.id,
           category: 'medal',
-          activityId: "1",
+          activityId: "observador-iniciante",
           points: 0,
           timestamp: new Date(),
           details: {
-            name: "Observador Iniciante",
-            description: "Completou o treinamento básico de observação de riscos"
+            name: medalData?.name || "Observador Iniciante",
+            description: medalData?.description || "Completou o treinamento básico de observação de riscos",
+            imageSrc: medalData?.imageSrc || "/src/assets/medals/observador-iniciante.png",
+            manual: true
           }
         };
         
@@ -128,6 +144,7 @@ async function seedInitialData() {
             timestamp: ontem,
             details: {
               title: "Introdução à Segurança",
+              category: "Introdução",
               isFullCourse: false
             }
           },
@@ -138,7 +155,8 @@ async function seedInitialData() {
             points: 50,
             timestamp: new Date(),
             details: {
-              title: "Orientação de Segurança"
+              title: "Orientação de Segurança",
+              category: "Segurança"
             }
           }
         ];

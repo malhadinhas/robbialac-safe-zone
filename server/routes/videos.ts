@@ -8,6 +8,7 @@ import {
   incrementVideoViews,
   getLastViewedVideosByCategory
 } from '../controllers/videoController';
+import { isAuthenticated, isAdmin } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -20,16 +21,16 @@ router.get('/category/:category/most-viewed', getLastViewedVideosByCategory);
 // Buscar um vídeo específico
 router.get('/:id', getVideoById);
 
-// Criar um novo vídeo
-router.post('/', createVideo);
+// Criar um novo vídeo (requer privilégios de administrador)
+router.post('/', isAdmin, createVideo);
 
-// Atualizar um vídeo
-router.put('/:id', updateVideo);
+// Atualizar um vídeo (requer privilégios de administrador)
+router.put('/:id', isAdmin, updateVideo);
 
-// Excluir um vídeo
-router.delete('/:id', deleteVideo);
+// Excluir um vídeo (requer privilégios de administrador)
+router.delete('/:id', isAdmin, deleteVideo);
 
-// Incrementar visualizações
-router.post('/:id/views', incrementVideoViews);
+// Incrementar visualizações (requer autenticação)
+router.post('/:id/views', isAuthenticated, incrementVideoViews);
 
 export default router; 

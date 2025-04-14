@@ -227,3 +227,164 @@
 {"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:21:10.593Z","url":"/api/database/status"}
 {"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:21:40.584Z","url":"/api/database/status"}
 {"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:22:10.595Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:22:40.580Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:23:41.577Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:24:42.589Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:25:43.586Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:26:44.580Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:27:45.580Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:28:46.595Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:29:47.589Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:30:48.591Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:31:49.587Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:32:50.590Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:33:51.584Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:34:52.594Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:35:53.583Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:36:54.589Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:37:55.587Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:38:56.584Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:39:52.611Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:40:10.584Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:40:40.582Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:41:10.138Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:41:40.142Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:42:10.590Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:42:40.584Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:43:01.658Z","url":"/api/medals"}
+{"count":19,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T14:43:01.718Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:43:03.593Z","url":"/api/medals"}
+{"count":19,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T14:43:03.653Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:43:41.584Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:44:42.590Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:45:19.593Z","url":"/api/medals"}
+{"count":19,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T14:45:19.655Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:45:27.870Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:45:34.889Z","url":"/api/medals"}
+{"count":19,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T14:45:34.950Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:46:01.589Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:46:31.583Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:47:01.587Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:47:04.609Z","url":"/api/medals"}
+{"count":19,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T14:47:04.673Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:47:05.594Z","url":"/api/medals"}
+{"count":19,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T14:47:05.657Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:47:31.590Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:47:48.618Z","url":"/api/medals"}
+{"count":19,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T14:47:48.680Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:47:49.611Z","url":"/api/medals"}
+{"count":19,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T14:47:49.672Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:47:50.600Z","url":"/api/medals"}
+{"count":19,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T14:47:50.663Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:48:01.575Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:49:02.577Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:49:30.838Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"OPTIONS","timestamp":"2025-04-14T14:49:54.409Z","url":"/api/medals/28dfb178-2677-41a5-8eff-e6d95a5f3dfa"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"PUT","timestamp":"2025-04-14T14:49:54.410Z","url":"/api/medals/28dfb178-2677-41a5-8eff-e6d95a5f3dfa"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:50:00.838Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:50:31.577Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:51:01.577Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:51:57.100Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:52:01.576Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"OPTIONS","timestamp":"2025-04-14T14:52:26.051Z","url":"/api/medals/28dfb178-2677-41a5-8eff-e6d95a5f3dfa"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"PUT","timestamp":"2025-04-14T14:52:26.053Z","url":"/api/medals/28dfb178-2677-41a5-8eff-e6d95a5f3dfa"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:52:30.836Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:53:00.837Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:53:31.576Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:54:01.575Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:55:02.590Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:56:03.576Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:57:04.576Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:58:05.576Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:59:06.588Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:00:07.575Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:00:55.087Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:01:00.848Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:01:04.705Z","url":"/api/medals"}
+{"count":18,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T15:01:04.764Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"OPTIONS","timestamp":"2025-04-14T15:01:25.268Z","url":"/api/medals/observador-iniciante"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"PUT","timestamp":"2025-04-14T15:01:25.270Z","url":"/api/medals/observador-iniciante"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:01:31.223Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:02:01.575Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:02:31.575Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:02:45.616Z","url":"/api/medals"}
+{"count":18,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T15:02:45.676Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"OPTIONS","timestamp":"2025-04-14T15:02:51.817Z","url":"/api/medals/observador-iniciante"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"PUT","timestamp":"2025-04-14T15:02:51.818Z","url":"/api/medals/observador-iniciante"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:03:00.121Z","url":"/api/medals"}
+{"count":18,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T15:03:00.182Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"OPTIONS","timestamp":"2025-04-14T15:03:02.879Z","url":"/api/medals/observador-iniciante"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"PUT","timestamp":"2025-04-14T15:03:02.880Z","url":"/api/medals/observador-iniciante"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:03:27.575Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:03:57.576Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:04:27.576Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:04:57.575Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:05:27.576Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:06:07.576Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:06:27.438Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:06:57.438Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:07:27.576Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:07:57.577Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:08:57.576Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:09:58.577Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:10:59.599Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:11:24.855Z","url":"/api/medals"}
+{"count":18,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T15:11:24.928Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:12:00.589Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:12:20.669Z","url":"/api/medals"}
+{"count":18,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T15:12:20.736Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:12:27.451Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:12:54.731Z","url":"/api/medals"}
+{"count":18,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T15:12:54.796Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:12:55.683Z","url":"/api/medals"}
+{"count":18,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T15:12:55.751Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:12:57.578Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:13:27.590Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:14:07.588Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:15:07.605Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:16:07.582Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:17:07.598Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:18:07.581Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:19:07.603Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:20:07.619Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:20:33.920Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:20:57.439Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:21:27.584Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:21:57.438Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:22:27.597Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:22:57.451Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:23:27.448Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:23:57.527Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:24:09.421Z","url":"/api/medals"}
+{"count":10,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T15:24:09.487Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"OPTIONS","timestamp":"2025-04-14T15:24:12.167Z","url":"/api/medals/observador-iniciante"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"PUT","timestamp":"2025-04-14T15:24:12.170Z","url":"/api/medals/observador-iniciante"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:24:36.613Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:25:05.799Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:25:36.587Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:26:06.620Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:26:35.804Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:27:06.595Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:27:35.170Z","url":"/api/medals/observador-iniciante"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:27:36.600Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:28:06.591Z","url":"/api/database/status"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000","timestamp":"2025-04-14T15:29:12.064Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:29:33.211Z","url":"/api/videos"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:29:33.218Z","url":"/api/incidents"}
+{"count":0,"level":"info","message":"Vídeos recuperados com sucesso","timestamp":"2025-04-14T15:29:33.281Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:29:35.077Z","url":"/api/medals/observador-iniciante"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:30:00.503Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:30:05.392Z","url":"/api/medals"}
+{"count":10,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T15:30:05.463Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"OPTIONS","timestamp":"2025-04-14T15:30:09.478Z","url":"/api/medals/observador-iniciante"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"PUT","timestamp":"2025-04-14T15:30:09.491Z","url":"/api/medals/observador-iniciante"}
+{"level":"warn","message":"Tentativa de acesso sem token de autenticação","method":"PUT","path":"/observador-iniciante","timestamp":"2025-04-14T15:30:09.718Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:30:30.593Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:31:00.599Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:31:30.604Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:32:00.514Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:32:30.528Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:33:00.611Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:33:30.604Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T15:34:07.598Z","url":"/api/database/status"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000","timestamp":"2025-04-14T15:35:13.061Z"}

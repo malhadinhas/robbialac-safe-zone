@@ -9,15 +9,15 @@ import {
   deleteMedal
 } from '../controllers/medalController';
 
-// Middleware de autenticação/autorização (Exemplo, ajuste conforme necessário)
-import { isAdmin } from '../middleware/authMiddleware'; // <<< VERIFIQUE O CAMINHO/NOME CORRETO
+// Middleware de autenticação/autorização
+import { isAdmin, isAuthenticated } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
 // Rotas Públicas (ou protegidas por autenticação geral)
 router.get('/', getMedals);
-router.get('/user/:userId', getUserMedals);
-router.get('/user/:userId/unacquired', getUserUnacquiredMedals);
+router.get('/user/:userId', isAuthenticated, getUserMedals);
+router.get('/user/:userId/unacquired', isAuthenticated, getUserUnacquiredMedals);
 
 // Rota para Atribuição Manual (protegida por admin)
 router.post('/assign/:userId/:medalId', isAdmin, assignMedalToUser);

@@ -364,11 +364,20 @@ export const updateMedal = async (req: Request, res: Response) => {
     const { medalId } = req.params; // Este é o ID legível (slug)
     const updateData: Partial<Omit<Medal, '_id' | 'id'>> = req.body;
 
+    logger.info(`Tentativa de atualizar medalha ${medalId}`, { 
+      medalId,
+      updateData,
+      headers: req.headers,
+      ip: req.ip
+    });
+
      // Validação básica
     if (Object.keys(updateData).length === 0) {
+      logger.warn(`Dados vazios para atualização da medalha ${medalId}`);
       return res.status(400).json({ message: 'Nenhum dado fornecido para atualização' });
     }
      if (updateData.requiredCount !== undefined && updateData.requiredCount <= 0) {
+        logger.warn(`Contagem inválida para medalha ${medalId}: ${updateData.requiredCount}`);
         return res.status(400).json({ message: 'Contagem necessária deve ser maior que zero' });
     }
      // Validação de categoria condicional mais complexa (simplificada aqui)
@@ -381,6 +390,22 @@ export const updateMedal = async (req: Request, res: Response) => {
 
     const collection = await getCollection<Medal>('medals');
 
+    // Verificar se a medalha existe antes de atualizar
+    const existingMedal = await collection.findOne({ id: medalId });
+    if (!existingMedal) {
+      logger.warn(`Tentativa de atualizar medalha não encontrada: ${medalId}`);
+      
+      // Mostrar todas as medalhas disponíveis para debug
+      const allMedals = await collection.find({}, { projection: { id: 1, name: 1 } }).toArray();
+      logger.info('Medalhas disponíveis no sistema:', { medals: allMedals });
+      
+      return res.status(404).json({ 
+        message: 'Medalha não encontrada',
+        requestedId: medalId,
+        availableIds: allMedals.map(m => m.id)
+      });
+    }
+
     // Não permitir alterar o ID (slug)
     delete updateData.id;
 
@@ -390,16 +415,26 @@ export const updateMedal = async (req: Request, res: Response) => {
     );
 
     if (result.matchedCount === 0) {
-      logger.warn(`Tentativa de atualizar medalha não encontrada: ${medalId}`);
+      logger.warn(`Tentativa de atualizar medalha não encontrada (após segunda verificação): ${medalId}`);
       return res.status(404).json({ message: 'Medalha não encontrada' });
     }
 
-    logger.info(`Medalha atualizada com sucesso: ${medalId}`);
     const updatedMedal = await collection.findOne({ id: medalId });
+    logger.info(`Medalha atualizada com sucesso: ${medalId}`, { 
+      medalId, 
+      before: existingMedal, 
+      after: updatedMedal 
+    });
+    
     res.status(200).json(updatedMedal);
 
-  } catch (error) {
-    logger.error(`Erro ao atualizar medalha ${req.params.medalId}`, { error });
+  } catch (error: any) {
+    logger.error(`Erro ao atualizar medalha ${req.params.medalId}`, { 
+      error: error.message, 
+      stack: error.stack,
+      medalId: req.params.medalId,
+      body: req.body 
+    });
     res.status(500).json({ message: 'Erro interno ao atualizar medalha' });
   }
 };

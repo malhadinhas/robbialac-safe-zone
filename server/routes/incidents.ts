@@ -6,6 +6,7 @@ import {
   updateIncident,
   deleteIncident
 } from '../controllers/incidentController';
+import { isAuthenticated, isAdmin } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -15,13 +16,13 @@ router.get('/', getIncidents);
 // Buscar um incidente específico
 router.get('/:id', getIncidentById);
 
-// Criar um novo incidente
-router.post('/', createIncident);
+// Criar um novo incidente (requer autenticação)
+router.post('/', isAuthenticated, createIncident);
 
-// Atualizar um incidente
-router.put('/:id', updateIncident);
+// Atualizar um incidente (requer autenticação)
+router.put('/:id', isAuthenticated, updateIncident);
 
-// Excluir um incidente
-router.delete('/:id', deleteIncident);
+// Excluir um incidente (requer privilégios de administrador)
+router.delete('/:id', isAdmin, deleteIncident);
 
 export default router; 

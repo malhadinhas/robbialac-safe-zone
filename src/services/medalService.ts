@@ -196,6 +196,9 @@ const allSampleMedals = [...sampleMedals, ...advancedMedals];
 // Tipo para os dados do formulário
 type MedalFormData = Omit<Medal, '_id' | 'acquired' | 'dateEarned' | 'acquiredDate'>;
 
+// Tipo para dados de atualização (não pode incluir id ou _id)
+type MedalUpdateData = Partial<Omit<MedalFormData, 'id'>>;
+
 /**
  * Busca TODAS as medalhas disponíveis no sistema (para gestão).
  */
@@ -374,6 +377,40 @@ export async function createMedal(medalData: MedalFormData): Promise<Medal> {
   } catch (error) {
     console.error("Erro detalhado ao criar medalha:", error instanceof AxiosError ? error.response?.data : error);
     throw error;
+  }
+}
+
+/**
+ * Atualiza uma medalha existente no sistema.
+ * @param medalId O ID (slug) da medalha a ser atualizada.
+ * @param updateData Os campos da medalha a serem atualizados.
+ */
+export async function updateMedal(medalId: string, updateData: MedalUpdateData): Promise<Medal> {
+  try {
+    console.log(`Enviando dados para atualizar medalha ${medalId}:`, updateData);
+    // Chama a rota PUT /api/medals/:medalId
+    const response = await api.put<Medal>(`/medals/${medalId}`, updateData);
+    console.log(`Resposta da atualização da medalha ${medalId}:`, response.data);
+    return response.data;
+  } catch (error) {
+    console.error(`Erro detalhado ao atualizar medalha ${medalId}:`, error instanceof AxiosError ? error.response?.data : error);
+    throw error; // Re-lança para tratamento no componente
+  }
+}
+
+/**
+ * Apaga uma medalha do sistema.
+ * @param medalId O ID (slug) da medalha a ser apagada.
+ */
+export async function deleteMedal(medalId: string): Promise<void> {
+  try {
+    console.log(`Enviando pedido para apagar medalha ${medalId}`);
+    // Chama a rota DELETE /api/medals/:medalId
+    await api.delete(`/medals/${medalId}`);
+    console.log(`Medalha ${medalId} apagada com sucesso (no servidor).`);
+  } catch (error) {
+    console.error(`Erro detalhado ao apagar medalha ${medalId}:`, error instanceof AxiosError ? error.response?.data : error);
+    throw error; // Re-lança para tratamento no componente
   }
 }
 
