@@ -218,3 +218,12 @@
 {"level":"info","message":"1 atividades encontradas para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:12:15.102Z"}
 {"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:13:07.588Z","url":"/api/database/status"}
 {"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:13:31.464Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:20:12.240Z","url":"/api/videos"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:20:12.241Z","url":"/api/incidents"}
+{"count":0,"level":"info","message":"Vídeos recuperados com sucesso","timestamp":"2025-04-14T14:20:12.301Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:20:15.455Z","url":"/api/medals"}
+{"count":19,"level":"info","message":"Medalhas recuperadas com sucesso","timestamp":"2025-04-14T14:20:15.517Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:20:40.580Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:21:10.593Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:21:40.584Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:22:10.595Z","url":"/api/database/status"}
