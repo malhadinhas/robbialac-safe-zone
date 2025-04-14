@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { getUserMedals, Medal } from "@/services/medalService";
+import { getUserPointsBreakdown, UserPointsBreakdown } from "@/services/statsService";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,22 +17,28 @@ export default function Pontuacao() {
   const isCompactView = useIsCompactView();
   const [medals, setMedals] = useState<Medal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pointsBreakdown, setPointsBreakdown] = useState<UserPointsBreakdown[]>([]);
   
   useEffect(() => {
-    const fetchMedals = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const data = await getUserMedals(user?.id);
-        setMedals(data);
+        // Buscar medalhas
+        const medalsData = await getUserMedals(user?.id);
+        setMedals(medalsData);
+        
+        // Buscar distribuição de pontos
+        const pointsData = await getUserPointsBreakdown(user?.id);
+        setPointsBreakdown(pointsData);
       } catch (error) {
-        console.error("Erro ao buscar medalhas:", error);
+        console.error("Erro ao buscar dados:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
     if (user?.id) {
-      fetchMedals();
+      fetchData();
     }
   }, [user?.id]);
   
@@ -43,12 +50,6 @@ export default function Pontuacao() {
   const progressToNextLevel = Math.min(((user?.points || 0) % 500) / 5, 100);
   const currentLevel = user?.level || 1;
   const pointsToNextLevel = 500 - ((user?.points || 0) % 500);
-  
-  const pointsBreakdown = [
-    { category: "Vídeos Assistidos", points: 250, color: "#0071CE" },
-    { category: "Quase Acidentes", points: 175, color: "#FF7A00" },
-    { category: "Formações Concluídas", points: 75, color: "#28a745" }
-  ];
   
   const activityHistory = [
     { 
@@ -179,23 +180,44 @@ export default function Pontuacao() {
             <div className="pt-4 border-t mt-4">
               <h4 className="font-medium text-gray-800 mb-3">Distribuição de Pontos</h4>
               <div className="space-y-3">
-                {pointsBreakdown.map((item, index) => (
-                  <div key={index}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>{item.category}</span>
-                      <span>{item.points} pts</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="h-2 rounded-full" 
-                        style={{ 
-                          width: `${(item.points / (user?.points || 1)) * 100}%`,
-                          backgroundColor: item.color 
-                        }}
-                      ></div>
-                    </div>
+                {isLoading ? (
+                  // Mostrar placeholders de carregamento
+                  <>
+                    {[1, 2, 3].map(index => (
+                      <div key={index} className="animate-pulse">
+                        <div className="flex justify-between text-sm mb-1">
+                          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                          <div className="h-4 bg-gray-200 rounded w-16"></div>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2"></div>
+                      </div>
+                    ))}
+                  </>
+                ) : pointsBreakdown.length === 0 ? (
+                  // Mostrar mensagem quando não há dados
+                  <div className="text-center py-3 text-gray-500">
+                    Nenhum ponto registrado ainda
                   </div>
-                ))}
+                ) : (
+                  // Mostrar dados reais
+                  pointsBreakdown.map((item, index) => (
+                    <div key={index}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>{item.category}</span>
+                        <span>{item.points} pts</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div 
+                          className="h-2 rounded-full transition-all duration-500 ease-in-out" 
+                          style={{ 
+                            width: `${Math.min((item.points / (pointsBreakdown.reduce((sum, current) => sum + current.points, 0) || 1)) * 100, 100)}%`,
+                            backgroundColor: item.color 
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>

@@ -6,6 +6,8 @@ import videoRoutes from './routes/videos';
 import departmentRoutes from './routes/departments';
 import medalRoutes from './routes/medals';
 import zoneRoutes from './routes/zones';
+import statsRoutes from './routes/statsRoutes';
+import activityRoutes from './routes/activityRoutes';
 import logger from './utils/logger';
 
 const app = express();
@@ -36,6 +38,8 @@ app.use('/api/videos', videoRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/medals', medalRoutes);
 app.use('/api/zones', zoneRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/activities', activityRoutes);
 
 // Rota para verificar status do banco
 app.get('/api/database/status', (req, res) => {
