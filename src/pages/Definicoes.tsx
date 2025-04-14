@@ -23,6 +23,7 @@ import { initializeR2Config } from "@/config/storage";
 import { initializeMongoConfig } from "@/config/database";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import MedalManagement from "@/components/medal-management/MedalManagement";
 
 export default function Definicoes() {
   const [language, setLanguage] = useState("pt");
@@ -110,12 +111,13 @@ export default function Definicoes() {
       <div className="container py-6 space-y-6">
         <h1 className="text-2xl font-bold">Definições</h1>
         
-        <Tabs defaultValue="interface">
-          <TabsList className="mb-6">
+        <Tabs defaultValue="interface" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="interface">Interface</TabsTrigger>
             <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
             <TabsTrigger value="storage">Armazenamento</TabsTrigger>
             <TabsTrigger value="database">Base de Dados</TabsTrigger>
+            <TabsTrigger value="medals">Medalhas</TabsTrigger>
           </TabsList>
           
           <TabsContent value="interface">
@@ -295,6 +297,10 @@ export default function Definicoes() {
                 </Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="medals">
+            <MedalManagement />
           </TabsContent>
         </Tabs>
       </div>

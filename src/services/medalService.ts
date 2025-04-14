@@ -1,16 +1,19 @@
-import api from '@/lib/api';
+import api from "@/lib/api";
+import { AxiosError } from "axios";
+import { toast } from "sonner";
 
 export interface Medal {
-  id: string;
+  _id?: string; // ID do MongoDB
+  id: string; // ID legível (slug)
   name: string;
   description: string;
   imageSrc: string;
-  dateEarned?: string;
-  category: string;
-  acquired?: boolean;
-  acquiredDate?: string;
-  image?: string;
-  requiredPoints?: number;
+  triggerAction: 'incidentReported' | 'videoWatched' | 'trainingCompleted';
+  triggerCategory?: string;
+  requiredCount: number;
+  acquired?: boolean; // Adicionado pelo frontend/backend em alguns contextos
+  dateEarned?: Date | string; // Adicionado pelo frontend/backend em alguns contextos
+  acquiredDate?: Date | string; // Adicionado pelo backend
 }
 
 // Medalhas de exemplo baseadas nas imagens disponíveis
@@ -190,6 +193,24 @@ const advancedMedals: Medal[] = [
 // Combina todas as medalhas
 const allSampleMedals = [...sampleMedals, ...advancedMedals];
 
+// Tipo para os dados do formulário
+type MedalFormData = Omit<Medal, '_id' | 'acquired' | 'dateEarned' | 'acquiredDate'>;
+
+/**
+ * Busca TODAS as medalhas disponíveis no sistema (para gestão).
+ */
+export async function getMedals(): Promise<Medal[]> {
+  try {
+    // Chama a rota GET /api/medals do backend
+    const response = await api.get<Medal[]>('/medals');
+    return response.data || []; // Retorna os dados ou um array vazio
+  } catch (error) {
+    console.error('Erro ao buscar todas as medalhas:', error);
+    toast.error("Falha ao carregar medalhas do sistema."); // Adiciona toast de erro
+    return []; // Retorna vazio em caso de erro para não quebrar a interface
+  }
+}
+
 /**
  * Busca todas as medalhas do usuário especificado
  * @param userId ID do usuário
@@ -209,7 +230,7 @@ export async function getUserMedals(userId?: string): Promise<Medal[]> {
     }
     
     try {
-      const response = await api.get(`/medals/user/${userId}`);
+      const response = await api.get<Medal[]>(`/medals/user/${userId}`);
       if (response.data && response.data.length > 0) {
         return response.data;
       }
@@ -282,7 +303,7 @@ export async function getUnacquiredMedals(userId?: string): Promise<Medal[]> {
     }
     
     try {
-      const response = await api.get(`/medals/user/${userId}/unacquired`);
+      const response = await api.get<Medal[]>(`/medals/user/${userId}/unacquired`);
       
       // Verifica se a resposta tem dados, se é um array e se não está vazio
       if (response.data && Array.isArray(response.data) && response.data.length > 0) {
@@ -311,31 +332,60 @@ function getDefaultUnacquiredMedals(): Medal[] {
   console.log("Retornando lista padrão de medalhas não conquistadas.");
   return [
     {
-      id: "3",
+      id: "vigilante-dedicado",
       name: "Vigilante Dedicado",
       description: "Reportou 10 situações potencialmente perigosas",
       imageSrc: "/src/assets/medals/vigilante-dedicado.png",
-      category: "seguranca",
-      acquired: false,
-      requiredPoints: 100
+      triggerAction: "incidentReported",
+      requiredCount: 10,
+      acquired: false
     },
     {
-      id: "4",
+      id: "observador-consistente",
       name: "Observador Consistente",
-      description: "Identificou 15 riscos no ambiente de trabalho",
+      description: "Reportou 15 situações potencialmente perigosas",
       imageSrc: "/src/assets/medals/observador-consistente.png",
-      category: "observacao",
-      acquired: false,
-      requiredPoints: 200
+      triggerAction: "incidentReported",
+      requiredCount: 15,
+      acquired: false
     },
     {
-      id: "5",
-      name: "Guardião da Prevenção",
-      description: "Contribuiu para 30 dias sem acidentes na fábrica",
-      imageSrc: "/src/assets/medals/guardiao-prevencao.png",
-      category: "seguranca",
-      acquired: false,
-      requiredPoints: 300
+      id: "especialista-riscos",
+      name: "Especialista em Riscos",
+      description: "Reportou 20 situações potencialmente perigosas",
+      imageSrc: "/src/assets/medals/especialista-riscos.png",
+      triggerAction: "incidentReported",
+      requiredCount: 20,
+      acquired: false
     }
   ];
+}
+
+/**
+ * Cria uma nova medalha no sistema.
+ * @param medalData Dados da nova medalha (sem _id)
+ */
+export async function createMedal(medalData: MedalFormData): Promise<Medal> {
+  try {
+    console.log("Enviando dados para criar medalha:", medalData);
+    const response = await api.post<Medal>('/medals', medalData);
+    console.log("Resposta da criação de medalha:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Erro detalhado ao criar medalha:", error instanceof AxiosError ? error.response?.data : error);
+    throw error;
+  }
+}
+
+/**
+ * Atribui manualmente uma medalha a um usuário.
+ */
+export async function assignMedalToUser(userId: string, medalId: string): Promise<any> {
+  try {
+    const response = await api.post(`/medals/assign/${userId}/${medalId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Erro ao atribuir medalha ${medalId} ao usuário ${userId}:`, error);
+    throw error;
+  }
 } 

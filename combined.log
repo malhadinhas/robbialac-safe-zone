@@ -131,3 +131,90 @@
 {"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:06:31.591Z","url":"/api/database/status"}
 {"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:07:01.578Z","url":"/api/database/status"}
 {"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:08:02.584Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:08:48.371Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:09:01.579Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:09:31.578Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:01.581Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:17.607Z","url":"/api/medals/user/67fc11d4142809e545cba7b9"}
+{"count":0,"level":"info","message":"Medalhas do usuário recuperadas com sucesso","timestamp":"2025-04-14T14:10:17.731Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:17.738Z","url":"/api/medals/user/67fc11d4142809e545cba7b9/unacquired"}
+{"count":19,"level":"info","message":"Medalhas não conquistadas recuperadas com sucesso","timestamp":"2025-04-14T14:10:17.860Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:17.866Z","url":"/api/stats/user/67fc11d4142809e545cba7b9/points-breakdown"}
+{"level":"info","message":"Buscando distribuição de pontos para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:10:17.866Z"}
+{"categories":4,"level":"info","message":"Distribuição de pontos recuperada com sucesso","timestamp":"2025-04-14T14:10:17.927Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:17.931Z","url":"/api/stats/user/67fc11d4142809e545cba7b9/ranking"}
+{"level":"info","message":"Buscando ranking para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:10:17.932Z"}
+{"level":"info","message":"Ranking recuperado com sucesso","position":3,"timestamp":"2025-04-14T14:10:18.051Z","totalUsers":3,"userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:18.055Z","url":"/api/activities/user/67fc11d4142809e545cba7b9?limit=20"}
+{"level":"info","message":"Buscando atividades do usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:10:18.056Z"}
+{"level":"info","message":"1 atividades encontradas para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:10:18.116Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:18.595Z","url":"/api/medals/user/67fc11d4142809e545cba7b9"}
+{"count":0,"level":"info","message":"Medalhas do usuário recuperadas com sucesso","timestamp":"2025-04-14T14:10:18.716Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:18.720Z","url":"/api/medals/user/67fc11d4142809e545cba7b9/unacquired"}
+{"count":19,"level":"info","message":"Medalhas não conquistadas recuperadas com sucesso","timestamp":"2025-04-14T14:10:18.842Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:18.846Z","url":"/api/stats/user/67fc11d4142809e545cba7b9/points-breakdown"}
+{"level":"info","message":"Buscando distribuição de pontos para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:10:18.847Z"}
+{"categories":4,"level":"info","message":"Distribuição de pontos recuperada com sucesso","timestamp":"2025-04-14T14:10:18.908Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:18.912Z","url":"/api/stats/user/67fc11d4142809e545cba7b9/ranking"}
+{"level":"info","message":"Buscando ranking para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:10:18.912Z"}
+{"level":"info","message":"Ranking recuperado com sucesso","position":3,"timestamp":"2025-04-14T14:10:19.039Z","totalUsers":3,"userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:19.043Z","url":"/api/activities/user/67fc11d4142809e545cba7b9?limit=20"}
+{"level":"info","message":"Buscando atividades do usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:10:19.043Z"}
+{"level":"info","message":"1 atividades encontradas para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:10:19.103Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:19.587Z","url":"/api/medals/user/67fc11d4142809e545cba7b9"}
+{"count":0,"level":"info","message":"Medalhas do usuário recuperadas com sucesso","timestamp":"2025-04-14T14:10:19.710Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:19.714Z","url":"/api/medals/user/67fc11d4142809e545cba7b9/unacquired"}
+{"count":19,"level":"info","message":"Medalhas não conquistadas recuperadas com sucesso","timestamp":"2025-04-14T14:10:19.835Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:19.838Z","url":"/api/stats/user/67fc11d4142809e545cba7b9/points-breakdown"}
+{"level":"info","message":"Buscando distribuição de pontos para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:10:19.839Z"}
+{"categories":4,"level":"info","message":"Distribuição de pontos recuperada com sucesso","timestamp":"2025-04-14T14:10:19.900Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:19.904Z","url":"/api/stats/user/67fc11d4142809e545cba7b9/ranking"}
+{"level":"info","message":"Buscando ranking para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:10:19.905Z"}
+{"level":"info","message":"Ranking recuperado com sucesso","position":3,"timestamp":"2025-04-14T14:10:20.027Z","totalUsers":3,"userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:20.030Z","url":"/api/activities/user/67fc11d4142809e545cba7b9?limit=20"}
+{"level":"info","message":"Buscando atividades do usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:10:20.031Z"}
+{"level":"info","message":"1 atividades encontradas para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:10:20.092Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:10:31.589Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:11:07.581Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:11:11.598Z","url":"/api/medals/user/67fc11d4142809e545cba7b9"}
+{"count":0,"level":"info","message":"Medalhas do usuário recuperadas com sucesso","timestamp":"2025-04-14T14:11:11.724Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:11:11.730Z","url":"/api/medals/user/67fc11d4142809e545cba7b9/unacquired"}
+{"count":19,"level":"info","message":"Medalhas não conquistadas recuperadas com sucesso","timestamp":"2025-04-14T14:11:11.856Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:11:11.860Z","url":"/api/stats/user/67fc11d4142809e545cba7b9/points-breakdown"}
+{"level":"info","message":"Buscando distribuição de pontos para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:11:11.860Z"}
+{"categories":4,"level":"info","message":"Distribuição de pontos recuperada com sucesso","timestamp":"2025-04-14T14:11:11.923Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:11:11.926Z","url":"/api/stats/user/67fc11d4142809e545cba7b9/ranking"}
+{"level":"info","message":"Buscando ranking para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:11:11.927Z"}
+{"level":"info","message":"Ranking recuperado com sucesso","position":3,"timestamp":"2025-04-14T14:11:12.050Z","totalUsers":3,"userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:11:12.054Z","url":"/api/activities/user/67fc11d4142809e545cba7b9?limit=20"}
+{"level":"info","message":"Buscando atividades do usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:11:12.054Z"}
+{"level":"info","message":"1 atividades encontradas para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:11:12.117Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:11:12.602Z","url":"/api/medals/user/67fc11d4142809e545cba7b9"}
+{"count":0,"level":"info","message":"Medalhas do usuário recuperadas com sucesso","timestamp":"2025-04-14T14:11:12.726Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:11:12.730Z","url":"/api/medals/user/67fc11d4142809e545cba7b9/unacquired"}
+{"count":19,"level":"info","message":"Medalhas não conquistadas recuperadas com sucesso","timestamp":"2025-04-14T14:11:12.861Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:11:12.865Z","url":"/api/stats/user/67fc11d4142809e545cba7b9/points-breakdown"}
+{"level":"info","message":"Buscando distribuição de pontos para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:11:12.865Z"}
+{"categories":4,"level":"info","message":"Distribuição de pontos recuperada com sucesso","timestamp":"2025-04-14T14:11:12.926Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:11:12.929Z","url":"/api/stats/user/67fc11d4142809e545cba7b9/ranking"}
+{"level":"info","message":"Buscando ranking para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:11:12.930Z"}
+{"level":"info","message":"Ranking recuperado com sucesso","position":3,"timestamp":"2025-04-14T14:11:13.052Z","totalUsers":3,"userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:11:13.055Z","url":"/api/activities/user/67fc11d4142809e545cba7b9?limit=20"}
+{"level":"info","message":"Buscando atividades do usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:11:13.056Z"}
+{"level":"info","message":"1 atividades encontradas para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:11:13.115Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:12:07.588Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:12:14.590Z","url":"/api/medals/user/67fc11d4142809e545cba7b9"}
+{"count":0,"level":"info","message":"Medalhas do usuário recuperadas com sucesso","timestamp":"2025-04-14T14:12:14.710Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:12:14.715Z","url":"/api/medals/user/67fc11d4142809e545cba7b9/unacquired"}
+{"count":19,"level":"info","message":"Medalhas não conquistadas recuperadas com sucesso","timestamp":"2025-04-14T14:12:14.842Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:12:14.846Z","url":"/api/stats/user/67fc11d4142809e545cba7b9/points-breakdown"}
+{"level":"info","message":"Buscando distribuição de pontos para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:12:14.846Z"}
+{"categories":4,"level":"info","message":"Distribuição de pontos recuperada com sucesso","timestamp":"2025-04-14T14:12:14.906Z","userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:12:14.911Z","url":"/api/stats/user/67fc11d4142809e545cba7b9/ranking"}
+{"level":"info","message":"Buscando ranking para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:12:14.911Z"}
+{"level":"info","message":"Ranking recuperado com sucesso","position":3,"timestamp":"2025-04-14T14:12:15.035Z","totalUsers":3,"userId":"67fc11d4142809e545cba7b9"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:12:15.041Z","url":"/api/activities/user/67fc11d4142809e545cba7b9?limit=20"}
+{"level":"info","message":"Buscando atividades do usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:12:15.041Z"}
+{"level":"info","message":"1 atividades encontradas para o usuário 67fc11d4142809e545cba7b9","timestamp":"2025-04-14T14:12:15.102Z"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:13:07.588Z","url":"/api/database/status"}
+{"ip":"::1","level":"info","message":"Nova requisição","method":"GET","timestamp":"2025-04-14T14:13:31.464Z","url":"/api/database/status"}

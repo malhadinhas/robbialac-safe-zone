@@ -301,4 +301,134 @@ export const assignMedalToUser = async (req: Request, res: Response) => {
     logger.error('Erro ao atribuir medalha ao usuário', { error });
     res.status(500).json({ message: 'Erro ao atribuir medalha ao usuário' });
   }
+};
+
+// --- NOVAS FUNÇÕES CRUD --- 
+
+/**
+ * Cria uma nova medalha no sistema
+ */
+export const createMedal = async (req: Request, res: Response) => {
+  try {
+    const medalData: Omit<Medal, '_id'> = req.body;
+
+    // Validação básica (pode ser mais robusta com Zod, etc.)
+    if (!medalData.id || !medalData.name || !medalData.description || !medalData.imageSrc || !medalData.triggerAction || !medalData.requiredCount) {
+      logger.warn('Tentativa de criar medalha com dados incompletos', medalData);
+      return res.status(400).json({ message: 'Dados incompletos para criar a medalha' });
+    }
+    if (medalData.requiredCount <= 0) {
+        return res.status(400).json({ message: 'Contagem necessária deve ser maior que zero' });
+    }
+    if ((medalData.triggerAction === 'videoWatched' || medalData.triggerAction === 'trainingCompleted') && !medalData.triggerCategory) {
+         return res.status(400).json({ message: 'Categoria é obrigatória para ações de vídeo ou treino' });
+     }
+
+    // Normalizar o ID (caso não tenha sido feito no frontend)
+    medalData.id = medalData.id.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+    const collection = await getCollection<Medal>('medals');
+
+    // Verificar se já existe uma medalha com este ID
+    const existingMedal = await collection.findOne({ id: medalData.id });
+    if (existingMedal) {
+      logger.warn(`Tentativa de criar medalha com ID duplicado: ${medalData.id}`);
+      return res.status(409).json({ message: `Medalha com ID '${medalData.id}' já existe` });
+    }
+
+    // Adicionar timestamps
+    const medalToInsert: Medal = {
+        ...medalData,
+        created_at: new Date(),
+        updated_at: new Date()
+    }
+
+    const result = await collection.insertOne(medalToInsert as any); // Usar `as any` temporariamente se o tipo do BSON for incompatível
+
+    logger.info(`Nova medalha criada com sucesso: ${medalData.name} (ID: ${medalData.id})`);
+    // Retornar o documento criado (ou pelo menos o ID)
+    const createdMedal = await collection.findOne({ _id: result.insertedId });
+    res.status(201).json(createdMedal);
+
+  } catch (error) {
+    logger.error('Erro ao criar medalha', { error });
+    res.status(500).json({ message: 'Erro interno ao criar medalha' });
+  }
+};
+
+/**
+ * Atualiza uma medalha existente
+ */
+export const updateMedal = async (req: Request, res: Response) => {
+  try {
+    const { medalId } = req.params; // Este é o ID legível (slug)
+    const updateData: Partial<Omit<Medal, '_id' | 'id'>> = req.body;
+
+     // Validação básica
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ message: 'Nenhum dado fornecido para atualização' });
+    }
+     if (updateData.requiredCount !== undefined && updateData.requiredCount <= 0) {
+        return res.status(400).json({ message: 'Contagem necessária deve ser maior que zero' });
+    }
+     // Validação de categoria condicional mais complexa (simplificada aqui)
+     if ((updateData.triggerAction === 'videoWatched' || updateData.triggerAction === 'trainingCompleted') && updateData.triggerCategory === undefined) {
+         // Cuidado: Se só mudar a contagem, a categoria pode não vir no updateData
+         // Uma validação completa verificaria o estado combinado dos dados existentes e do update
+         logger.warn(`Atualização de medalha ${medalId} pode resultar em estado inválido (ação vídeo/treino sem categoria)`);
+         // Poderia buscar a medalha atual e validar o estado final
+     }
+
+    const collection = await getCollection<Medal>('medals');
+
+    // Não permitir alterar o ID (slug)
+    delete updateData.id;
+
+    const result = await collection.updateOne(
+      { id: medalId },
+      { $set: { ...updateData, updated_at: new Date() } }
+    );
+
+    if (result.matchedCount === 0) {
+      logger.warn(`Tentativa de atualizar medalha não encontrada: ${medalId}`);
+      return res.status(404).json({ message: 'Medalha não encontrada' });
+    }
+
+    logger.info(`Medalha atualizada com sucesso: ${medalId}`);
+    const updatedMedal = await collection.findOne({ id: medalId });
+    res.status(200).json(updatedMedal);
+
+  } catch (error) {
+    logger.error(`Erro ao atualizar medalha ${req.params.medalId}`, { error });
+    res.status(500).json({ message: 'Erro interno ao atualizar medalha' });
+  }
+};
+
+/**
+ * Deleta uma medalha do sistema
+ */
+export const deleteMedal = async (req: Request, res: Response) => {
+  try {
+    const { medalId } = req.params; // ID legível (slug)
+    const collection = await getCollection<Medal>('medals');
+
+    const result = await collection.deleteOne({ id: medalId });
+
+    if (result.deletedCount === 0) {
+      logger.warn(`Tentativa de deletar medalha não encontrada: ${medalId}`);
+      return res.status(404).json({ message: 'Medalha não encontrada' });
+    }
+
+    // Opcional: Considerar remover as entradas correspondentes em `user_medals`
+    // const userMedalsCollection = await getCollection('user_medals');
+    // const deleteUserMedalsResult = await userMedalsCollection.deleteMany({ medalId });
+    // logger.info(`Removidas ${deleteUserMedalsResult.deletedCount} entradas de user_medals para a medalha ${medalId}`);
+
+    logger.info(`Medalha deletada com sucesso: ${medalId}`);
+    res.status(200).json({ message: 'Medalha deletada com sucesso' });
+
+  } catch (error) {
+    logger.error(`Erro ao deletar medalha ${req.params.medalId}`, { error });
+    res.status(500).json({ message: 'Erro interno ao deletar medalha' });
+  }
 }; 
