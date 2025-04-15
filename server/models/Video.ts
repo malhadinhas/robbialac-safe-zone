@@ -6,17 +6,17 @@ export interface IVideo extends Document {
   videoId: string;
   title: string;
   description: string;
-  url: string;
-  thumbnail: string;
+  r2VideoKey: string;
+  r2ThumbnailKey: string;
   category: string;
   zone?: string;
   duration?: number;
   views: number;
   uploadDate: Date;
-  qualities: {
-    high: string;
-    medium: string;
-    low: string;
+  r2Qualities?: {
+    high?: string;
+    medium?: string;
+    low?: string;
   };
   status: 'processing' | 'ready' | 'error';
   processingError?: string;
@@ -38,18 +38,18 @@ const VideoSchema = new Schema<IVideo>({
     required: true,
     trim: true
   },
-  url: {
+  r2VideoKey: {
     type: String,
     required: true
   },
-  thumbnail: {
+  r2ThumbnailKey: {
     type: String,
     required: true
   },
   category: {
     type: String,
     required: true,
-    enum: ['Segurança', 'Qualidade', 'Procedimentos e Regras']
+    enum: ['Segurança', 'Qualidade', 'Procedimentos e Regras', 'Treinamento', 'Equipamentos', 'Outros', 'Procedimentos']
   },
   zone: {
     type: String,
@@ -67,7 +67,7 @@ const VideoSchema = new Schema<IVideo>({
     type: Date,
     default: Date.now
   },
-  qualities: {
+  r2Qualities: {
     high: String,
     medium: String,
     low: String
@@ -90,11 +90,18 @@ VideoSchema.index({ views: -1 });
 VideoSchema.index({ uploadDate: -1 });
 VideoSchema.index({ videoId: 1 }, { unique: true });
 
-// Middleware para atualizar updatedAt antes de salvar
+// Middleware para garantir que o documento nunca tenha id null
 VideoSchema.pre('save', function(next) {
+  // Atualiza updatedAt
   if (this.isModified()) {
     this.updatedAt = new Date();
   }
+  
+  // Garante que o id não seja nulo
+  if (this.id === null || this.id === undefined) {
+    this.id = this._id;
+  }
+  
   next();
 });
 

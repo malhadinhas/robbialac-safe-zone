@@ -1,5 +1,4 @@
 import { Video } from "@/types";
-import { generateSignedUrl } from "./cloudflareR2Service";
 import axios, { AxiosError } from 'axios';
 import logger from '../utils/logger';
 
@@ -25,7 +24,7 @@ function normalizeCategory(category: string): string {
       .replace(/[\u0300-\u036f]/g, '')
       .trim();
     
-    logger.debug('Normalizando categoria', {
+    logger.info('Normalizando categoria', {
       original: category,
       normalized: normalizedKey
     });
@@ -121,7 +120,8 @@ export const uploadVideo = async (
       lastModified: new Date(file.lastModified).toISOString()
     });
 
-    formData.append('video', file, file.name);
+    // Adicionar os campos ao FormData corretamente
+    formData.append('video', file);
     formData.append('title', metadata.title.trim());
     formData.append('description', metadata.description.trim());
     formData.append('category', normalizeCategory(metadata.category));
@@ -134,9 +134,12 @@ export const uploadVideo = async (
       retryCount
     });
 
+    progress.status = 'uploading';
+    onProgress?.(progress);
+
     const response = await axios.post(`${API_URL}/api/videos`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'multipart/form-data',
       },
       timeout: UPLOAD_TIMEOUT,
       onUploadProgress: (progressEvent) => {
@@ -146,13 +149,15 @@ export const uploadVideo = async (
           progress.total = progressEvent.total;
           progress.percentage = percentage;
           progress.status = 'uploading';
+          progress.currentChunk = 1;
+          progress.totalChunks = 1;
           onProgress?.(progress);
         }
       }
     });
 
     logger.info('Upload concluído com sucesso', {
-      videoId: response.data.id,
+      videoId: response.data.videoId,
       response: response.data
     });
 
@@ -162,7 +167,7 @@ export const uploadVideo = async (
 
     return {
       success: true,
-      videoId: response.data.id
+      videoId: response.data.videoId
     };
 
   } catch (error) {
@@ -213,51 +218,129 @@ export const uploadVideo = async (
   }
 };
 
-// Função para buscar vídeos
+// Interface para a resposta da nova API de URL segura
+interface SecureUrlResponse {
+  signedUrl: string;
+}
+
+// --- Função para buscar a URL segura do backend --- 
+export const getSecureR2Url = async (key: string): Promise<string> => {
+  if (!key) {
+    logger.warn('[getSecureR2Url] Tentativa de buscar URL segura com chave vazia.');
+    throw new Error('Chave R2 inválida ou não fornecida.');
+  }
+  logger.info(`[getSecureR2Url] Solicitando URL segura para a chave: ${key}`);
+  try {
+    // Fazer pedido GET para o novo endpoint, passando a chave como query parameter
+    const response = await axios.get<SecureUrlResponse>(`${API_URL}/api/secure-url`, {
+      params: { key: key }, // Passar a chave como ?key=...
+      // Considerar adicionar timeout e tratamento de erro aqui
+    });
+
+    if (response.data && response.data.signedUrl) {
+       logger.info(`[getSecureR2Url] URL segura recebida para a chave: ${key}`);
+       return response.data.signedUrl;
+    } else {
+       logger.error('[getSecureR2Url] Resposta da API de URL segura inválida', { key, responseData: response.data });
+       throw new Error('Resposta inválida da API de URL segura.');
+    }
+
+  } catch (error) {
+    logger.error('[getSecureR2Url] Erro ao buscar URL segura do backend', { 
+      key,
+      error,
+      message: error instanceof Error ? error.message : 'Erro desconhecido',
+      axiosResponse: error instanceof AxiosError ? error.response?.data : undefined
+    });
+    // Relançar o erro para que o chamador saiba que falhou
+    throw error;
+  }
+};
+
+// Função para buscar vídeos (RETORNA CHAVES R2 AGORA)
 export const getVideos = async (): Promise<Video[]> => {
   try {
-    const response = await axios.get(`${API_URL}/api/videos`);
+    const response = await axios.get<Video[]>(`${API_URL}/api/videos`);
+    logger.info('Resposta recebida de GET /api/videos', {
+      status: response.status,
+      dataLength: Array.isArray(response.data) ? response.data.length : 'N/A',
+    });
     
-    // Garantir que a resposta é um array
     const videos = Array.isArray(response.data) ? response.data : [];
     
     if (!Array.isArray(response.data)) {
-      logger.warn('API retornou dados em formato inesperado', { 
-        received: typeof response.data,
-        data: response.data 
-      });
+      logger.warn('API /api/videos retornou dados em formato inesperado', { received: typeof response.data });
+      return []; 
     }
 
-    // Mapear e validar cada vídeo
-    return videos.map((video: any) => ({
-      id: video.id || '',
+    // Mapear dados (assegurando que têm ID e status)
+    const mappedVideos = videos.map((video: any) => ({
+      id: video.id || video._id || '', 
       title: video.title || '',
       description: video.description || '',
-      url: video.url || '',
-      thumbnail: video.thumbnail || '',
+      r2VideoKey: video.r2VideoKey || '',
+      r2ThumbnailKey: video.r2ThumbnailKey || '',
       category: normalizeCategory(video.category || ''),
       zone: video.zone || '',
       views: typeof video.views === 'number' ? video.views : 0,
       uploadDate: new Date(video.uploadDate || Date.now()),
-      duration: video.duration || 0
+      duration: video.duration || 0,
+      status: video.status || 'unknown',
+      r2Qualities: video.r2Qualities || { high: '', medium: '', low: '' }
     }));
-  } catch (error) {
-    logger.error('Erro ao buscar vídeos', { 
-      error,
-      message: error instanceof Error ? error.message : 'Erro desconhecido'
+
+    logger.info('Vídeos mapeados no frontend (devem ter status e chaves R2)', {
+      count: mappedVideos.length,
+      statuses: mappedVideos.map(v => ({ id: v.id, status: v.status }))
     });
-    return []; // Retorna array vazio em caso de erro
+
+    return mappedVideos;
+
+  } catch (error) {
+    logger.error('Erro ao buscar vídeos em getVideos()', { 
+      error,
+      message: error instanceof Error ? error.message : 'Erro desconhecido',
+      axiosErrorCode: error instanceof AxiosError ? error.code : undefined
+    });
+    return []; 
   }
 };
 
-// Função para buscar um vídeo específico
-export const getVideoById = async (videoId: string) => {
+// Função para buscar um vídeo por ID (RETORNA CHAVES R2 AGORA)
+export const getVideoById = async (videoId: string): Promise<Video | null> => {
+  if (!videoId) return null;
   try {
-    const response = await axios.get(`${API_URL}/api/videos/${videoId}`);
-    return response.data;
+    const response = await axios.get<Video>(`${API_URL}/api/videos/${videoId}`);
+    logger.info(`Resposta recebida de GET /api/videos/${videoId}`, { status: response.status });
+    // Aqui também precisamos mapear para garantir o formato esperado pelo tipo Video
+    const videoData = response.data;
+    if (!videoData) return null;
+
+    return {
+       id: videoData._id || videoData.id || '', // Garantir que ID existe
+       title: videoData.title || '',
+       description: videoData.description || '',
+       r2VideoKey: videoData.r2VideoKey || '',
+       r2ThumbnailKey: videoData.r2ThumbnailKey || '',
+       category: normalizeCategory(videoData.category || ''),
+       zone: videoData.zone || '',
+       views: typeof videoData.views === 'number' ? videoData.views : 0,
+       uploadDate: new Date(videoData.uploadDate || Date.now()),
+       duration: videoData.duration || 0,
+       status: videoData.status || 'unknown',
+       r2Qualities: videoData.r2Qualities || { high: '', medium: '', low: '' }
+    };
+
   } catch (error) {
-    logger.error('Erro ao buscar vídeo por ID', { error, videoId });
-    throw error;
+    logger.error(`Erro ao buscar vídeo por ID: ${videoId}`, { 
+      error,
+      message: error instanceof Error ? error.message : 'Erro desconhecido',
+      axiosResponse: error instanceof AxiosError ? error.response?.data : undefined
+    });
+    if (error instanceof AxiosError && error.response?.status === 404) {
+      return null; // Vídeo não encontrado
+    }
+    throw error; // Relançar outros erros
   }
 };
 
@@ -371,19 +454,23 @@ export async function createVideo(video: Omit<Video, "id" | "uploadDate" | "view
   }
 }
 
-/**
- * Obtém uma URL assinada para visualização do vídeo
- */
+// Função para obter a URL de stream (AGORA CHAMA getSecureR2Url)
 export async function getVideoStreamUrl(videoId: string): Promise<string> {
+  logger.info(`[videoService] Solicitando URL de stream para videoId: ${videoId}`);
   try {
     const video = await getVideoById(videoId);
-    if (!video) throw new Error('Vídeo não encontrado');
+    if (!video || !video.r2VideoKey) {
+      logger.error('[videoService] Vídeo ou r2VideoKey não encontrado para gerar URL de stream', { videoId });
+      throw new Error('Vídeo ou chave R2 não encontrado para gerar URL de stream');
+    }
     
-    // Gerar URL assinada do Cloudflare R2
-    const signedUrl = await generateSignedUrl(video.url);
+    // Chamar a nova função para obter a URL segura do backend usando a chave R2 correta
+    logger.info(`[videoService] Obtendo URL segura para a chave: ${video.r2VideoKey}`);
+    const signedUrl = await getSecureR2Url(video.r2VideoKey);
+    
     return signedUrl;
   } catch (error) {
-    console.error('Erro ao obter URL do vídeo:', error);
-    throw error;
+    // O erro já foi logado em getSecureR2Url ou getVideoById
+    throw error; // Relançar para a página
   }
 }

@@ -5,13 +5,15 @@ import path from 'path';
 import { connectToDatabase, getDatabaseStatus } from './services/database';
 import incidentRoutes from './routes/incidents';
 import videoRoutes from './routes/videos';
+import secureUrlRoutes from './routes/secureUrlRoutes';
 import departmentRoutes from './routes/departments';
 import medalRoutes from './routes/medals';
 import zoneRoutes from './routes/zones';
 import statsRoutes from './routes/statsRoutes';
 import activityRoutes from './routes/activityRoutes';
 import logger from './utils/logger';
-import authRoutes from './routes/authRoutes';
+import { ensureStorageDirectories } from './config/storage';
+import { checkStorage } from './scripts/checkStorage';
 
 const app = express();
 const port = 3000;
@@ -29,20 +31,22 @@ app.use((req, res, next) => {
   next();
 });
 
-// Aumentar limite de tamanho do corpo da requisição para 50MB
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
-// Configurações de segurança e CORS
+// Configurações de segurança
 app.use(helmet());
 app.use(cors());
+
+// Aumentar limite de payload para 10GB
+app.use(express.json({ limit: '10gb' }));
+app.use(express.urlencoded({ limit: '10gb', extended: true }));
 
 // Servir arquivos estáticos do diretório temp
 app.use('/videos', express.static(TEMP_DIR));
 
-// Servir arquivos estáticos
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
-app.use('/assets', express.static(path.join(process.cwd(), 'assets')));
+// Verificar configuração de armazenamento
+checkStorage().catch(error => {
+  logger.error('Erro na verificação de armazenamento', { error });
+  process.exit(1);
+});
 
 // Middleware para tratar erros
 app.use((err: any, req: any, res: any, next: any) => {
@@ -53,12 +57,12 @@ app.use((err: any, req: any, res: any, next: any) => {
 // Rotas da API
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/videos', videoRoutes);
+app.use('/api/secure-url', secureUrlRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/medals', medalRoutes);
 app.use('/api/zones', zoneRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/activities', activityRoutes);
-app.use('/api/auth', authRoutes);
 
 // Rota para verificar status do banco
 app.get('/api/database/status', (req, res) => {

@@ -5,6 +5,7 @@ import { VideoProcessor } from '../services/videoProcessingService';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import { isValidObjectId } from 'mongoose';
 
 const videoProcessor = new VideoProcessor();
 const TEMP_DIR = path.join(process.cwd(), 'temp');
@@ -12,11 +13,17 @@ const TEMP_DIR = path.join(process.cwd(), 'temp');
 // Buscar todos os vídeos
 export const getVideos = async (req: Request, res: Response) => {
   try {
-    const videos = await Video.find();
-    logger.info('Vídeos recuperados com sucesso', { count: videos.length });
-    res.json(videos);
+    // Busca os vídeos diretamente como objetos JS planos
+    const videosFromDb = await Video.find().lean(); 
+    logger.info(`Vídeos recuperados do DB para GET /api/videos: ${videosFromDb.length}`);
+
+    // Retorna os dados como estão (com as chaves R2, não URLs assinadas)
+    // ** LOG ANTES DE ENVIAR RESPOSTA **
+    logger.info('Dados dos vídeos a serem enviados na resposta GET /api/videos:', videosFromDb);
+    res.json(videosFromDb); 
+
   } catch (error) {
-    logger.error('Erro ao recuperar vídeos', { error });
+    logger.error('Erro ao recuperar vídeos em GET /api/videos', { error: getErrorMessage(error) });
     res.status(500).json({ message: 'Erro ao recuperar vídeos' });
   }
 };
@@ -24,21 +31,56 @@ export const getVideos = async (req: Request, res: Response) => {
 // Buscar um vídeo específico
 export const getVideoById = async (req: Request, res: Response) => {
   try {
-    const video = await Video.findById(req.params.id);
+    const { id } = req.params;
+    
+    if (!isValidObjectId(id)) {
+      logger.warn('Tentativa de acesso GET /api/videos/:id com ID inválido', { id });
+      return res.status(400).json({ message: 'ID de vídeo inválido' });
+    }
+    
+    // Busca o vídeo como objeto JS plano
+    const video = await Video.findById(id).lean(); 
+    
     if (!video) {
-      logger.warn('Vídeo não encontrado', { id: req.params.id });
+      logger.warn('Vídeo não encontrado em GET /api/videos/:id', { id });
       return res.status(404).json({ message: 'Vídeo não encontrado' });
     }
-    logger.info('Vídeo recuperado com sucesso', { id: video._id });
-    res.json(video);
+    
+    // Não incrementa mais visualizações aqui, deve ser feito no frontend se necessário após carregar
+    /* 
+    if (req.query.view === 'true' && video.status === 'ready') {
+      // A lógica de incremento precisa ser reavaliada, 
+      // pois lean() retorna objeto plano, não documento Mongoose
+      // Poderia fazer um findByIdAndUpdate separado se necessário.
+      // await Video.findByIdAndUpdate(id, { $inc: { views: 1 } });
+      // logger.info('Visualização incrementada', { id });
+    }
+    */
+    
+    // Retorna o vídeo como está (com as chaves R2, sem URLs assinadas)
+    logger.info(`Vídeo encontrado em GET /api/videos/:id : ${id}`, { videoStatus: video.status });
+    // ** LOG ANTES DE ENVIAR RESPOSTA **
+    logger.info(`Dados do vídeo a serem enviados na resposta GET /api/videos/${id}:`, video);
+    res.json(video); 
+
   } catch (error) {
-    logger.error('Erro ao recuperar vídeo', { id: req.params.id, error });
-    res.status(500).json({ message: 'Erro ao recuperar vídeo' });
+    logger.error('Erro ao obter vídeo por ID em GET /api/videos/:id', { error: getErrorMessage(error), id: req.params.id });
+    res.status(500).json({ message: 'Erro interno ao obter vídeo', error: getErrorMessage(error) });
   }
 };
 
+// Função auxiliar para obter mensagem de erro
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+}
+
 // Criar um novo vídeo
 export const createVideo = async (req: Request, res: Response) => {
+  let videoId: string | null = null;
+  
   try {
     logger.info('Iniciando criação de vídeo', {
       body: req.body,
@@ -65,98 +107,213 @@ export const createVideo = async (req: Request, res: Response) => {
       });
     }
 
-    // Verificar se já existe um vídeo com o mesmo título
-    const existingVideoByTitle = await Video.findOne({ 
-      title: req.body.title.trim()
-    });
+    try {
+      // Validar o vídeo
+      const videoProcessor = new VideoProcessor();
+      const videoInfo = await videoProcessor.validateVideo(req.file.path);
+      
+      if (!videoInfo) {
+        logger.error('Erro na validação do vídeo');
+        return res.status(400).json({ message: 'Erro na validação do vídeo' });
+      }
 
-    if (existingVideoByTitle) {
-      logger.warn('Tentativa de criar vídeo com título duplicado', {
-        title: req.body.title
+      // Gerar um videoId único usando UUID
+      const uniqueVideoId = uuidv4();
+      
+      // Validar categoria
+      const validCategories = ['Segurança', 'Qualidade', 'Procedimentos e Regras', 'Treinamento', 'Equipamentos', 'Outros', 'Procedimentos'];
+      let category = req.body.category;
+      
+      if (!validCategories.includes(category)) {
+        // Normalizar a categoria
+        if (category.toLowerCase().includes('seguranca') || category.toLowerCase().includes('segurança')) {
+          category = 'Segurança';
+        } else if (category.toLowerCase().includes('treinamento')) {
+          category = 'Treinamento';
+        } else if (category.toLowerCase().includes('procedimento')) {
+          category = 'Procedimentos';
+        } else {
+          category = 'Outros';
+        }
+      }
+      
+      // Definir chaves R2 temporárias/placeholders
+      const temporaryR2VideoKey = `temp/${req.file.filename}`; // Chave temporária para o vídeo original
+      const temporaryR2ThumbnailKey = 'placeholders/thumbnail.jpg'; // Chave placeholder para thumbnail
+
+      // Criar objeto do vídeo inicial com valores temporários para os campos obrigatórios
+      const video = new Video({
+        videoId: uniqueVideoId,
+        title: req.body.title.trim(),
+        description: req.body.description.trim(),
+        category: category,
+        zone: req.body.zone,
+        duration: videoInfo.duration || 0,
+        r2VideoKey: temporaryR2VideoKey, // Usar chave temporária
+        r2ThumbnailKey: temporaryR2ThumbnailKey, // Usar chave placeholder
+        views: 0,
+        uploadDate: new Date(),
+        r2Qualities: { // Usar chaves temporárias/placeholders
+          high: temporaryR2VideoKey,
+          medium: temporaryR2VideoKey,
+          low: temporaryR2VideoKey
+        },
+        status: 'processing'
       });
+
+      // Salvar para obter o ID
+      await video.save();
+      videoId = video._id;
+      
+      logger.info('Vídeo criado com sucesso, iniciando processamento', { 
+        id: videoId,
+        videoId: uniqueVideoId,
+        title: video.title
+      });
+
+      // Iniciar processamento em background
+      process.nextTick(async () => {
+        try {
+          // Gerar thumbnail e obter a chave R2
+          const thumbnailR2Key = await videoProcessor.generateThumbnail(req.file.path, videoId.toString()); // Renomeado para clareza
+          
+          // Processar vídeo em diferentes qualidades e obter as chaves R2
+          const processedR2Keys = await videoProcessor.processVideo(req.file.path, videoId.toString()); // Renomeado para clareza
+
+          // ** LOG DETALHADO ANTES DO UPDATE **
+          logger.info('Valores para atualizar no MongoDB', {
+            videoIdToUpdate: videoId?.toString(),
+            updateData: {
+              r2VideoKey: processedR2Keys?.high,
+              r2ThumbnailKey: thumbnailR2Key,
+              r2Qualities: processedR2Keys,
+              status: 'ready'
+            }
+          });
+
+          // Verificar se as chaves são válidas
+          if (!videoId || !thumbnailR2Key || !processedR2Keys?.high) {
+             logger.error('ERRO CRÍTICO: ID do vídeo ou chaves R2 em falta antes de atualizar o MongoDB!', {
+               videoIdExists: !!videoId,
+               thumbnailKeyExists: !!thumbnailR2Key,
+               highQualityKeyExists: !!processedR2Keys?.high
+             });
+             // Atualizar status para erro se chaves críticas faltarem
+             await Video.findByIdAndUpdate(videoId, { 
+               status: 'error',
+               processingError: 'Falha ao obter chaves R2 necessárias após processamento.'
+             });
+             return; // Não continuar com a atualização normal
+          }
+
+          // Atualizar vídeo com as chaves R2 e status
+          const updateResult = await Video.findByIdAndUpdate(videoId, {
+            r2VideoKey: processedR2Keys.high, // Chave principal é a de alta qualidade
+            r2ThumbnailKey: thumbnailR2Key,
+            r2Qualities: { // Guardar as chaves R2 das qualidades
+              high: processedR2Keys.high,
+              medium: processedR2Keys.medium,
+              low: processedR2Keys.low
+            },
+            status: 'ready'
+          }, { new: true }); // Adicionado { new: true } para retornar o documento atualizado
+
+          // ** LOG DO RESULTADO DO UPDATE **
+          logger.info('Resultado da operação findByIdAndUpdate', {
+             videoIdUpdated: videoId?.toString(),
+             updateResult // Logar o documento retornado (ou null se não encontrado/falhou)
+          });
+
+          // Verificar se o resultado contém as chaves (redundante se {new: true} funcionar)
+          if (!updateResult || !updateResult.r2ThumbnailKey || !updateResult.r2VideoKey) {
+            logger.error('ERRO PÓS-UPDATE: Documento atualizado não contém as chaves R2 esperadas!', {
+              updateResult // Logar o que foi retornado
+            });
+          }
+
+          logger.info('Processamento do vídeo concluído e chaves R2 atualizadas', { 
+            id: videoId,
+            title: video.title,
+            keys: {
+              thumbnail: thumbnailR2Key,
+              high: processedR2Keys.high,
+              medium: processedR2Keys.medium,
+              low: processedR2Keys.low
+            }
+          });
+        } catch (error) {
+          logger.error('Erro no processamento do vídeo', { 
+            error, 
+            videoId 
+          });
+
+          // Atualizar status para erro
+          if (videoId) {
+            await Video.findByIdAndUpdate(videoId, {
+              status: 'error',
+              processingError: error instanceof Error ? error.message : 'Erro desconhecido'
+            });
+          }
+        }
+      });
+
+      // Retornar resposta imediata
+      res.status(202).json({
+        message: 'Vídeo recebido e em processamento',
+        videoId: video._id,
+        uniqueId: uniqueVideoId,
+        status: 'processing'
+      });
+    } catch (validationError) {
+      logger.error('Erro na validação ou criação do vídeo', { validationError });
+      
+      // Limpar arquivo temporário
+      if (req.file) {
+        try {
+          await fs.unlink(req.file.path);
+          logger.info('Arquivo temporário removido após erro de validação', { 
+            path: req.file.path 
+          });
+        } catch (cleanupError) {
+          logger.error('Erro ao remover arquivo temporário', { 
+            error: cleanupError,
+            path: req.file.path
+          });
+        }
+      }
+      
       return res.status(400).json({ 
-        message: 'Já existe um vídeo com este título' 
+        message: validationError instanceof Error ? validationError.message : 'Erro na validação ou criação do vídeo' 
       });
     }
-
-    // Verificar se já existe um vídeo com o mesmo nome de arquivo
-    const existingVideoByFilename = await Video.findOne({
-      url: new RegExp(req.file.filename, 'i')
-    });
-
-    if (existingVideoByFilename) {
-      logger.warn('Tentativa de upload de arquivo duplicado', {
-        filename: req.file.filename
-      });
-      return res.status(400).json({ 
-        message: 'Este arquivo já foi enviado anteriormente' 
-      });
-    }
-
-    // Mover o arquivo do diretório temporário para o diretório de uploads
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const finalPath = path.join(uploadDir, req.file.filename);
-    await fs.promises.rename(req.file.path, finalPath);
-    
-    // Construir URLs
-    const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-    const videoUrl = `${baseUrl}/uploads/${req.file.filename}`;
-    // Por enquanto, usar uma thumbnail padrão
-    const thumbnailUrl = `${baseUrl}/assets/default-thumbnail.jpg`;
-
-    // Criar o documento do vídeo no MongoDB
-    const video = new Video({
-      title: req.body.title.trim(),
-      description: req.body.description.trim(),
-      category: req.body.category,
-      zone: req.body.zone,
-      videoId: uuidv4(),
-      url: videoUrl,
-      thumbnail: thumbnailUrl,
-      uploadDate: new Date(),
-      views: 0,
-      status: 'ready' // Como não temos processamento, marcar como pronto
-    });
-
-    await video.save();
-    logger.info('Vídeo salvo com sucesso', { 
-      id: video._id,
-      title: video.title,
-      category: video.category,
-      zone: video.zone,
-      url: video.url
-    });
-
-    res.status(201).json(video);
   } catch (error) {
-    logger.error('Erro ao processar e criar vídeo', { 
-      error,
-      body: req.body,
-      file: req.file
-    });
-
-    // Limpar arquivo em caso de erro
+    logger.error('Erro ao criar vídeo', { error });
+    
+    // Limpar arquivos temporários em caso de erro
     if (req.file) {
       try {
-        await fs.promises.unlink(req.file.path);
+        await fs.unlink(req.file.path);
         logger.info('Arquivo temporário removido após erro', { 
           path: req.file.path 
         });
-      } catch (unlinkError) {
+      } catch (cleanupError) {
         logger.error('Erro ao remover arquivo temporário', { 
-          error: unlinkError,
+          error: cleanupError,
           path: req.file.path
         });
       }
     }
 
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: 'Erro de validação',
+        errors: error.errors 
+      });
+    }
+
     res.status(500).json({ 
-      message: 'Erro ao processar e criar vídeo',
-      details: error instanceof Error ? error.message : 'Erro desconhecido'
+      message: 'Erro ao criar vídeo',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

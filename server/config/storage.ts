@@ -15,11 +15,11 @@ export const storageConfig = {
   // Diretório para vídeos processados
   processedDir: path.join(process.cwd(), 'uploads', 'processed'),
   
-  // Tamanho máximo de arquivo (500MB)
-  maxFileSize: 500 * 1024 * 1024,
+  // Tamanho máximo de arquivo (10GB)
+  maxFileSize: 10 * 1024 * 1024 * 1024,
   
-  // Duração máxima de vídeo (1 hora em segundos)
-  maxDuration: 3600,
+  // Duração máxima de vídeo (4 horas em segundos)
+  maxDuration: 14400,
   
   // Tipos de arquivo permitidos
   allowedMimeTypes: [

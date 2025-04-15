@@ -1,4 +1,3 @@
-
 export type UserRole = "admin_app" | "admin_qa" | "user";
 
 export interface User {
@@ -26,14 +25,20 @@ export interface Video {
   id: string;
   title: string;
   description: string;
-  url: string;
-  thumbnail: string;
+  r2VideoKey: string;
+  r2ThumbnailKey: string;
   duration: number;
-  category: "Segurança" | "Qualidade" | "Procedimentos e Regras";
+  category: "Segurança" | "Qualidade" | "Procedimentos e Regras" | "Treinamento" | "Equipamentos" | "Outros" | "Procedimentos";
   zone: "Enchimento" | "Fabrico" | "Outra";
   uploadDate: Date;
   views: number;
   pointsForWatching: number;
+  status?: 'processing' | 'ready' | 'error';
+  r2Qualities?: {
+    high?: string;
+    medium?: string;
+    low?: string;
+  };
 }
 
 export interface Incident {

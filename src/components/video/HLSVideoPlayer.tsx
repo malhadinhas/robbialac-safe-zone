@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import Hls from 'hls.js';
+// import Hls from 'hls.js'; // Não é mais necessário para MP4
 
-interface HLSVideoPlayerProps {
+interface VideoPlayerProps { // Renomeado de HLSVideoPlayerProps
   videoUrl: string;
   autoPlay?: boolean;
   controls?: boolean;
@@ -10,10 +10,11 @@ interface HLSVideoPlayerProps {
   onProgress?: (progressPercent: number, currentTime: number) => void;
   onEnd?: () => void;
   className?: string;
-  thumbnail?: string;
+  thumbnail?: string; // Poster image
 }
 
-export default function HLSVideoPlayer({
+// Renomeado de HLSVideoPlayer
+export default function VideoPlayer({
   videoUrl,
   autoPlay = false,
   controls = true,
@@ -23,70 +24,39 @@ export default function HLSVideoPlayer({
   onEnd,
   className = '',
   thumbnail
-}: HLSVideoPlayerProps) {
+}: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
-  const [isError, setIsError] = useState(false);
+  // const hlsRef = useRef<Hls | null>(null); // Não é mais necessário
+  const [isError, setIsError] = useState(false); // Manter para erros de <video>
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Limpar instância anterior do HLS
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-    }
+    // --- Lógica do HLS removida ---
+    // if (hlsRef.current) { ... }
+    // if (video.canPlayType(...) { ... }
+    // else if (Hls.isSupported()) { ... }
 
-    // Verificar se o navegador suporta HLS nativamente
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = videoUrl;
-    }
-    // Se não suporta, usar hls.js
-    else if (Hls.isSupported()) {
-      const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-        backBufferLength: 90
-      });
-
-      hls.loadSource(videoUrl);
-      hls.attachMedia(video);
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        if (autoPlay) {
-          video.play().catch(console.error);
-        }
-      });
-
-      hls.on(Hls.Events.ERROR, (event, data) => {
-        if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              console.error('HLS network error');
-              hls.startLoad();
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              console.error('HLS media error');
-              hls.recoverMediaError();
-              break;
-            default:
-              console.error('HLS fatal error');
-              setIsError(true);
-              break;
-          }
-        }
-      });
-
-      hlsRef.current = hls;
-    }
+    // Configurar diretamente o src para a tag <video>
+    video.src = videoUrl;
 
     // Configurar o vídeo
     video.currentTime = startAt;
     video.muted = muted;
 
+    // Tentar tocar se autoPlay estiver ativo
+    if (autoPlay) {
+        video.play().catch(error => {
+            console.error("Erro ao tentar autoPlay:", error);
+            // Erros de autoPlay são comuns se o utilizador não interagiu com a página
+            // Não definir isError aqui, pois o vídeo pode carregar mas não tocar automaticamente
+        });
+    }
+
     // Adicionar event listeners
     const handleTimeUpdate = () => {
-      if (onProgress && video.duration) {
+      if (onProgress && video.duration && !isNaN(video.duration)) {
         const progressPercent = (video.currentTime / video.duration) * 100;
         onProgress(progressPercent, video.currentTime);
       }
@@ -96,22 +66,28 @@ export default function HLSVideoPlayer({
       onEnd?.();
     };
 
+    const handleError = (e: Event) => {
+        console.error("Erro no elemento <video>:", e);
+        setIsError(true); // Definir como erro se o próprio vídeo falhar ao carregar/decodificar
+    };
+
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('ended', handleEnded);
+    video.addEventListener('error', handleError); // Adicionar listener para erros do <video>
 
     return () => {
       video.removeEventListener('timeupdate', handleTimeUpdate);
       video.removeEventListener('ended', handleEnded);
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-      }
+      video.removeEventListener('error', handleError);
+      // --- Lógica de destruição do HLS removida ---
+      // if (hlsRef.current) { ... }
     };
   }, [videoUrl, autoPlay, muted, startAt, onProgress, onEnd]);
 
   if (isError) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-900 text-white">
-        <p>Erro ao carregar o vídeo. Por favor, tente novamente mais tarde.</p>
+        <p>Erro ao carregar o vídeo.</p>
       </div>
     );
   }
@@ -121,8 +97,11 @@ export default function HLSVideoPlayer({
       ref={videoRef}
       className={className}
       controls={controls}
-      playsInline
+      playsInline // Importante para reprodução inline em mobile
       poster={thumbnail}
+      // Não é necessário autoPlay aqui se for tratado no useEffect
+      // A propriedade `muted` também é definida no useEffect
+      // O `src` é definido no useEffect
     />
   );
 }
