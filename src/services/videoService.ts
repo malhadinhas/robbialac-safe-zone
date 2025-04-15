@@ -226,39 +226,63 @@ interface SecureUrlResponse {
 // --- Função para buscar a URL segura do backend --- 
 export const getSecureR2Url = async (key: string): Promise<string> => {
   if (!key) {
-    logger.warn('[getSecureR2Url] Tentativa de buscar URL segura com chave vazia.');
+    console.error('[getSecureR2Url] Tentativa de buscar URL segura com chave vazia.');
     throw new Error('Chave R2 inválida ou não fornecida.');
   }
-  logger.info(`[getSecureR2Url] Solicitando URL segura para a chave: ${key}`);
+  
+  console.log(`[getSecureR2Url] Solicitando URL segura para a chave: ${key}`);
+  
   try {
     // Fazer pedido GET para o novo endpoint, passando a chave como query parameter
-    const response = await axios.get<SecureUrlResponse>(`${API_URL}/api/secure-url`, {
+    const response = await axios.get(`${API_URL}/api/secure-url`, {
       params: { key: key }, // Passar a chave como ?key=...
-      // Considerar adicionar timeout e tratamento de erro aqui
+      timeout: 15000, // 15 segundos de timeout
     });
 
-    if (response.data && response.data.signedUrl) {
-       logger.info(`[getSecureR2Url] URL segura recebida para a chave: ${key}`);
-       return response.data.signedUrl;
-    } else {
-       logger.error('[getSecureR2Url] Resposta da API de URL segura inválida', { key, responseData: response.data });
-       throw new Error('Resposta inválida da API de URL segura.');
+    console.log(`[getSecureR2Url] Resposta do servidor:`, {
+      status: response.status,
+      headers: response.headers,
+      data: typeof response.data
+    });
+
+    // Verificar se a resposta tem url (novo formato) ou signedUrl (formato antigo)
+    if (response.data?.url) {
+      console.log(`[getSecureR2Url] URL segura obtida (formato url):`, response.data.url.substring(0, 50) + '...');
+      return response.data.url;
+    } 
+    else if (response.data?.signedUrl) {
+      console.log(`[getSecureR2Url] URL segura obtida (formato signedUrl):`, response.data.signedUrl.substring(0, 50) + '...');
+      return response.data.signedUrl;
+    } 
+    else {
+      console.error('[getSecureR2Url] Resposta da API não contém URL:', response.data);
+      
+      // Tente acessar possíveis campos aninhados
+      const responseStr = JSON.stringify(response.data);
+      console.log('[getSecureR2Url] Resposta como string:', responseStr);
+      
+      throw new Error('Resposta da API não contém URL válida');
     }
-
   } catch (error) {
-    logger.error('[getSecureR2Url] Erro ao buscar URL segura do backend', { 
-      key,
-      error,
-      message: error instanceof Error ? error.message : 'Erro desconhecido',
-      axiosResponse: error instanceof AxiosError ? error.response?.data : undefined
-    });
-    // Relançar o erro para que o chamador saiba que falhou
-    throw error;
+    if (error instanceof AxiosError) {
+      console.error('[getSecureR2Url] Erro Axios ao buscar URL segura:', { 
+        message: error.message,
+        code: error.code,
+        status: error.response?.status,
+        data: error.response?.data,
+        headers: error.response?.headers
+      });
+    } else {
+      console.error('[getSecureR2Url] Erro genérico ao buscar URL segura:', error);
+    }
+    
+    // Relançar o erro com mensagem mais clara
+    throw new Error(`Falha ao buscar URL para chave: ${key}`);
   }
 };
 
 // Função para buscar vídeos (RETORNA CHAVES R2 AGORA)
-export const getVideos = async (): Promise<Video[]> => {
+export const getVideos = async (options?: { category?: string; limit?: string }): Promise<Video[]> => {
   try {
     const response = await axios.get<Video[]>(`${API_URL}/api/videos`);
     logger.info('Resposta recebida de GET /api/videos', {
@@ -274,12 +298,12 @@ export const getVideos = async (): Promise<Video[]> => {
     }
 
     // Mapear dados (assegurando que têm ID e status)
-    const mappedVideos = videos.map((video: any) => ({
+    let mappedVideos = videos.map((video: any) => ({
       id: video.id || video._id || '', 
       title: video.title || '',
       description: video.description || '',
-      r2VideoKey: video.r2VideoKey || '',
-      r2ThumbnailKey: video.r2ThumbnailKey || '',
+      r2Key: video.r2Key || video.r2VideoKey || '',
+      thumbnailR2Key: video.thumbnailR2Key || video.r2ThumbnailKey || '',
       category: normalizeCategory(video.category || ''),
       zone: video.zone || '',
       views: typeof video.views === 'number' ? video.views : 0,
@@ -288,6 +312,26 @@ export const getVideos = async (): Promise<Video[]> => {
       status: video.status || 'unknown',
       r2Qualities: video.r2Qualities || { high: '', medium: '', low: '' }
     }));
+
+    // Filtrar por categoria se fornecida
+    if (options?.category) {
+      const normalizedCategory = normalizeCategory(options.category);
+      mappedVideos = mappedVideos.filter(v => v.category === normalizedCategory);
+      logger.info(`Filtrando vídeos por categoria: ${normalizedCategory}`, { 
+        filteredCount: mappedVideos.length 
+      });
+    }
+
+    // Limitar número de resultados se fornecido
+    if (options?.limit) {
+      const limit = parseInt(options.limit, 10);
+      if (!isNaN(limit) && limit > 0) {
+        mappedVideos = mappedVideos.slice(0, limit);
+        logger.info(`Limitando resultados para: ${limit}`, { 
+          limitedCount: mappedVideos.length 
+        });
+      }
+    }
 
     logger.info('Vídeos mapeados no frontend (devem ter status e chaves R2)', {
       count: mappedVideos.length,

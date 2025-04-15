@@ -2,53 +2,65 @@ import { connectToDatabase, getCollection } from '../services/database';
 import logger from '../utils/logger';
 
 interface Department {
-  value: string;
-  label: string;
+  id: string;
+  name: string;
+  color: string;
+  employeeCount: number;
 }
 
-const departments: Department[] = [
-  { value: 'producao', label: 'Produção' },
-  { value: 'logistica', label: 'Logística' },
-  { value: 'manutencao', label: 'Manutenção' },
-  { value: 'qualidade', label: 'Qualidade' },
-  { value: 'administrativo', label: 'Administrativo' },
-  { value: 'rh', label: 'Recursos Humanos' },
-  { value: 'ti', label: 'Tecnologia da Informação' },
-  { value: 'comercial', label: 'Comercial' },
-  { value: 'financeiro', label: 'Financeiro' }
+const initialDepartments: Department[] = [
+  {
+    id: '1',
+    name: 'Produção',
+    color: '#FF4B4B',
+    employeeCount: 40
+  },
+  {
+    id: '2',
+    name: 'Manutenção',
+    color: '#4CAF50',
+    employeeCount: 15
+  },
+  {
+    id: '3',
+    name: 'Logística',
+    color: '#2196F3',
+    employeeCount: 20
+  },
+  {
+    id: '4',
+    name: 'Qualidade',
+    color: '#9C27B0',
+    employeeCount: 10
+  },
+  {
+    id: '5',
+    name: 'Segurança',
+    color: '#FF9800',
+    employeeCount: 8
+  }
 ];
 
 async function seedDepartments() {
   try {
-    logger.info('Iniciando população de departamentos...');
-    
-    // Conectar ao banco de dados
     await connectToDatabase();
-    
-    // Obter a coleção
     const collection = await getCollection<Department>('departments');
     
-    // Verificar se já existem departamentos
-    const existingCount = await collection.countDocuments();
-    if (existingCount > 0) {
-      logger.info(`Já existem ${existingCount} departamentos. Pulando inserção.`);
-      return;
-    }
+    // Limpa a coleção existente
+    await collection.deleteMany({});
     
-    // Inserir departamentos
-    const result = await collection.insertMany(departments);
+    // Insere os departamentos iniciais
+    const result = await collection.insertMany(initialDepartments);
     
-    logger.info(`${result.insertedCount} departamentos inseridos com sucesso!`);
+    logger.info('Departamentos inseridos com sucesso', {
+      count: result.insertedCount
+    });
+    
+    process.exit(0);
   } catch (error) {
-    logger.error('Erro ao popular departamentos:', { error });
+    logger.error('Erro ao inserir departamentos', { error });
+    process.exit(1);
   }
 }
 
-// Executar o script
-seedDepartments().then(() => {
-  logger.info('Script finalizado.');
-  process.exit(0);
-}).catch(error => {
-  logger.error('Erro ao executar script:', { error });
-  process.exit(1);
-}); 
+seedDepartments(); 

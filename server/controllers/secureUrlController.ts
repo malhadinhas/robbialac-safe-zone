@@ -43,7 +43,17 @@ try {
       accessKeyId: R2_CONFIG.accessKeyId!,
       secretAccessKey: R2_CONFIG.secretAccessKey!
     },
-    signatureVersion: 'v4' // Garantir SigV4
+    signatureVersion: 'v4', // Garantir SigV4
+    tls: true,
+    forcePathStyle: true, // Forçar URL com estilo de caminho (pode ajudar com alguns endpoints)
+    requestHandler: {
+      connectionTimeout: 5000, // 5 segundos para timeout de conexão
+    },
+    // Configurações adicionais para resolver problemas SSL
+    maxAttempts: 3,
+    customUserAgent: 'RobbialacSafeZone/1.0',
+    retryMode: 'standard',
+    followRegionRedirects: true
   });
   logger.info('[SecureUrlController] Cliente S3 inicializado com sucesso no backend.');
 } catch (error) {
@@ -51,76 +61,84 @@ try {
    // Tratar o erro apropriadamente - talvez impedir o arranque ou retornar erros 500 nos endpoints
 }
 
-const getUrlExpiration = (): number => {
+const getUrlExpiration = (req: Request): number => {
   const expiration = Number(process.env.R2_URL_EXPIRATION);
   return !isNaN(expiration) ? expiration : 3600; // Padrão: 1 hora
 };
 
 export const generateSecureUrl = async (req: Request, res: Response) => {
-  const keyParam = req.query.key as string;
-
-  if (!s3Client) {
-    logger.error('Tentativa de gerar URL segura sem cliente S3 inicializado.');
-    return res.status(500).json({ message: 'Erro interno do servidor (S3 Client)' });
-  }
-
-  if (!keyParam) {
-    logger.warn('Pedido para URL segura sem a query param \'key\'.');
-    return res.status(400).json({ message: 'Query parameter \'key\' é obrigatório.' });
-  }
-
-  logger.info(`[generateSecureUrl] Recebido pedido para chave/URL: ${keyParam}`);
-
-  let objectKey = '';
   try {
-    // --- EXTRAIR A CHAVE CORRETA DA URL RECEBIDA ---
-    if (keyParam.startsWith('http')) {
-      try {
-        const url = new URL(keyParam);
-        objectKey = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
-        logger.info(`[generateSecureUrl] Chave extraída da URL: ${objectKey}`);
-      } catch (e) {
-        logger.error('[generateSecureUrl] Falha ao parsear URL recebida para extrair chave', { url: keyParam, error: e });
-        // Se falhar o parse, talvez a keyParam fosse uma chave malformada?
-        objectKey = keyParam; // Tenta usar como está, mas provavelmente falhará
-      }
-    } else {
-      // Se não começa com http, assume que já é a chave
-      objectKey = keyParam.startsWith('/') ? keyParam.slice(1) : keyParam;
-      logger.info(`[generateSecureUrl] Parâmetro recebido não é URL, usando como chave: ${objectKey}`);
-    }
-    // --- FIM DA EXTRAÇÃO ---
-    
-    if (!objectKey) {
-       logger.warn('[generateSecureUrl] Chave inválida ou vazia após processamento.', { originalKey: keyParam });
-       return res.status(400).json({ message: 'Chave inválida.' });
+    if (!s3Client) {
+      logger.error('[SecureUrlController] Cliente S3 não inicializado corretamente.');
+      return res.status(500).json({ error: 'Erro interno do servidor: Cliente S3 não inicializado' });
     }
 
+    // Extrai a key da URL ou dos parâmetros da consulta
+    const urlKey = req.query.url as string;
+    const keyParam = req.query.key as string;
+    
+    if (!urlKey && !keyParam) {
+      logger.error('[SecureUrlController] Requisição sem url ou key');
+      return res.status(400).json({ error: 'URL ou key do objeto é necessária' });
+    }
+
+    // Obtém a chave do objeto
+    let objectKey = '';
+    
+    if (urlKey) {
+      const url = new URL(urlKey);
+      objectKey = url.pathname.substring(1); // Remove a barra inicial
+    } else {
+      objectKey = keyParam;
+    }
+    
+    logger.info(`[SecureUrlController] Gerando URL assinada para objeto: ${objectKey}`);
+    
+    // Log da configuração (omitindo dados sensíveis)
+    logger.info(`[SecureUrlController] Configuração R2: 
+      região: ${R2_CONFIG.region}, 
+      endpoint: ${R2_CONFIG.endpoint}, 
+      bucket: ${R2_CONFIG.bucketName},
+      ID de acesso disponível: ${!!R2_CONFIG.accessKeyId},
+      Chave secreta disponível: ${!!R2_CONFIG.secretAccessKey}`
+    );
+
+    // Cria o comando para obter o objeto
     const command = new GetObjectCommand({
       Bucket: R2_CONFIG.bucketName!,
-      Key: objectKey, // Usar a chave extraída e limpa
+      Key: objectKey
     });
 
-    logger.info(`[generateSecureUrl] Preparando assinatura para: Bucket=${R2_CONFIG.bucketName}, Key=${objectKey}`);
+    // Obtém o tempo de expiração
+    const expiresIn = getUrlExpiration(req);
+    
+    logger.info(`[SecureUrlController] Tempo de expiração definido: ${expiresIn} segundos`);
 
-    const signedUrl = await getSignedUrl(s3Client, command, {
-      expiresIn: getUrlExpiration(),
-    });
-
-    logger.info(`[generateSecureUrl] URL segura gerada com sucesso para a chave: ${objectKey}`);
-    res.json({ signedUrl });
-
-  } catch (error) {
-    logger.error('[generateSecureUrl] Erro ao gerar URL segura no backend', {
-      receivedParam: keyParam,
-      processedKey: objectKey,
-      error,
-      message: error instanceof Error ? error.message : 'Erro desconhecido'
-    });
-    if (error instanceof Error && error.name === 'NoSuchKey') {
-       res.status(404).json({ message: 'Objeto não encontrado no R2.' });
-    } else {
-       res.status(500).json({ message: 'Erro ao gerar URL segura.' });
+    // Gera a URL assinada
+    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn });
+    
+    // Log completo da URL assinada para depuração
+    logger.info(`[SecureUrlController] URL assinada gerada: ${signedUrl}`);
+    
+    // Analisar a URL assinada para depuração
+    try {
+      const parsedUrl = new URL(signedUrl);
+      logger.info(`[SecureUrlController] URL assinada - Protocolo: ${parsedUrl.protocol}, Host: ${parsedUrl.host}, Caminho: ${parsedUrl.pathname}`);
+      logger.info(`[SecureUrlController] Parâmetros da URL assinada: ${parsedUrl.search}`);
+    } catch (parseError) {
+      logger.error(`[SecureUrlController] Erro ao analisar URL assinada: ${parseError}`);
     }
+
+    // Mantemos o formato "signedUrl" para compatibilidade com o cliente
+    return res.json({ signedUrl });
+  } catch (error) {
+    logger.error('[SecureUrlController] Erro ao gerar URL segura', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      objectKey: urlKey || keyParam,
+      bucketName: R2_CONFIG.bucketName
+    });
+    
+    return res.status(500).json({ message: 'Falha ao gerar URL segura.' });
   }
 }; 

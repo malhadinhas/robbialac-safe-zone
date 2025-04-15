@@ -23,6 +23,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { getVideos } from "@/services/videoService";
 import { getIncidents } from "@/services/incidentService";
 import { Video, Incident } from "@/types";
+import VideoCategoryPieChart from '@/components/stats/VideoCategoryPieChart';
+import RecentActivityCard from '@/components/RecentActivityCard';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -283,17 +285,25 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={statsByCategory}>
-                <XAxis dataKey="category" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="count" name="Quantidade">
+              <PieChart>
+                <Pie
+                  data={statsByCategory}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={renderCustomPieChartLabel}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="count"
+                  nameKey="category"
+                >
                   {statsByCategory.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
-                </Bar>
-              </BarChart>
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -401,81 +411,11 @@ export default function Dashboard() {
     <>
       <h2 className="text-xl font-bold text-gray-800 mb-4">Atividade Recente</h2>
       
-      <Card className="bg-white shadow mb-4">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-lg font-medium">Atividade Recente</CardTitle>
-            <div className="flex space-x-2">
-              <Button 
-                variant={activeTab === "videos" ? "default" : "outline"}
-                size="compact"
-                onClick={() => setActiveTab("videos")}
-                className={activeTab === "videos" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
-              >
-                <Film className="w-3 h-3 mr-1" /> Vídeos
-              </Button>
-              <Button 
-                variant={activeTab === "quaseAcidentes" ? "default" : "outline"}
-                size="compact"
-                onClick={() => setActiveTab("quaseAcidentes")}
-                className={activeTab === "quaseAcidentes" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
-              >
-                <AlertTriangle className="w-3 h-3 mr-1" /> Quase Acidentes
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {activeTab === "videos" ? (
-            <div className="space-y-3">
-              {recentVideos.map((video) => (
-                <div key={video.id} className="flex items-center p-2 border rounded-lg hover:bg-gray-50">
-                  <div className="flex-shrink-0 w-12 h-9 bg-gray-200 rounded overflow-hidden mr-3">
-                    <img 
-                      src={video.thumbnail} 
-                      alt={video.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate text-sm">{video.title}</p>
-                    <div className="flex items-center text-xs text-gray-500">
-                      <Eye className="w-2.5 h-2.5 mr-1" /> {video.views}
-                      <Clock className="w-2.5 h-2.5 ml-2 mr-1" /> {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentIncidents.map((incident) => (
-                <div key={incident.id} className={`flex items-center p-2 border-l-4 rounded-lg ${
-                  incident.severity === "Alto" 
-                    ? "border-l-red-500 bg-red-50" 
-                    : incident.severity === "Médio"
-                    ? "border-l-orange-500 bg-orange-50"
-                    : "border-l-yellow-400 bg-yellow-50"
-                }`}>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 text-sm">{incident.title}</p>
-                    <div className="flex items-center text-xs text-gray-500">
-                      <AlertTriangle className={`w-2.5 h-2.5 mr-1 ${
-                        incident.severity === "Alto" 
-                          ? "text-red-500" 
-                          : incident.severity === "Médio"
-                          ? "text-orange-500"
-                          : "text-yellow-500"
-                      }`} /> 
-                      {incident.severity} • {incident.status}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <RecentActivityCard 
+        videos={recentVideos}
+        incidents={recentIncidents}
+        className="bg-white shadow mb-4"
+      />
       
       <div className="grid grid-cols-2 gap-3">
         <Card className="bg-white shadow">
@@ -615,17 +555,25 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={statsByCategory}>
-                    <XAxis dataKey="category" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="count" name="Quantidade">
+                  <PieChart>
+                    <Pie
+                      data={statsByCategory}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={renderCustomPieChartLabel}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="count"
+                      nameKey="category"
+                    >
                       {statsByCategory.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
-                    </Bar>
-                  </BarChart>
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
@@ -729,97 +677,11 @@ export default function Dashboard() {
           </div>
     
           {/* Bottom Section - Recent Activity */}
-          <Card className="bg-white shadow mb-6">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-lg font-medium">Atividade Recente</CardTitle>
-                <div className="flex space-x-2">
-                  <Button 
-                    variant={activeTab === "videos" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setActiveTab("videos")}
-                    className={activeTab === "videos" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
-                  >
-                    <Film className="w-4 h-4 mr-1" /> Vídeos
-                  </Button>
-                  <Button 
-                    variant={activeTab === "quaseAcidentes" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setActiveTab("quaseAcidentes")}
-                    className={activeTab === "quaseAcidentes" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
-                  >
-                    <AlertTriangle className="w-4 h-4 mr-1" /> Quase Acidentes
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {activeTab === "videos" ? (
-                <div className="space-y-4">
-                  {recentVideos.map((video) => (
-                    <div key={video.id} className="flex items-center p-3 border rounded-lg hover:bg-gray-50">
-                      <div className="flex-shrink-0 w-16 h-12 bg-gray-200 rounded overflow-hidden mr-4">
-                        <img 
-                          src={video.thumbnail} 
-                          alt={video.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{video.title}</p>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Eye className="w-3 h-3 mr-1" /> {video.views} visualizações
-                          <Clock className="w-3 h-3 ml-3 mr-1" /> {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
-                        </div>
-                      </div>
-                      <div className="ml-4 flex-shrink-0">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {video.category}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentIncidents.map((incident) => (
-                    <div key={incident.id} className={`flex items-center p-3 border-l-4 rounded-lg ${
-                      incident.severity === "Alto" 
-                        ? "border-l-red-500 bg-red-50" 
-                        : incident.severity === "Médio"
-                        ? "border-l-orange-500 bg-orange-50"
-                        : "border-l-yellow-400 bg-yellow-50"
-                    }`}>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900">{incident.title}</p>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <AlertTriangle className={`w-3 h-3 mr-1 ${
-                            incident.severity === "Alto" 
-                              ? "text-red-500" 
-                              : incident.severity === "Médio"
-                              ? "text-orange-500"
-                              : "text-yellow-500"
-                          }`} /> 
-                          Severidade: {incident.severity} • Status: {incident.status}
-                        </div>
-                      </div>
-                      <div className="ml-4 flex-shrink-0">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          incident.status === "Resolvido"
-                            ? "bg-green-100 text-green-800"
-                            : incident.status === "Em Análise"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}>
-                          {incident.status}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <RecentActivityCard 
+            videos={recentVideos}
+            incidents={recentIncidents}
+            className="bg-white shadow mb-6"
+          />
     
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

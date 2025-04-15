@@ -11,6 +11,7 @@ import medalRoutes from './routes/medals';
 import zoneRoutes from './routes/zones';
 import statsRoutes from './routes/statsRoutes';
 import activityRoutes from './routes/activityRoutes';
+import systemRoutes from './routes/system';
 import logger from './utils/logger';
 import { ensureStorageDirectories } from './config/storage';
 import { checkStorage } from './scripts/checkStorage';
@@ -63,6 +64,7 @@ app.use('/api/medals', medalRoutes);
 app.use('/api/zones', zoneRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/activities', activityRoutes);
+app.use('/api/system', systemRoutes);
 
 // Rota para verificar status do banco
 app.get('/api/database/status', (req, res) => {

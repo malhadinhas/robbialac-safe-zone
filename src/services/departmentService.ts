@@ -1,8 +1,8 @@
 import api from '@/lib/api';
+import { Department } from '@/types/department';
 
-export interface Department {
-  value: string;
-  label: string;
+export interface DepartmentWithEmployees extends Department {
+  employeeCount: number;
 }
 
 /**
@@ -22,7 +22,7 @@ export async function getDepartments(): Promise<Department[]> {
 
 /**
  * Busca um departamento específico pelo ID
- * @param id ID (value) do departamento
+ * @param id ID do departamento
  * @returns O departamento encontrado ou null
  */
 export async function getDepartmentById(id: string): Promise<Department | null> {
@@ -32,5 +32,104 @@ export async function getDepartmentById(id: string): Promise<Department | null> 
   } catch (error) {
     console.error(`Erro ao buscar departamento ${id}:`, error);
     return null;
+  }
+}
+
+// Mock data - será substituído pela API real
+const mockDepartments: DepartmentWithEmployees[] = [
+  {
+    id: '1',
+    name: 'Operações',
+    color: '#FF4B4B',
+    employeeCount: 40
+  },
+  {
+    id: '2',
+    name: 'Marketing',
+    color: '#4CAF50',
+    employeeCount: 15
+  },
+  {
+    id: '3',
+    name: 'Recursos Humanos',
+    color: '#2196F3',
+    employeeCount: 20
+  },
+  {
+    id: '4',
+    name: 'Direção',
+    color: '#9C27B0',
+    employeeCount: 10
+  },
+  {
+    id: '5',
+    name: 'Financeira',
+    color: '#FF9800',
+    employeeCount: 8
+  },
+  {
+    id: '6',
+    name: 'Comercial',
+    color: '#607D8B',
+    employeeCount: 5
+  }
+];
+
+export async function getDepartmentsWithEmployees(): Promise<DepartmentWithEmployees[]> {
+  try {
+    const response = await api.get('/departments/with-employees');
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar departamentos com funcionários:', error);
+    throw error;
+  }
+}
+
+/**
+ * Atualiza o número de funcionários de um departamento
+ */
+export async function updateDepartmentEmployeeCount(departmentId: string, employeeCount: number): Promise<boolean> {
+  try {
+    await api.put(`/departments/${departmentId}/employee-count`, { employeeCount });
+    return true;
+  } catch (error) {
+    console.error('Erro ao atualizar número de funcionários:', error);
+    return false;
+  }
+}
+
+/**
+ * Obtém a meta de quase acidentes por departamento
+ * @param department Departamento
+ * @param targetPerEmployee Meta por funcionário (padrão: 5)
+ * @returns Meta total para o departamento
+ */
+export function getDepartmentIncidentTarget(department: DepartmentWithEmployees, targetPerEmployee: number = 5): number {
+  return department.employeeCount * targetPerEmployee;
+}
+
+/**
+ * Obtém a configuração do sistema
+ */
+export async function getSystemConfig(): Promise<{ annualIncidentTargetPerEmployee: number }> {
+  try {
+    const response = await api.get('/system/config');
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar configuração do sistema:', error);
+    throw error;
+  }
+}
+
+/**
+ * Atualiza a meta anual de quase acidentes por funcionário
+ */
+export async function updateIncidentTargetPerEmployee(value: number): Promise<boolean> {
+  try {
+    await api.put('/system/config/incident-target', { annualIncidentTargetPerEmployee: value });
+    return true;
+  } catch (error) {
+    console.error('Erro ao atualizar meta de quase acidentes por funcionário:', error);
+    return false;
   }
 } 

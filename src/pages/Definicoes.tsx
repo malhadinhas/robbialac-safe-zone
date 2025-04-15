@@ -24,6 +24,8 @@ import { initializeMongoConfig } from "@/config/database";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import MedalManagement from "@/components/medal-management/MedalManagement";
+import DepartmentEmployeeEditor from '@/components/analytics/DepartmentEmployeeEditor';
+import IncidentTargetEditor from '@/components/analytics/IncidentTargetEditor';
 
 export default function Definicoes() {
   const [language, setLanguage] = useState("pt");
@@ -112,12 +114,13 @@ export default function Definicoes() {
         <h1 className="text-2xl font-bold">Definições</h1>
         
         <Tabs defaultValue="interface" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="interface">Interface</TabsTrigger>
             <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
             <TabsTrigger value="storage">Armazenamento</TabsTrigger>
             <TabsTrigger value="database">Base de Dados</TabsTrigger>
             <TabsTrigger value="medals">Medalhas</TabsTrigger>
+            <TabsTrigger value="incidents">Quase Acidentes</TabsTrigger>
           </TabsList>
           
           <TabsContent value="interface">
@@ -301,6 +304,30 @@ export default function Definicoes() {
 
           <TabsContent value="medals">
             <MedalManagement />
+          </TabsContent>
+
+          <TabsContent value="incidents">
+            <div className="grid gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Configurações de Quase Acidentes</CardTitle>
+                  <CardDescription>
+                    Configure as metas e departamentos para o sistema de quase acidentes
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Meta de Quase Acidentes</h3>
+                    <IncidentTargetEditor />
+                  </div>
+                  
+                  <div className="pt-6 border-t">
+                    <h3 className="text-lg font-medium mb-4">Funcionários por Departamento</h3>
+                    <DepartmentEmployeeEditor />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

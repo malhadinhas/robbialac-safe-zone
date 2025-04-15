@@ -27,6 +27,8 @@ export interface Video {
   description: string;
   r2VideoKey: string;
   r2ThumbnailKey: string;
+  r2Key?: string;
+  thumbnailR2Key?: string;
   duration: number;
   category: "Segurança" | "Qualidade" | "Procedimentos e Regras" | "Treinamento" | "Equipamentos" | "Outros" | "Procedimentos";
   zone: "Enchimento" | "Fabrico" | "Outra";

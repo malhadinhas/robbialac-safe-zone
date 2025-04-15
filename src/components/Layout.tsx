@@ -1,9 +1,8 @@
-
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { Home, BookOpen, AlertTriangle, Medal, Settings, LogOut, X, Menu } from "lucide-react";
+import { Home, BookOpen, AlertTriangle, Medal, Settings, LogOut, X, Menu, BarChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { 
@@ -42,6 +41,7 @@ export function Layout({ children }: LayoutProps) {
     { icon: Home, label: "Dashboard", path: "/" },
     { icon: BookOpen, label: "Formações", path: "/formacoes" },
     { icon: AlertTriangle, label: "Quase Acidentes", path: "/quase-acidentes" },
+    { icon: BarChart, label: "Estatísticas", path: "/quase-acidentes/estatisticas" },
     { icon: Medal, label: "Pontuação", path: "/pontuacao" },
     { icon: Settings, label: "Definições", path: "/definicoes" }
   ];

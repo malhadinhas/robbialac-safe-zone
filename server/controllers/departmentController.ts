@@ -3,8 +3,10 @@ import { getCollection } from '../services/database';
 import logger from '../utils/logger';
 
 interface Department {
-  value: string;
-  label: string;
+  id: string;
+  name: string;
+  color: string;
+  employeeCount: number;
 }
 
 // Buscar todos os departamentos
@@ -30,8 +32,8 @@ export const getDepartmentById = async (req: Request, res: Response) => {
     const { id } = req.params;
     const collection = await getCollection<Department>('departments');
     
-    // Buscar departamento pelo ID (value)
-    const department = await collection.findOne({ value: id });
+    // Buscar departamento pelo ID
+    const department = await collection.findOne({ id });
     
     if (!department) {
       logger.warn('Departamento não encontrado', { id });
@@ -43,5 +45,19 @@ export const getDepartmentById = async (req: Request, res: Response) => {
   } catch (error) {
     logger.error('Erro ao recuperar departamento', { id: req.params.id, error });
     res.status(500).json({ message: 'Erro ao recuperar departamento' });
+  }
+};
+
+// Buscar departamentos com número de funcionários
+export const getDepartmentsWithEmployees = async (req: Request, res: Response) => {
+  try {
+    const collection = await getCollection<Department>('departments');
+    const departments = await collection.find().toArray();
+    
+    logger.info('Departamentos com funcionários recuperados com sucesso', { count: departments.length });
+    res.json(departments);
+  } catch (error) {
+    logger.error('Erro ao recuperar departamentos com funcionários', { error });
+    res.status(500).json({ message: 'Erro ao recuperar departamentos com funcionários' });
   }
 }; 

@@ -4,7 +4,8 @@ import {
   getIncidentById,
   createIncident,
   updateIncident,
-  deleteIncident
+  deleteIncident,
+  getIncidentsByDepartment
 } from '../controllers/incidentController';
 import { isAuthenticated, isAdmin } from '../middleware/authMiddleware';
 
@@ -12,6 +13,9 @@ const router = Router();
 
 // Listar todos os incidentes
 router.get('/', getIncidents);
+
+// Buscar incidentes por departamento
+router.get('/by-department', getIncidentsByDepartment);
 
 // Buscar um incidente específico
 router.get('/:id', getIncidentById);

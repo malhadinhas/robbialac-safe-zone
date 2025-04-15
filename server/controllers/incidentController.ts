@@ -171,4 +171,34 @@ export async function deleteIncident(req: Request, res: Response) {
     console.error('Erro ao excluir incidente:', error);
     res.status(500).json({ error: 'Erro ao excluir incidente' });
   }
+}
+
+// Buscar incidentes por departamento
+export async function getIncidentsByDepartment(req: Request, res: Response) {
+  try {
+    const collection = await getCollection<Incident>('incidents');
+    
+    // Agrupa os incidentes por departamento e conta
+    const incidents = await collection.aggregate([
+      {
+        $group: {
+          _id: "$department",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          department: "$_id",
+          count: 1
+        }
+      }
+    ]).toArray();
+    
+    logger.info('Incidentes por departamento recuperados com sucesso', { count: incidents.length });
+    res.json(incidents);
+  } catch (error) {
+    logger.error('Erro ao buscar incidentes por departamento', { error });
+    res.status(500).json({ message: 'Erro ao buscar incidentes por departamento' });
+  }
 } 
