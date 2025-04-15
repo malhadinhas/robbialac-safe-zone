@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Factory3DModelManager, { FactoryZone } from "@/components/Factory3DModelManager";
@@ -25,10 +25,12 @@ const factoryZones = [
 
 export default function Formacoes() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [useSimpleView, setUseSimpleView] = useState(false);
+  const [enableControls, setEnableControls] = useState(false);
   const isCompactView = useIsCompactView();
   const [zoneStats, setZoneStats] = useState<ZoneStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,6 +67,7 @@ export default function Formacoes() {
   }, []);
   
   const handleZoneClick = (zone: string) => {
+    console.log("Zona clicada:", zone);
     navigate(`/videos/${zone.toLowerCase()}`);
   };
   
@@ -194,6 +197,10 @@ export default function Formacoes() {
     setUseSimpleView(!useSimpleView);
   };
 
+  const handleToggleControls = () => {
+    setEnableControls(!enableControls);
+  };
+
   const videoCategories = [
     { 
       title: "Segurança", 
@@ -230,15 +237,19 @@ export default function Formacoes() {
       </div>
       
       <div className="flex justify-between items-center mb-4">
-        {isAdmin && (
-          <Button onClick={showImportModal} className="bg-robbialac hover:bg-robbialac-dark">
-            Importar Vídeo
-          </Button>
-        )}
+        <div className="flex space-x-2">
+          {isAdmin && (
+            <Button onClick={showImportModal} className="bg-robbialac hover:bg-robbialac-dark">
+              Importar Vídeo
+            </Button>
+          )}
+        </div>
 
-        <Button onClick={handleToggleView} variant="outline">
-          {useSimpleView ? "Ver Modelo 3D" : "Ver Lista Simples"}
-        </Button>
+        <div className="flex space-x-2">
+          <Button onClick={handleToggleView} variant="outline">
+            {useSimpleView ? "Ver Modelo 3D" : "Ver Lista Simples"}
+          </Button>
+        </div>
       </div>
       
       <Card className="mb-6">
@@ -271,7 +282,9 @@ export default function Formacoes() {
             </>
           ) : (
             <>
-              <Factory3DModelManager onZoneClick={handleZoneClick} />
+              <Factory3DModelManager 
+                onZoneClick={handleZoneClick} 
+              />
               <p className="text-sm text-gray-500 mt-2 text-center">
                 Interaja com o modelo 3D para explorar as diferentes áreas da fábrica
               </p>

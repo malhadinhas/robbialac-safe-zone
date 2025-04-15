@@ -3,6 +3,9 @@ import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PresentationControls, useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import ErrorBoundary from './ErrorBoundary';
+import { useLocation } from 'react-router-dom';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'; // Importar o tipo para a ref
+import CustomOrbitControls from './CustomOrbitControls'; // Importar o novo componente
 
 // Loading spinner component
 const LoadingSpinner = () => (
@@ -125,23 +128,39 @@ const FactoryModel = ({
       return;
     }
 
+    // ** LOG: Listar todos os nós carregados do GLB **
+    console.log('Nós carregados do GLB:', Object.keys(nodes));
+
     const zones = Object.keys(zoneMeshMapping) as FactoryZone[];
     
     // Atualizar materiais
     zones.forEach(zone => {
       const meshName = zoneMeshMapping[zone];
       if (nodes[meshName]) {
-        if (nodes[meshName].material && !nodes[meshName].originalMaterial) {
-          nodes[meshName].originalMaterial = nodes[meshName].material.clone();
-        }
-        
-        const isHovered = hoveredZone === zone;
-        if (isHovered) {
-          nodes[meshName].material.emissive = new THREE.Color(zoneColors[zone]);
-          nodes[meshName].material.emissiveIntensity = 0.8;
-        } else if (nodes[meshName].originalMaterial) {
-          nodes[meshName].material.emissive = nodes[meshName].originalMaterial.emissive;
-          nodes[meshName].material.emissiveIntensity = nodes[meshName].originalMaterial.emissiveIntensity || 0;
+        if (nodes[meshName].material) { 
+          if (!nodes[meshName].originalMaterial) {
+            // Apenas clonar se o material original ainda não foi guardado
+            try {
+              nodes[meshName].originalMaterial = nodes[meshName].material.clone();
+            } catch (cloneError) {
+               console.error(`Erro ao clonar material para ${meshName}:`, cloneError);
+               // Não podemos prosseguir com o hover effect se o clone falhar
+               return; // Usar return em vez de continue
+            }
+          }
+          
+          const isHovered = hoveredZone === zone;
+          if (isHovered) {
+            nodes[meshName].material.emissive = new THREE.Color(zoneColors[zone]);
+            nodes[meshName].material.emissiveIntensity = 0.8;
+          } else if (nodes[meshName].originalMaterial) {
+            // Restaurar apenas se o originalMaterial foi clonado com sucesso
+            nodes[meshName].material.emissive = nodes[meshName].originalMaterial.emissive;
+            nodes[meshName].material.emissiveIntensity = nodes[meshName].originalMaterial.emissiveIntensity || 0;
+          }
+        } else {
+           // Log se o nó não tiver material (apenas informativo)
+           console.warn(`Nó encontrado ${meshName} não possui material.`);
         }
       }
     });
@@ -159,46 +178,77 @@ const FactoryModel = ({
   
   const model = scene.clone();
   const zones = Object.keys(zoneMeshMapping) as FactoryZone[];
+  
+  // ** LOG: FactoryModel está a renderizar **
+  console.log('Renderizando FactoryModel com zonas:', zones);
     
   return (
     <group ref={groupRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
-      {/* Render the main factory model */}
+      {/* Render the main factory model - Garantir que está descomentado */}
       <primitive object={model} />
       
       {/* Add interactive areas for each zone */}
       {zones.map(zone => {
         const meshName = zoneMeshMapping[zone];
-        if (!nodes || !nodes[meshName]) return null;
+        // ** LOG: Verificando mesh para zona **
+        console.log(`Verificando Zona: ${zone}, Mesh Name: ${meshName}`);
+        
+        if (!nodes || !nodes[meshName]) {
+          // ** LOG: Mesh não encontrado **
+          console.warn(`Mesh não encontrado para ${zone} (Nome esperado: ${meshName})`);
+          return null;
+        }
         
         // Get the world position of the mesh
         const position = new THREE.Vector3();
-        nodes[meshName].getWorldPosition(position);
+        // ** LOG: Tentando obter posição **
+        console.log(`Obtendo posição para ${meshName}...`);
+        try {
+           nodes[meshName].getWorldPosition(position);
+        } catch (err) {
+           console.error(`Erro ao obter posição para ${meshName}:`, err);
+           return null; // Não renderizar se não conseguir a posição
+        }
+        // ** LOG: Posição obtida **
+        console.log(`Posição para ${zone} (${meshName}):`, position.x, position.y, position.z);
         
         return (
           <group key={zone} position={position}>
-            {/* Invisible clickable area */}
+            {/* Esfera clicável: Invisível, tamanho normal */}
             <mesh
-              visible={false}
-              onClick={() => onZoneClick(zone)}
-              onPointerOver={() => {
+              visible={false} // Tornar invisível
+              onClick={(e) => { 
+                  console.log('Click on zone mesh:', zone); 
+                  onZoneClick(zone); 
+              }}
+              onPointerOver={(e) => {
+                e.stopPropagation(); 
+                console.log('Pointer OVER zone mesh:', zone); 
                 setHoveredZone(zone);
                 document.body.style.cursor = 'pointer';
               }}
-              onPointerOut={() => {
+              onPointerOut={(e) => {
+                e.stopPropagation();
+                console.log('Pointer OUT zone mesh:', zone); 
                 setHoveredZone(null);
                 document.body.style.cursor = 'auto';
               }}
             >
-              <sphereGeometry args={[0.5, 16, 16]} />
-              <meshBasicMaterial transparent opacity={0} />
+              {/* Restaurar tamanho original */}
+              <sphereGeometry args={[8, 16, 16]} /> 
+              {/* Material básico, não precisa ser transparente */}
+              <meshBasicMaterial color="red" wireframe={false} /> 
             </mesh>
             
-            {/* Label for the zone */}
-            <Html position={[0, 1, 0]} center>
-              <div className="bg-white/80 px-2 py-1 rounded shadow text-sm font-medium">
+            {/* Label for the zone - Manter afastada e não interativa */}
+             <Html position={[0, 10, 0]} center> 
+              <div 
+                className="bg-white/80 px-2 py-1 rounded shadow text-sm font-medium"
+                style={{ pointerEvents: 'none' }} 
+              >
                 {zone}
               </div>
-            </Html>
+            </Html> 
           </group>
         );
       })}
@@ -207,9 +257,16 @@ const FactoryModel = ({
 };
 
 // Component for the entire factory model with interactive zones
-const Factory3DModelManager = ({ onZoneClick }: { onZoneClick: (zone: string) => void }) => {
+const Factory3DModelManager = ({ 
+  onZoneClick, 
+  enableControls = false
+}: { 
+  onZoneClick: (zone: string) => void,
+  enableControls?: boolean
+}) => {
   const [hoveredZone, setHoveredZone] = useState<FactoryZone | null>(null);
   const [modelError, setModelError] = useState<Error | null>(null);
+  const location = useLocation();
 
   const handleLoadError = (error: Error) => {
     console.error('Erro ao carregar modelo da fábrica:', error);
@@ -220,6 +277,7 @@ const Factory3DModelManager = ({ onZoneClick }: { onZoneClick: (zone: string) =>
     <div className="aspect-video bg-gray-100 rounded-md">
       <ErrorBoundary>
         <Canvas
+          key={location.pathname} 
           camera={{ position: [0, 180, 300], fov: 35 }}
           style={{ width: '100%', height: '100%' }}
         >
@@ -235,17 +293,18 @@ const Factory3DModelManager = ({ onZoneClick }: { onZoneClick: (zone: string) =>
             />
             <hemisphereLight intensity={0.3} groundColor="#b9b9b9" />
             
-            <OrbitControls
-              enableZoom={false}
-              enablePan={false}
-              enableRotate={true}
-              minPolarAngle={Math.PI / 3}
-              maxPolarAngle={Math.PI / 3}
-              minAzimuthAngle={-Math.PI}
-              maxAzimuthAngle={Math.PI}
-              target={[0, 0, 0]}
-              rotateSpeed={0.5}
-            />
+            {/* Renderizar CustomOrbitControls em vez do OrbitControls original */}
+            {enableControls && (
+              <CustomOrbitControls
+                enableZoom={false}
+                enablePan={false}
+                enableRotate={true} 
+                minPolarAngle={Math.PI / 3} 
+                maxPolarAngle={Math.PI / 3} 
+                target={[0, 0, 0]} 
+                rotateSpeed={0.5} 
+              />
+            )}
             
             <group position={[0, -5, 0]} scale={1.2}>
               {!modelError && (

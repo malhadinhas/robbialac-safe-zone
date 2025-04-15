@@ -51,7 +51,8 @@ export default function Videos() {
         );
         logger.info(`Vídeos filtrados como 'ready' (comparação robusta): ${readyVideos.length}`);
 
-        let videosToDisplay = readyVideos;
+        // Garantir que videosToDisplay é sempre um array
+        let videosToDisplay: Video[] = []; 
 
         if (zone) {
           const normalizedZoneParam = zone.charAt(0).toUpperCase() + zone.slice(1).toLowerCase();
@@ -77,8 +78,12 @@ export default function Videos() {
           videosToDisplay = filteredReadyVideos;
         } else {
           logger.info('Nenhuma zona especificada, exibindo todos os vídeos prontos.');
+          // Se não houver zona, mostrar todos os vídeos prontos
+          videosToDisplay = readyVideos; 
         }
         
+        // ** LOG ANTES DE setVideos **
+        logger.info('Definindo estado de vídeos com:', { count: videosToDisplay.length, isArray: Array.isArray(videosToDisplay) });
         setVideos(videosToDisplay);
       } catch (error) {
         logger.error('Erro detalhado ao carregar vídeos', { 
