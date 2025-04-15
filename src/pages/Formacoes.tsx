@@ -56,7 +56,6 @@ export default function Formacoes() {
         const data = await getZoneStats();
         setZoneStats(data);
       } catch (error) {
-        console.error("Erro ao buscar estatísticas das zonas:", error);
         toast.error("Erro ao carregar estatísticas. Tente novamente.");
       } finally {
         setIsLoading(false);
@@ -67,7 +66,6 @@ export default function Formacoes() {
   }, []);
   
   const handleZoneClick = (zone: string) => {
-    console.log("Zona clicada:", zone);
     navigate(`/videos/${zone.toLowerCase()}`);
   };
   
@@ -165,7 +163,6 @@ export default function Formacoes() {
         throw new Error(result.error || 'Erro ao enviar o vídeo');
       }
     } catch (error) {
-      console.error('Erro no upload:', error);
       let errorMessage = 'Ocorreu um erro ao enviar o vídeo.';
       
       if (error instanceof Error) {

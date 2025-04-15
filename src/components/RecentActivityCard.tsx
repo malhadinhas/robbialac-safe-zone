@@ -46,7 +46,6 @@ const VideoThumbnail = ({ video }: { video: Video }) => {
       const thumbnailKey = video.thumbnailR2Key || video.r2ThumbnailKey;
       
       if (!thumbnailKey) {
-        console.warn(`Video ${video.id} não tem chave de miniatura definida`);
         setError(true);
         setErrorMessage('Chave de miniatura não definida');
         setIsLoading(false);
@@ -54,21 +53,17 @@ const VideoThumbnail = ({ video }: { video: Video }) => {
       }
       
       try {
-        console.log(`Tentando carregar miniatura para o vídeo ${video.id} com chave ${thumbnailKey}`);
         const url = await getSecureR2Url(thumbnailKey);
         
         if (!url) {
-          console.error(`URL segura vazia para miniatura do vídeo ${video.id}`);
           setError(true);
           setErrorMessage('URL segura vazia');
           setIsLoading(false);
           return;
         }
         
-        console.log(`URL segura obtida para miniatura do vídeo ${video.id}: ${url.substring(0, 50)}...`);
         setThumbnailUrl(url);
       } catch (err) {
-        console.error(`Erro ao carregar miniatura para vídeo ${video.id}:`, err);
         setError(true);
         setErrorMessage(err instanceof Error ? err.message : 'Erro desconhecido');
       } finally {
@@ -103,7 +98,6 @@ const VideoThumbnail = ({ video }: { video: Video }) => {
       className="w-full h-full object-cover"
       loading="lazy"
       onError={(e) => {
-        console.error(`Erro ao carregar imagem para vídeo ${video.id}`, e);
         setError(true);
         setErrorMessage('Erro ao carregar imagem');
       }}

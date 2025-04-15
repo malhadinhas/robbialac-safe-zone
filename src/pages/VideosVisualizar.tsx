@@ -119,7 +119,7 @@ export default function VideosVisualizar() {
         }
 
       } catch (error) {
-        console.error("Erro ao carregar dados do vídeo:", { videoId: id, error });
+        toast.error("Erro ao carregar informações do vídeo.");
         if (isMounted) {
            setErrorLoadingUrls("Erro ao carregar informações do vídeo.");
         }

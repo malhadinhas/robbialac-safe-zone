@@ -26,7 +26,6 @@ export default function IncidentTargetEditor() {
       const config = await getSystemConfig();
       setTargetValue(config.annualIncidentTargetPerEmployee);
     } catch (error) {
-      console.error('Erro ao carregar configuração atual:', error);
       toast.error('Não foi possível carregar a configuração atual');
     } finally {
       setLoading(false);
@@ -60,7 +59,6 @@ export default function IncidentTargetEditor() {
         toast.error('Não foi possível atualizar a meta');
       }
     } catch (error) {
-      console.error('Erro ao salvar meta:', error);
       toast.error('Erro ao salvar a meta');
     } finally {
       setSaving(false);

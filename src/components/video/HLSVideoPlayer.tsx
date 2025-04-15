@@ -47,11 +47,7 @@ export default function VideoPlayer({
 
     // Tentar tocar se autoPlay estiver ativo
     if (autoPlay) {
-        video.play().catch(error => {
-            console.error("Erro ao tentar autoPlay:", error);
-            // Erros de autoPlay são comuns se o utilizador não interagiu com a página
-            // Não definir isError aqui, pois o vídeo pode carregar mas não tocar automaticamente
-        });
+        video.play();
     }
 
     // Adicionar event listeners
@@ -66,19 +62,12 @@ export default function VideoPlayer({
       onEnd?.();
     };
 
-    const handleError = (e: Event) => {
-        console.error("Erro no elemento <video>:", e);
-        setIsError(true); // Definir como erro se o próprio vídeo falhar ao carregar/decodificar
-    };
-
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('ended', handleEnded);
-    video.addEventListener('error', handleError); // Adicionar listener para erros do <video>
 
     return () => {
       video.removeEventListener('timeupdate', handleTimeUpdate);
       video.removeEventListener('ended', handleEnded);
-      video.removeEventListener('error', handleError);
       // --- Lógica de destruição do HLS removida ---
       // if (hlsRef.current) { ... }
     };

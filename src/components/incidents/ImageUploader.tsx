@@ -116,7 +116,6 @@ export default function ImageUploader({
         toast.success(`${newImages.length} imagem(ns) adicionada(s)`);
       }
     } catch (error) {
-      console.error("Error uploading images:", error);
       toast.error("Erro ao carregar imagens");
     }
   };
@@ -148,7 +147,6 @@ export default function ImageUploader({
         toast.success("Imagem capturada com sucesso");
       }
     } catch (error) {
-      console.error("Error capturing image:", error);
       toast.error("Erro ao capturar imagem");
     }
   };

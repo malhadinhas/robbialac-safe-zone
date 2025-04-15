@@ -16,7 +16,6 @@ export default function TestApi() {
       setResult({ name, data });
     } catch (err: any) {
       setError(err.message || 'Erro ao executar operação');
-      console.error(`Erro em ${name}:`, err);
     } finally {
       setLoading(false);
     }
@@ -30,7 +29,6 @@ export default function TestApi() {
       setResult({ name: 'login', data });
     } catch (err: any) {
       setError(err.message || 'Erro ao fazer login');
-      console.error('Erro no login:', err);
     } finally {
       setLoading(false);
     }

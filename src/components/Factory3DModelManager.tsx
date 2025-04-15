@@ -128,9 +128,6 @@ const FactoryModel = ({
       return;
     }
 
-    // ** LOG: Listar todos os nós carregados do GLB **
-    console.log('Nós carregados do GLB:', Object.keys(nodes));
-
     const zones = Object.keys(zoneMeshMapping) as FactoryZone[];
     
     // Atualizar materiais
@@ -179,9 +176,6 @@ const FactoryModel = ({
   const model = scene.clone();
   const zones = Object.keys(zoneMeshMapping) as FactoryZone[];
   
-  // ** LOG: FactoryModel está a renderizar **
-  console.log('Renderizando FactoryModel com zonas:', zones);
-    
   return (
     <group ref={groupRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
       {/* Render the main factory model - Garantir que está descomentado */}
@@ -190,27 +184,18 @@ const FactoryModel = ({
       {/* Add interactive areas for each zone */}
       {zones.map(zone => {
         const meshName = zoneMeshMapping[zone];
-        // ** LOG: Verificando mesh para zona **
-        console.log(`Verificando Zona: ${zone}, Mesh Name: ${meshName}`);
         
         if (!nodes || !nodes[meshName]) {
-          // ** LOG: Mesh não encontrado **
-          console.warn(`Mesh não encontrado para ${zone} (Nome esperado: ${meshName})`);
           return null;
         }
         
         // Get the world position of the mesh
         const position = new THREE.Vector3();
-        // ** LOG: Tentando obter posição **
-        console.log(`Obtendo posição para ${meshName}...`);
         try {
            nodes[meshName].getWorldPosition(position);
         } catch (err) {
-           console.error(`Erro ao obter posição para ${meshName}:`, err);
            return null; // Não renderizar se não conseguir a posição
         }
-        // ** LOG: Posição obtida **
-        console.log(`Posição para ${zone} (${meshName}):`, position.x, position.y, position.z);
         
         return (
           <group key={zone} position={position}>
@@ -218,18 +203,15 @@ const FactoryModel = ({
             <mesh
               visible={false} // Tornar invisível
               onClick={(e) => { 
-                  console.log('Click on zone mesh:', zone); 
                   onZoneClick(zone); 
               }}
               onPointerOver={(e) => {
                 e.stopPropagation(); 
-                console.log('Pointer OVER zone mesh:', zone); 
                 setHoveredZone(zone);
                 document.body.style.cursor = 'pointer';
               }}
               onPointerOut={(e) => {
                 e.stopPropagation();
-                console.log('Pointer OUT zone mesh:', zone); 
                 setHoveredZone(null);
                 document.body.style.cursor = 'auto';
               }}

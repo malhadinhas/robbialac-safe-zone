@@ -25,56 +25,43 @@ export default function Pontuacao() {
   const [activities, setActivities] = useState<UserActivity[]>([]);
   
   useEffect(() => {
-    console.log("Pontuacao.tsx: useEffect triggered. User:", user);
     const fetchData = async () => {
-      console.log("Pontuacao.tsx: fetchData starting...");
       try {
         setIsLoading(true);
-        console.log("Pontuacao.tsx: Fetching data...");
         // Buscar medalhas conquistadas
         const medalsData = await getUserMedals(user?._id);
         setMedals(medalsData);
-        console.log("Pontuacao.tsx: Medals fetched.", medalsData);
         
         // Buscar medalhas não conquistadas
         const unacquiredMedalsData = await getUnacquiredMedals(user?._id);
         setUnacquiredMedals(unacquiredMedalsData);
-        console.log("Pontuacao.tsx: Unacquired medals fetched.", unacquiredMedalsData);
         
         // Buscar distribuição de pontos
         const pointsData = await getUserPointsBreakdown(user?._id);
         setPointsBreakdown(pointsData);
-        console.log("Pontuacao.tsx: Points breakdown fetched.", pointsData);
         
         // Buscar ranking do usuário
         const rankingData = await getUserRanking(user?._id);
         setUserRanking(rankingData);
-        console.log("Pontuacao.tsx: Ranking fetched.", rankingData);
         
         // Buscar histórico de atividades
         const activitiesData = await getUserActivities(user?._id, 20);
         setActivities(activitiesData);
-        console.log("Pontuacao.tsx: Activities fetched.", activitiesData);
       } catch (error) {
-        console.error("Pontuacao.tsx: Erro ao buscar dados:", error);
+        // console.error("Pontuacao.tsx: Erro ao buscar dados:", error);
       } finally {
-        console.log("Pontuacao.tsx: Fetch data finished, setting loading to false.");
         setIsLoading(false);
       }
     };
 
     if (user?._id) {
-      console.log("Pontuacao.tsx: User _ID found, calling fetchData.");
       fetchData();
     } else {
-      console.log("Pontuacao.tsx: User _ID not found yet.");
-      // Se não houver user._id, podemos querer parar o loading após um tempo
-       setTimeout(() => {
-         if (!user?._id) { // Verifica novamente se o ID ainda não chegou
-           console.log("Pontuacao.tsx: Timeout - User _ID still not available, stopping loading.");
-           setIsLoading(false);
-         }
-       }, 3000); // Espera 3 segundos
+      setTimeout(() => {
+        if (!user?._id) {
+          setIsLoading(false);
+        }
+      }, 3000);
     }
   }, [user?._id]);
   

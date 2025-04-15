@@ -24,14 +24,12 @@ const HoverVideoPreview = ({ video }: { video: Video }) => {
     const videoKey = video.r2Key || video.r2VideoKey;
     if (!videoKey || videoUrl) return;
     
-    console.log(`Obtendo URL segura para vídeo: ${video.title}`, { videoKey });
     setIsLoadingUrl(true);
     try {
       const response = await getSecureR2Url(videoKey);
       setVideoUrl(response);
-      console.log(`URL segura obtida para: ${video.title}`);
     } catch (error) {
-      console.error("Erro ao buscar URL segura do vídeo:", error);
+      toast.error("Erro ao buscar URL segura do vídeo.");
     } finally {
       setIsLoadingUrl(false);
     }
@@ -74,7 +72,6 @@ const HoverVideoPreview = ({ video }: { video: Video }) => {
             muted
             loop
             playsInline
-            onError={(e) => console.error("Erro ao carregar vídeo preview:", e)}
           />
         )}
         
@@ -115,14 +112,10 @@ const VideosCategoryCard = ({ category, displayTitle, description }: VideosCateg
     const fetchCategoryVideos = async () => {
       setLoading(true);
       try {
-        const fetchedVideos = await getVideos({ category: category, limit: '2' });
+        const fetchedVideos = await getVideos({ category: category, limit: '4' });
         const validVideos = fetchedVideos.filter(v => v.r2Key && v.thumbnailR2Key);
-        if (validVideos.length < fetchedVideos.length) {
-            console.warn(`Alguns vídeos da categoria ${category} não têm r2Key ou thumbnailR2Key.`);
-        }
-        setVideos(validVideos.slice(0, 2));
+        setVideos(validVideos.slice(0, 4));
       } catch (error) {
-        console.error(`Erro ao buscar vídeos para a categoria ${category}:`, error);
         toast.error(`Erro ao carregar vídeos de ${displayTitle}.`);
       } finally {
         setLoading(false);

@@ -14,9 +14,7 @@ export async function getDepartments(): Promise<Department[]> {
     const response = await api.get('/departments');
     return response.data;
   } catch (error) {
-    console.error('Erro ao buscar departamentos:', error);
-    // Retorna uma lista vazia em caso de erro
-    return [];
+    throw error;
   }
 }
 
@@ -30,8 +28,7 @@ export async function getDepartmentById(id: string): Promise<Department | null> 
     const response = await api.get(`/departments/${id}`);
     return response.data;
   } catch (error) {
-    console.error(`Erro ao buscar departamento ${id}:`, error);
-    return null;
+    throw error;
   }
 }
 
@@ -80,7 +77,6 @@ export async function getDepartmentsWithEmployees(): Promise<DepartmentWithEmplo
     const response = await api.get('/departments/with-employees');
     return response.data;
   } catch (error) {
-    console.error('Erro ao buscar departamentos com funcionários:', error);
     throw error;
   }
 }
@@ -93,8 +89,7 @@ export async function updateDepartmentEmployeeCount(departmentId: string, employ
     await api.put(`/departments/${departmentId}/employee-count`, { employeeCount });
     return true;
   } catch (error) {
-    console.error('Erro ao atualizar número de funcionários:', error);
-    return false;
+    throw error;
   }
 }
 
@@ -116,7 +111,6 @@ export async function getSystemConfig(): Promise<{ annualIncidentTargetPerEmploy
     const response = await api.get('/system/config');
     return response.data;
   } catch (error) {
-    console.error('Erro ao buscar configuração do sistema:', error);
     throw error;
   }
 }
@@ -129,7 +123,6 @@ export async function updateIncidentTargetPerEmployee(value: number): Promise<bo
     await api.put('/system/config/incident-target', { annualIncidentTargetPerEmployee: value });
     return true;
   } catch (error) {
-    console.error('Erro ao atualizar meta de quase acidentes por funcionário:', error);
-    return false;
+    throw error;
   }
 } 

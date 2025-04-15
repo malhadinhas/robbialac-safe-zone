@@ -24,7 +24,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    // Remover console.error deste arquivo, mantendo apenas tratamento de erro visual, throw ou logs via logger customizado, se houver.
   }
 
   public render() {

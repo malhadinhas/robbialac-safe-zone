@@ -27,8 +27,6 @@ export function isHlsSupported(): boolean {
  * Carrega um player HLS no elemento de vídeo fornecido.
  */
 export function loadHlsPlayer(videoElement: HTMLVideoElement, hlsUrl: string, options: PlayerOptions = {}): () => void {
-  console.log(`Carregando vídeo HLS: ${hlsUrl}`);
-  
   let hls: Hls | null = null;
   
   // Configurar opções do vídeo
@@ -46,7 +44,6 @@ export function loadHlsPlayer(videoElement: HTMLVideoElement, hlsUrl: string, op
   
   // Se o navegador suporta HLS nativamente
   if (isHlsSupported()) {
-    console.log('Usando suporte HLS nativo');
     videoElement.src = hlsUrl;
     
     if (options.startTime) {
@@ -55,7 +52,6 @@ export function loadHlsPlayer(videoElement: HTMLVideoElement, hlsUrl: string, op
   }
   // Se o navegador não suporta HLS nativamente, usar hls.js
   else if (Hls.isSupported()) {
-    console.log('Usando hls.js');
     hls = new Hls({
       debug: false,
       enableWorker: true,
@@ -67,36 +63,30 @@ export function loadHlsPlayer(videoElement: HTMLVideoElement, hlsUrl: string, op
     hls.attachMedia(videoElement);
     
     hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      console.log('HLS manifest carregado');
       if (options.startTime) {
         videoElement.currentTime = options.startTime;
       }
       if (options.autoplay) {
-        videoElement.play().catch(console.error);
+        videoElement.play().catch(() => {});
       }
     });
     
     hls.on(Hls.Events.ERROR, (event, data) => {
       if (data.fatal) {
-        console.error('Erro fatal HLS:', data);
         switch (data.type) {
           case Hls.ErrorTypes.NETWORK_ERROR:
-            console.log('Tentando recuperar de erro de rede...');
             hls?.startLoad();
             break;
           case Hls.ErrorTypes.MEDIA_ERROR:
-            console.log('Tentando recuperar de erro de mídia...');
             hls?.recoverMediaError();
             break;
           default:
-            console.error('Erro irrecuperável');
             destroyPlayer();
             break;
         }
       }
     });
   } else {
-    console.error('Navegador não suporta HLS');
     throw new Error('Seu navegador não suporta reprodução de vídeos HLS');
   }
   
@@ -110,8 +100,6 @@ export function loadHlsPlayer(videoElement: HTMLVideoElement, hlsUrl: string, op
       hls.destroy();
       hls = null;
     }
-    
-    console.log('Player HLS destruído');
   };
   
   return destroyPlayer;

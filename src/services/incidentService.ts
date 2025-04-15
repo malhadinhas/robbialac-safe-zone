@@ -4,7 +4,6 @@ import api from '@/lib/api';
 export async function getIncidents(): Promise<Incident[]> {
   try {
     const response = await api.get('/incidents');
-    console.log(`Recuperados ${response.data.length} incidentes`);
     return response.data.map((incident: Incident) => ({
       ...incident,
       date: new Date(incident.date),
@@ -12,7 +11,6 @@ export async function getIncidents(): Promise<Incident[]> {
       resolutionDeadline: incident.resolutionDeadline ? new Date(incident.resolutionDeadline) : undefined
     }));
   } catch (error) {
-    console.error("Erro ao buscar incidentes:", error);
     throw error;
   }
 }
@@ -31,7 +29,6 @@ export async function getIncidentById(id: string): Promise<Incident | null> {
     if (error.response?.status === 404) {
       return null;
     }
-    console.error("Erro ao buscar incidente por ID:", error);
     throw error;
   }
 }
@@ -39,10 +36,8 @@ export async function getIncidentById(id: string): Promise<Incident | null> {
 export async function createIncident(incident: Omit<Incident, "id">): Promise<Incident> {
   try {
     const response = await api.post('/incidents', incident);
-    console.log(`Novo incidente criado com ID: ${response.data.id}`);
     return response.data;
   } catch (error) {
-    console.error("Erro ao criar incidente:", error);
     throw error;
   }
 }
@@ -52,7 +47,6 @@ export async function updateIncident(incident: Incident): Promise<void> {
     const { _id, ...incidentWithoutId } = incident;
     await api.put(`/incidents/${incident.id}`, incidentWithoutId);
   } catch (error) {
-    console.error("Erro ao atualizar incidente:", error);
     throw error;
   }
 }
@@ -108,7 +102,6 @@ export async function captureImage(): Promise<string | null> {
       };
     });
   } catch (error) {
-    console.error("Error capturing image:", error);
     return null;
   }
 }
@@ -121,8 +114,6 @@ export async function getIncidentStatsByDepartment(): Promise<{ department: stri
     const response = await api.get('/incidents/stats/by-department');
     return response.data;
   } catch (error) {
-    console.error("Erro ao buscar estatísticas de incidentes por departamento:", error);
-    
     // Se estiver em desenvolvimento ou teste, retornamos dados simulados
     if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
       return [
@@ -145,10 +136,9 @@ interface IncidentsByDepartment {
 
 export async function getIncidentsByDepartment(): Promise<IncidentsByDepartment> {
   try {
-    const response = await api.get('/incidents/by-department');
+    const response = await api.get('/api/incidents/by-department');
     return response.data;
   } catch (error) {
-    console.error('Erro ao buscar incidentes por departamento:', error);
     throw error;
   }
 }

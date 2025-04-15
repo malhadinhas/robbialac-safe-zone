@@ -22,7 +22,6 @@ export default function DepartmentEmployeeEditor() {
       setDepartments(data);
     } catch (error) {
       toast.error("Erro ao carregar departamentos");
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -46,7 +45,6 @@ export default function DepartmentEmployeeEditor() {
       }
     } catch (error) {
       toast.error("Erro ao salvar alterações");
-      console.error(error);
     } finally {
       setSaving(false);
     }

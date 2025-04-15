@@ -20,7 +20,6 @@ const QuaseAcidentesNovo = () => {
         const data = await getDepartments();
         setDepartments(data);
       } catch (error) {
-        console.error("Erro ao buscar departamentos:", error);
         toast.error("Erro ao carregar departamentos. Tente novamente.");
       } finally {
         setIsLoading(false);
@@ -36,7 +35,6 @@ const QuaseAcidentesNovo = () => {
       toast.success("Quase acidente reportado com sucesso!");
       navigate('/quase-acidentes');
     } catch (error) {
-      console.error("Error creating incident:", error);
       toast.error("Erro ao reportar quase acidente");
     }
   };

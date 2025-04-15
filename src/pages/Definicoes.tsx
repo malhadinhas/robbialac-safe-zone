@@ -81,7 +81,6 @@ export default function Definicoes() {
       
       toast.success("Configuração do Cloudflare R2 salva com sucesso!");
     } catch (error) {
-      console.error("Erro ao salvar configuração R2:", error);
       toast.error("Erro ao salvar configuração R2");
     }
   };
@@ -103,7 +102,6 @@ export default function Definicoes() {
       toast.success("Configuração do MongoDB Atlas salva com sucesso!");
       
     } catch (error) {
-      console.error("Erro ao salvar configuração MongoDB:", error);
       toast.error("Erro ao salvar configuração MongoDB: " + (error instanceof Error ? error.message : "Erro desconhecido"));
     }
   };

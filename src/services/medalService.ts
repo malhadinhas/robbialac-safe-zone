@@ -208,7 +208,6 @@ export async function getMedals(): Promise<Medal[]> {
     const response = await api.get<Medal[]>('/medals');
     return response.data || []; // Retorna os dados ou um array vazio
   } catch (error) {
-    console.error('Erro ao buscar todas as medalhas:', error);
     toast.error("Falha ao carregar medalhas do sistema."); // Adiciona toast de erro
     return []; // Retorna vazio em caso de erro para não quebrar a interface
   }
@@ -228,7 +227,6 @@ export async function getUserMedals(userId?: string): Promise<Medal[]> {
     }
     
     if (!userId) {
-      console.warn('Tentativa de buscar medalhas sem usuário autenticado');
       return getDefaultAcquiredMedals();
     }
     
@@ -241,11 +239,9 @@ export async function getUserMedals(userId?: string): Promise<Medal[]> {
       // Se não há medalhas na resposta, retorna medalhas padrão
       return getDefaultAcquiredMedals();
     } catch (error) {
-      console.warn('Erro ao buscar medalhas da API, usando dados de exemplo:', error);
       return getDefaultAcquiredMedals();
     }
   } catch (error) {
-    console.error('Erro ao buscar medalhas:', error);
     // Retorna as medalhas de exemplo em caso de erro
     return getDefaultAcquiredMedals();
   }
@@ -282,7 +278,6 @@ export async function getAllMedals(): Promise<Medal[]> {
     // Se não houver dados, use os dados de exemplo
     return allSampleMedals;
   } catch (error) {
-    console.error('Erro ao buscar todas as medalhas:', error);
     // Retorna os dados de exemplo em caso de erro
     return allSampleMedals;
   }
@@ -301,7 +296,6 @@ export async function getUnacquiredMedals(userId?: string): Promise<Medal[]> {
     }
     
     if (!userId) {
-      console.warn('Tentativa de buscar medalhas sem usuário');
       return getDefaultUnacquiredMedals();
     }
     
@@ -310,20 +304,16 @@ export async function getUnacquiredMedals(userId?: string): Promise<Medal[]> {
       
       // Verifica se a resposta tem dados, se é um array e se não está vazio
       if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-        console.log(`Medalhas não conquistadas recebidas da API para ${userId}:`, response.data.length);
         return response.data;
       }
       
       // Se a API retornou vazia (ou não era array), usa o padrão
-      console.warn(`API retornou medalhas não conquistadas vazias ou inválidas para ${userId}, usando padrão.`);
       return getDefaultUnacquiredMedals();
       
     } catch (error) {
-      console.warn(`Erro ao buscar medalhas não conquistadas da API para ${userId}, usando dados de exemplo:`, error);
       return getDefaultUnacquiredMedals();
     }
   } catch (error) {
-    console.error('Erro geral ao buscar medalhas não conquistadas:', error);
     return getDefaultUnacquiredMedals();
   }
 }
@@ -332,7 +322,6 @@ export async function getUnacquiredMedals(userId?: string): Promise<Medal[]> {
  * Retorna medalhas não conquistadas padrão para utilizadores novos
  */
 function getDefaultUnacquiredMedals(): Medal[] {
-  console.log("Retornando lista padrão de medalhas não conquistadas.");
   return [
     {
       id: "vigilante-dedicado",
@@ -370,12 +359,9 @@ function getDefaultUnacquiredMedals(): Medal[] {
  */
 export async function createMedal(medalData: MedalFormData): Promise<Medal> {
   try {
-    console.log("Enviando dados para criar medalha:", medalData);
     const response = await api.post<Medal>('/medals', medalData);
-    console.log("Resposta da criação de medalha:", response.data);
     return response.data;
   } catch (error) {
-    console.error("Erro detalhado ao criar medalha:", error instanceof AxiosError ? error.response?.data : error);
     throw error;
   }
 }
@@ -387,13 +373,9 @@ export async function createMedal(medalData: MedalFormData): Promise<Medal> {
  */
 export async function updateMedal(medalId: string, updateData: MedalUpdateData): Promise<Medal> {
   try {
-    console.log(`Enviando dados para atualizar medalha ${medalId}:`, updateData);
-    // Chama a rota PUT /api/medals/:medalId
     const response = await api.put<Medal>(`/medals/${medalId}`, updateData);
-    console.log(`Resposta da atualização da medalha ${medalId}:`, response.data);
     return response.data;
   } catch (error) {
-    console.error(`Erro detalhado ao atualizar medalha ${medalId}:`, error instanceof AxiosError ? error.response?.data : error);
     throw error; // Re-lança para tratamento no componente
   }
 }
@@ -404,12 +386,8 @@ export async function updateMedal(medalId: string, updateData: MedalUpdateData):
  */
 export async function deleteMedal(medalId: string): Promise<void> {
   try {
-    console.log(`Enviando pedido para apagar medalha ${medalId}`);
-    // Chama a rota DELETE /api/medals/:medalId
     await api.delete(`/medals/${medalId}`);
-    console.log(`Medalha ${medalId} apagada com sucesso (no servidor).`);
   } catch (error) {
-    console.error(`Erro detalhado ao apagar medalha ${medalId}:`, error instanceof AxiosError ? error.response?.data : error);
     throw error; // Re-lança para tratamento no componente
   }
 }
@@ -422,7 +400,6 @@ export async function assignMedalToUser(userId: string, medalId: string): Promis
     const response = await api.post(`/medals/assign/${userId}/${medalId}`);
     return response.data;
   } catch (error) {
-    console.error(`Erro ao atribuir medalha ${medalId} ao usuário ${userId}:`, error);
     throw error;
   }
 } 

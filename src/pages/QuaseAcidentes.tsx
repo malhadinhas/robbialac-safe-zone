@@ -135,7 +135,6 @@ const QuaseAcidentes = () => {
       refetch();
     } catch (error) {
       toast.error("Erro ao arquivar quase acidente");
-      console.error("Error archiving incident:", error);
     }
   };
 
@@ -194,7 +193,6 @@ const QuaseAcidentes = () => {
       setIsEditModalOpen(false);
       refetch();
     } catch (error) {
-      console.error("Error updating incident:", error);
       toast.error("Erro ao atualizar quase acidente");
     } finally {
       setIsSubmitting(false);

@@ -20,24 +20,24 @@ const VideoThumbnail = ({ thumbnailR2Key, altText = 'Thumbnail' }: VideoThumbnai
     setError(null);
 
     if (!thumbnailR2Key) {
-      console.warn('VideoThumbnail: thumbnailR2Key não fornecida para', altText);
+      // console.warn('VideoThumbnail: thumbnailR2Key não fornecida para', altText);
       setError('Thumbnail key não fornecida.');
       setIsLoading(false);
       return;
     }
 
     let isMounted = true; // Flag para evitar updates após desmontar
-    console.log(`VideoThumbnail: Buscando URL para ${altText}`, { thumbnailR2Key });
+    // console.log(`VideoThumbnail: Buscando URL para ${altText}`, { thumbnailR2Key });
 
     const fetchUrl = async () => {
       try {
         const url = await getSecureR2Url(thumbnailR2Key);
         if (isMounted) {
-          console.log(`VideoThumbnail: URL obtida para ${altText}`);
+          // console.log(`VideoThumbnail: URL obtida para ${altText}`);
           setThumbnailUrl(url);
         }
       } catch (err) {
-        console.error("Erro ao buscar URL segura da thumbnail:", err);
+        // console.error("Erro ao buscar URL segura da thumbnail:", err);
         if (isMounted) {
           setError('Falha ao carregar thumbnail.');
         }

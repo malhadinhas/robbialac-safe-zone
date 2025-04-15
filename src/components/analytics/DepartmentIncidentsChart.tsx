@@ -29,11 +29,11 @@ interface Props {
 
 export default function DepartmentIncidentsChart({ data }: Props) {
   useEffect(() => {
-    console.log('Dados recebidos no gráfico:', data);
+    // Remover: console.log('Dados recebidos no gráfico:', data);
   }, [data]);
 
   const chartData = data.map(item => {
-    console.log('Processando item para o gráfico:', item);
+    // Remover: console.log('Processando item para o gráfico:', item);
     return {
       name: item.department.name,
       incidentes: item.incidents,
@@ -42,7 +42,7 @@ export default function DepartmentIncidentsChart({ data }: Props) {
     };
   });
 
-  console.log('Dados processados para o gráfico:', chartData);
+  // Remover: console.log('Dados processados para o gráfico:', chartData);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {

@@ -1,4 +1,3 @@
-
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDatabase } from "@/contexts/DatabaseContext";
@@ -11,19 +10,8 @@ export const PrivateRoute = () => {
   const { isConnected, connectionError, reconnect, isInitializing } = useDatabase();
   const navigate = useNavigate();
   
-  useEffect(() => {
-    console.log("PrivateRoute rendered with status:", { 
-      isAuthenticated, 
-      isLoading, 
-      isConnected, 
-      connectionError, 
-      isInitializing 
-    });
-  }, [isAuthenticated, isLoading, isConnected, connectionError, isInitializing]);
-  
   // Mostra tela de carregamento durante a inicialização
   if (isLoading || isInitializing) {
-    console.log("PrivateRoute: Exibindo tela de carregamento");
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
         <Loader2 className="h-8 w-8 text-robbialac animate-spin mb-4" />
@@ -43,7 +31,6 @@ export const PrivateRoute = () => {
   
   // Mostra erro de conexão se não conseguiu conectar ao banco de dados
   if (!isConnected && connectionError) {
-    console.log("PrivateRoute: Exibindo erro de conexão");
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-md max-w-2xl w-full">
@@ -61,7 +48,6 @@ export const PrivateRoute = () => {
           <div className="flex flex-col sm:flex-row gap-3">
             <Button 
               onClick={() => {
-                console.log("PrivateRoute: Botão de reconexão clicado");
                 reconnect();
               }}
               className="bg-blue-600 hover:bg-blue-700 flex items-center justify-center"
@@ -71,7 +57,6 @@ export const PrivateRoute = () => {
             </Button>
             <Button 
               onClick={() => {
-                console.log("PrivateRoute: Navegando para definições");
                 navigate("/definicoes");
               }}
               variant="outline" 
@@ -88,12 +73,10 @@ export const PrivateRoute = () => {
   
   // Redireciona para login se não estiver autenticado
   if (!isAuthenticated) {
-    console.log("PrivateRoute: Usuário não autenticado. Redirecionando para login...");
     return <Navigate to="/login" replace />;
   }
   
   // Se tudo estiver ok, mostra o conteúdo da rota
-  console.log("PrivateRoute: Renderizando conteúdo protegido");
   return <Outlet />;
 };
 
@@ -102,19 +85,8 @@ export const PublicOnlyRoute = () => {
   const { isConnected, connectionError, reconnect, isInitializing } = useDatabase();
   const navigate = useNavigate();
   
-  useEffect(() => {
-    console.log("PublicOnlyRoute rendered with status:", { 
-      isAuthenticated, 
-      isLoading, 
-      isConnected, 
-      connectionError, 
-      isInitializing 
-    });
-  }, [isAuthenticated, isLoading, isConnected, connectionError, isInitializing]);
-  
   // Mostra tela de carregamento durante a inicialização
   if (isLoading || isInitializing) {
-    console.log("PublicOnlyRoute: Exibindo tela de carregamento");
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
         <Loader2 className="h-8 w-8 text-robbialac animate-spin mb-4" />
@@ -134,7 +106,6 @@ export const PublicOnlyRoute = () => {
   
   // Mesmo nas rotas públicas, mostramos erro de conexão
   if (!isConnected && connectionError) {
-    console.log("PublicOnlyRoute: Exibindo erro de conexão");
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-md max-w-2xl w-full">
@@ -152,7 +123,6 @@ export const PublicOnlyRoute = () => {
           <div className="flex flex-col sm:flex-row gap-3">
             <Button 
               onClick={() => {
-                console.log("PublicOnlyRoute: Botão de reconexão clicado");
                 reconnect();
               }}
               className="bg-blue-600 hover:bg-blue-700 flex items-center justify-center"
@@ -162,7 +132,6 @@ export const PublicOnlyRoute = () => {
             </Button>
             <Button 
               onClick={() => {
-                console.log("PublicOnlyRoute: Navegando para definições");
                 navigate("/definicoes");
               }}
               variant="outline" 
@@ -179,11 +148,9 @@ export const PublicOnlyRoute = () => {
   
   // Redireciona para dashboard se já estiver autenticado
   if (isAuthenticated) {
-    console.log("PublicOnlyRoute: Usuário já autenticado. Redirecionando para dashboard...");
     return <Navigate to="/" replace />;
   }
   
   // Se tudo estiver ok, mostra o conteúdo da rota
-  console.log("PublicOnlyRoute: Renderizando conteúdo público");
   return <Outlet />;
 };

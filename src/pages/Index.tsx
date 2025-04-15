@@ -54,7 +54,6 @@ export default function Dashboard() {
         setIncidents(incidentsData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erro ao carregar dados');
-        console.error('Erro ao carregar dados:', err);
       } finally {
         setLoading(false);
       }

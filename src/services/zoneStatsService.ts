@@ -29,9 +29,7 @@ export async function getZoneStats(): Promise<ZoneStats[]> {
     const response = await api.get('/zones/stats');
     return response.data;
   } catch (error) {
-    console.error('Erro ao buscar estatísticas das zonas:', error);
-    // Retorna uma lista vazia em caso de erro
-    return [];
+    throw error;
   }
 }
 
@@ -49,8 +47,7 @@ export async function getZoneStatsById(zoneId: string): Promise<ZoneStats | null
       return null;
     }
     
-    console.error(`Erro ao buscar estatísticas da zona ${zoneId}:`, error);
-    return null;
+    throw error;
   }
 }
 
@@ -63,8 +60,6 @@ export async function getCategoryStats(): Promise<CategoryStats[]> {
     const response = await api.get('/zones/categories/stats');
     return response.data;
   } catch (error) {
-    console.error('Erro ao buscar estatísticas das categorias:', error);
-    // Retorna uma lista vazia em caso de erro
-    return [];
+    throw error;
   }
 } 

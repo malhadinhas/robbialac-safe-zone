@@ -26,8 +26,7 @@ export async function getUserPointsBreakdown(userId?: string): Promise<UserPoint
     }
     
     if (!userId) {
-      console.warn('Tentativa de buscar pontos sem usuário autenticado');
-      return getDefaultPointsDistribution();
+      throw new Error('Tentativa de buscar pontos sem usuário autenticado');
     }
     
     try {
@@ -41,11 +40,10 @@ export async function getUserPointsBreakdown(userId?: string): Promise<UserPoint
       
       return response.data;
     } catch (error) {
-      console.error('Erro ao buscar distribuição de pontos:', error);
-      return getDefaultPointsDistribution();
+      throw new Error('Erro ao buscar distribuição de pontos: ' + error.message);
     }
   } catch (error) {
-    console.error('Erro ao buscar distribuição de pontos:', error);
+    throw new Error('Erro ao buscar distribuição de pontos: ' + error.message);
     // Retorna dados padrão em caso de erro
     return getDefaultPointsDistribution();
   }
@@ -76,8 +74,7 @@ export async function getUserRanking(userId?: string): Promise<UserRanking> {
     }
     
     if (!userId) {
-      console.warn('Tentativa de buscar ranking sem usuário autenticado');
-      return getDefaultRanking();
+      throw new Error('Tentativa de buscar ranking sem usuário autenticado');
     }
     
     try {
@@ -89,11 +86,10 @@ export async function getUserRanking(userId?: string): Promise<UserRanking> {
       // Se não tem dados de ranking ou estão vazios, retorna ranking padrão
       return getDefaultRanking();
     } catch (error) {
-      console.error('Erro ao buscar ranking do usuário:', error);
-      return getDefaultRanking();
+      throw new Error('Erro ao buscar ranking do usuário: ' + error.message);
     }
   } catch (error) {
-    console.error('Erro ao buscar ranking do usuário:', error);
+    throw new Error('Erro ao buscar ranking do usuário: ' + error.message);
     return getDefaultRanking();
   }
 }

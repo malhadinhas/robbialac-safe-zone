@@ -83,7 +83,6 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
   
   // Check if user has admin privileges
   const isAdmin = user?.role === "admin_qa" || user?.role === "admin_app";
-  console.log("User role:", user?.role, "isAdmin:", isAdmin);
 
   const { data: incident, isLoading } = useQuery({
     queryKey: ["incident", incidentId],
@@ -93,7 +92,6 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
 
   useEffect(() => {
     if (incident) {
-      console.log("Incident data loaded:", incident);
       setFormData({
         id: incident.id,
         title: incident.title,
@@ -149,7 +147,6 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    console.log(`Select change: ${name} = ${value}`);
     setFormData(prev => ({ ...prev, [name]: value }));
     
     // Handle frequency and gravity special cases to set their values
@@ -202,36 +199,7 @@ export const QuaseAcidentesEditModal = ({ isOpen, onClose, incidentId }: EditMod
       
       onClose();
     } catch (error: any) {
-      console.error("Error updating incident:", error);
-      
-      // Tratamento de erros específicos
-      if (error.response) {
-        const status = error.response.status;
-        const errorData = error.response.data;
-        
-        // Erro 413 - Arquivo muito grande
-        if (status === 413) {
-          toast.error("Erro: Arquivo muito grande. O tamanho máximo permitido é 10MB.");
-          return;
-        }
-        
-        // Erro 400 - Validação
-        if (status === 400) {
-          const errorMessage = errorData.details || errorData.error || "Erro de validação";
-          toast.error(`Erro: ${errorMessage}`);
-          return;
-        }
-        
-        // Outros erros com resposta do servidor
-        const errorMessage = errorData.details || errorData.error || "Erro ao atualizar quase acidente";
-        toast.error(`Erro: ${errorMessage}`);
-      } else if (error.message) {
-        // Erros com mensagem definida
-        toast.error(`Erro: ${error.message}`);
-      } else {
-        // Fallback para erro genérico
-        toast.error("Erro ao atualizar quase acidente. Verifique sua conexão e tente novamente.");
-      }
+      toast.error("Erro ao atualizar quase acidente. Verifique sua conexão e tente novamente.");
     } finally {
       setIsSubmitting(false);
     }

@@ -1,4 +1,3 @@
-
 /**
  * Configuração para armazenamento em Cloudflare R2
  * Estes valores devem ser preenchidos com suas credenciais da Cloudflare R2
@@ -54,7 +53,6 @@ let r2Config: CloudflareR2Config = { ...defaultConfig };
  */
 export function initializeR2Config(config: CloudflareR2Config): void {
   r2Config = config;
-  console.log("Configuração R2 inicializada com sucesso");
 }
 
 /**

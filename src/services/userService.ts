@@ -8,8 +8,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
     if (!response.ok) return null;
     return response.json();
   } catch (error) {
-    console.error("Erro ao buscar usuário por email:", error);
-    return null;
+    throw error;
   }
 }
 
@@ -25,8 +24,7 @@ export async function validateUser(email: string, password: string): Promise<Use
     if (!response.ok) return null;
     return response.json();
   } catch (error) {
-    console.error("Erro ao validar usuário:", error);
-    return null;
+    throw error;
   }
 }
 
@@ -45,7 +43,6 @@ export async function createUser(userData: Omit<User, "id"> & { password: string
     }
     return response.json();
   } catch (error) {
-    console.error("Erro ao criar usuário:", error);
     throw error;
   }
 }
@@ -64,7 +61,6 @@ export async function updateUser(user: User): Promise<void> {
       throw new Error(error.error || 'Erro ao atualizar usuário');
     }
   } catch (error) {
-    console.error("Erro ao atualizar usuário:", error);
     throw error;
   }
 }
@@ -77,7 +73,6 @@ export async function getAllMedals(): Promise<Medal[]> {
     }
     return response.json();
   } catch (error) {
-    console.error("Erro ao buscar medalhas:", error);
     throw error;
   }
 }
@@ -95,9 +90,7 @@ export async function createAdminUser(): Promise<void> {
       viewedVideos: [],
       reportedIncidents: []
     });
-    console.log("Usuário administrador criado com sucesso");
   } catch (error) {
-    console.error("Erro ao criar usuário administrador:", error);
     throw error;
   }
 }

@@ -33,7 +33,6 @@ export async function tryReconnect(): Promise<boolean> {
     
     return result.connected;
   } catch (error) {
-    console.error('Erro ao tentar reconectar:', error);
     cachedStatus = {
       connected: false,
       error: error instanceof Error ? error.message : 'Erro desconhecido'
@@ -50,8 +49,7 @@ setInterval(async () => {
       const status = await response.json();
       cachedStatus = status;
     }
-    } catch (error) {
-    console.error('Erro ao verificar status do banco:', error);
+  } catch (error) {
     cachedStatus.connected = false;
     cachedStatus.error = error instanceof Error ? error.message : 'Erro desconhecido';
   }

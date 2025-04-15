@@ -21,7 +21,6 @@ export const CustomOrbitControls = (props: any) => {
 
   // Quando o componente for montado
   useEffect(() => {
-    console.log('CustomOrbitControls: Montando componente');
     setIsMounted(true);
     
     // Timeout para garantir que o DOM esteja pronto
@@ -31,7 +30,6 @@ export const CustomOrbitControls = (props: any) => {
     
     // Cleanup ao desmontar
     return () => {
-      console.log('CustomOrbitControls: Desmontando componente');
       setIsMounted(false);
       setIsInitialized(false);
       clearTimeout(initTimeout);
@@ -39,8 +37,6 @@ export const CustomOrbitControls = (props: any) => {
       try {
         // Tentar limpar manualmente
         if (controlsRef.current) {
-          console.log('CustomOrbitControls: Removendo manualmente listeners de eventos');
-          
           // Remover diretamente eventos do DOM
           const canvas = gl.domElement;
           
@@ -71,7 +67,7 @@ export const CustomOrbitControls = (props: any) => {
           controlsRef.current = null;
         }
       } catch (e) {
-        console.error('CustomOrbitControls: Erro durante limpeza:', e);
+        // Manter apenas tratamento de erro visual, throw ou logs via logger customizado, se houver.
       }
     };
   }, [gl]);

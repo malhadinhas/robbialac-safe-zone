@@ -48,7 +48,6 @@ const MedalManagement: React.FC = () => {
       setMedals(data);
     } catch (error) {
       toast.error("Erro ao buscar medalhas.");
-      console.error("Erro ao buscar medalhas:", error);
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +95,6 @@ const MedalManagement: React.FC = () => {
   };
 
   const handleEdit = (medal: Medal) => {
-    console.log("Editando medalha:", medal);
     setEditingMedalId(medal.id);
     setCurrentMedal({ 
       id: medal.id, 
@@ -154,7 +152,6 @@ const MedalManagement: React.FC = () => {
       setEditingMedalId(null);
       fetchMedals();
     } catch (error: any) {
-        console.error(`Erro ao ${editingMedalId ? 'atualizar' : 'criar'} medalha:`, error);
         toast.error(`Erro ao ${editingMedalId ? 'atualizar' : 'criar'} medalha: ${error?.response?.data?.message || error.message || 'Erro desconhecido'}`);
     } finally {
         setIsSubmitting(false);
@@ -171,7 +168,6 @@ const MedalManagement: React.FC = () => {
       setMedalToDelete(null);
       fetchMedals();
     } catch (error: any) {
-      console.error(`Erro ao apagar medalha ${medalToDelete.id}:`, error);
       toast.error(`Erro ao apagar medalha: ${error?.response?.data?.message || error.message || 'Erro desconhecido'}`);
     } finally {
       setIsSubmitting(false);

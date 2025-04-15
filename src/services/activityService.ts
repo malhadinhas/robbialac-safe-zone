@@ -35,7 +35,6 @@ export async function registerActivity(data: ActivityRegistration): Promise<Acti
     const response = await api.post('/activities', data);
     return response.data;
   } catch (error) {
-    console.error('Erro ao registrar atividade:', error);
     throw error;
   }
 }
@@ -131,8 +130,7 @@ export async function getUserActivities(userId?: string, limit: number = 10): Pr
     }
     
     if (!userId) {
-      console.warn('Tentativa de buscar atividades sem usuário autenticado');
-      return getDefaultActivities();
+      throw new Error('Tentativa de buscar atividades sem usuário autenticado');
     }
 
     try {
@@ -145,12 +143,10 @@ export async function getUserActivities(userId?: string, limit: number = 10): Pr
       
       return response.data;
     } catch (error) {
-      console.error('Erro ao buscar atividades:', error);
-      return getDefaultActivities();
+      throw error;
     }
   } catch (error) {
-    console.error('Erro ao buscar atividades do usuário:', error);
-    return getDefaultActivities();
+    throw error;
   }
 }
 

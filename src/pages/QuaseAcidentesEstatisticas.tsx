@@ -34,33 +34,20 @@ export default function QuaseAcidentesEstatisticas() {
     setIsLoading(true);
     setHasError(false);
     try {
-      console.log('Iniciando carregamento de dados...');
-      
       const [departments, config, incidents] = await Promise.all([
         getDepartmentsWithEmployees(),
         getSystemConfig(),
         getIncidentsByDepartment()
       ]);
-
-      console.log('Dados carregados:', { departments, config, incidents });
-
-      // Verifica se os dados estão corretos
       if (!Array.isArray(departments)) {
         throw new Error('Departamentos não é um array');
       }
-
       if (!config?.annualIncidentTargetPerEmployee) {
         throw new Error('Configuração inválida');
       }
-
       const data: DepartmentData[] = departments.map(dept => {
         const deptIncidents = incidents[dept.id] || 0;
         const target = dept.employeeCount * config.annualIncidentTargetPerEmployee;
-        console.log(`Processando departamento ${dept.name}:`, {
-          incidents: deptIncidents,
-          employeeCount: dept.employeeCount,
-          target,
-        });
         return {
           department: dept,
           incidents: deptIncidents,
@@ -68,32 +55,18 @@ export default function QuaseAcidentesEstatisticas() {
           percentage: target > 0 ? (deptIncidents / target) * 100 : 0
         };
       });
-
-      console.log('Dados processados:', data);
-
       const total = data.reduce((sum, d) => sum + d.incidents, 0);
       const targetTotal = data.reduce((sum, d) => sum + d.target, 0);
       const percentage = targetTotal > 0 ? (total / targetTotal) * 100 : 0;
-
-      // Calcula dias restantes no ano
       const today = new Date();
       const endOfYear = new Date(today.getFullYear(), 11, 31);
       const remaining = Math.ceil((endOfYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-      console.log('Totais calculados:', {
-        total,
-        targetTotal,
-        percentage,
-        remaining
-      });
-
       setDepartmentData(data);
       setTotalIncidents(total);
       setTotalTarget(targetTotal);
       setTargetPercentage(Math.round(percentage));
       setDaysRemaining(remaining);
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
       setHasError(true);
       toast.error("Erro ao carregar dados. Por favor, tente novamente mais tarde.");
     } finally {
