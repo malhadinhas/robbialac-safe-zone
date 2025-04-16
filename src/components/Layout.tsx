@@ -42,6 +42,7 @@ export function Layout({ children }: LayoutProps) {
     { icon: BookOpen, label: "Formações", path: "/formacoes" },
     { icon: AlertTriangle, label: "Quase Acidentes", path: "/quase-acidentes" },
     { icon: FileText, label: "Acidentes", path: "/acidentes" },
+    { icon: BookOpen, label: "Sensibilização", path: "/sensibilizacao" },
     { icon: BarChart, label: "Estatísticas", path: "/quase-acidentes/estatisticas" },
     { icon: Medal, label: "Pontuação", path: "/pontuacao" },
     { icon: Settings, label: "Definições", path: "/definicoes" }

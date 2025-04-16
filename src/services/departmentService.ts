@@ -3,6 +3,7 @@ import { Department } from '@/types/department';
 
 export interface DepartmentWithEmployees extends Department {
   employeeCount: number;
+  label: string;
 }
 
 /**
@@ -39,37 +40,43 @@ const mockDepartments: DepartmentWithEmployees[] = [
     id: '1',
     name: 'Operações',
     color: '#FF4B4B',
-    employeeCount: 40
+    employeeCount: 40,
+    label: 'Operações'
   },
   {
     id: '2',
     name: 'Marketing',
     color: '#4CAF50',
-    employeeCount: 15
+    employeeCount: 15,
+    label: 'Marketing'
   },
   {
     id: '3',
     name: 'Recursos Humanos',
     color: '#2196F3',
-    employeeCount: 20
+    employeeCount: 20,
+    label: 'Recursos Humanos'
   },
   {
     id: '4',
     name: 'Direção',
     color: '#9C27B0',
-    employeeCount: 10
+    employeeCount: 10,
+    label: 'Direção'
   },
   {
     id: '5',
     name: 'Financeira',
     color: '#FF9800',
-    employeeCount: 8
+    employeeCount: 8,
+    label: 'Financeira'
   },
   {
     id: '6',
     name: 'Comercial',
     color: '#607D8B',
-    employeeCount: 5
+    employeeCount: 5,
+    label: 'Comercial'
   }
 ];
 

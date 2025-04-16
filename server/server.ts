@@ -17,6 +17,7 @@ import accidentRoutes from './routes/accidentRoutes';
 import { ensureStorageDirectories } from './config/storage';
 import { checkStorage } from './scripts/checkStorage';
 import logger from './utils/logger';
+import sensibilizacaoRoutes from './routes/sensibilizacaoRoutes';
 
 // Verificar variáveis de ambiente críticas
 logger.info('Verificando variáveis de ambiente...');
@@ -91,6 +92,7 @@ app.use('/api/zones', zoneRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/system', systemRoutes);
+app.use('/api/sensibilizacao', sensibilizacaoRoutes);
 
 // Rota para verificar status do banco
 app.get('/api/database/status', (req, res) => {

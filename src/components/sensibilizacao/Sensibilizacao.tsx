@@ -1,17 +1,20 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { Accident } from '../types';
+import { Sensibilizacao } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
 import { FaPlus, FaFilePdf, FaTrash } from 'react-icons/fa';
-import { getAccidents, createAccident, deleteAccident } from '../services/accidentService';
+import { getSensibilizacoes, createSensibilizacao, deleteSensibilizacao } from '@/services/sensibilizacaoService';
 import { Layout } from '@/components/Layout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
+import { PDFPreview } from '@/components/PDFPreview';
 import { NoScrollLayout } from '@/components/NoScrollLayout';
 
 const COUNTRIES = [
@@ -23,28 +26,28 @@ const COUNTRIES = [
 
 type Country = typeof COUNTRIES[number]['value'];
 
-const Acidentes: React.FC = () => {
-  const router = useRouter();
-  const [accidents, setAccidents] = useState<Accident[]>([]);
+export function Sensibilizacao() {
+  const navigate = useNavigate();
+  const [sensibilizacoes, setSensibilizacoes] = useState<Sensibilizacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [newAccident, setNewAccident] = useState<Partial<Accident>>({
+  const [newSensibilizacao, setNewSensibilizacao] = useState<Partial<Sensibilizacao>>({
     name: '',
-    country: 'Portugal', // Valor padrão
+    country: 'Portugal',
     date: new Date(),
   });
 
   useEffect(() => {
-    loadAccidents();
+    loadSensibilizacoes();
   }, []);
 
-  const loadAccidents = async () => {
+  const loadSensibilizacoes = async () => {
     try {
-      const accidentsList = await getAccidents();
-      setAccidents(accidentsList);
+      const sensibilizacoesList = await getSensibilizacoes();
+      setSensibilizacoes(sensibilizacoesList);
     } catch (error) {
-      toast.error('Erro ao carregar acidentes');
+      toast.error('Erro ao carregar documentos de sensibilização');
     } finally {
       setLoading(false);
     }
@@ -62,10 +65,10 @@ const Acidentes: React.FC = () => {
   };
 
   const handleCountryChange = (value: Country) => {
-    setNewAccident(prev => ({ ...prev, country: value }));
+    setNewSensibilizacao(prev => ({ ...prev, country: value }));
   };
 
-  const handleAddAccident = async () => {
+  const handleAddSensibilizacao = async () => {
     try {
       if (!selectedFile) {
         toast.error('Por favor, selecione um arquivo PDF');
@@ -73,37 +76,42 @@ const Acidentes: React.FC = () => {
       }
 
       const formData = new FormData();
-      formData.append('name', newAccident.name || '');
-      formData.append('country', newAccident.country || '');
-      formData.append('date', newAccident.date?.toISOString() || new Date().toISOString());
+      formData.append('name', newSensibilizacao.name || '');
+      formData.append('country', newSensibilizacao.country || '');
+      formData.append('date', newSensibilizacao.date?.toISOString() || new Date().toISOString());
       formData.append('document', selectedFile);
 
-      await createAccident(formData);
+      await createSensibilizacao(formData);
       setShowAddModal(false);
-      setNewAccident({
+      setNewSensibilizacao({
         name: '',
         country: 'Portugal',
         date: new Date(),
       });
       setSelectedFile(null);
-      loadAccidents();
+      loadSensibilizacoes();
+      toast.success('Documento de sensibilização adicionado com sucesso');
     } catch (error) {
-      toast.error('Erro ao adicionar acidente');
+      toast.error('Erro ao adicionar documento de sensibilização');
     }
   };
 
-  const handleDeleteAccident = async (id: string) => {
+  const handleDeleteSensibilizacao = async (id: string) => {
     try {
-      await deleteAccident(id);
-      toast.success('Acidente removido com sucesso');
-      loadAccidents();
+      await deleteSensibilizacao(id);
+      toast.success('Documento removido com sucesso');
+      loadSensibilizacoes();
     } catch (error) {
-      toast.error('Erro ao remover acidente');
+      toast.error('Erro ao remover documento');
     }
   };
 
-  const handleViewPDF = (accident: Accident) => {
-    router.push(`/pdf-viewer/${accident._id}?url=${encodeURIComponent(accident.pdfUrl)}&title=${encodeURIComponent(accident.name)}`);
+  const handleViewPDF = (sensibilizacao: Sensibilizacao) => {
+    const searchParams = new URLSearchParams({
+      url: sensibilizacao.pdfUrl!,
+      title: sensibilizacao.name
+    });
+    navigate(`/pdf-viewer/${sensibilizacao._id}?${searchParams.toString()}`);
   };
 
   return (
@@ -111,12 +119,12 @@ const Acidentes: React.FC = () => {
       <NoScrollLayout>
         <div className="h-full">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold">Acidentes</h1>
+            <h1 className="text-2xl font-semibold">Sensibilização</h1>
             <Button
               onClick={() => setShowAddModal(true)}
               className="bg-robbialac hover:bg-robbialac-dark text-white"
             >
-              <FaPlus className="mr-2" /> Adicionar Acidente
+              <FaPlus className="mr-2" /> Adicionar Documento
             </Button>
           </div>
 
@@ -126,61 +134,67 @@ const Acidentes: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {accidents.map((accident) => (
-                <div key={accident._id} className="bg-white rounded-lg shadow-md p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <h2 className="text-lg font-medium">{accident.name}</h2>
+              {sensibilizacoes.map((sensibilizacao) => (
+                <div key={sensibilizacao._id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <h2 className="text-lg font-medium">{sensibilizacao.name}</h2>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteSensibilizacao(sensibilizacao._id!)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <FaTrash />
+                      </Button>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-1">País: {sensibilizacao.country}</p>
+                    <p className="text-gray-600 text-sm mb-3">
+                      Data: {format(new Date(sensibilizacao.date), 'dd/MM/yyyy', { locale: ptBR })}
+                    </p>
+                  </div>
+
+                  <div className="px-4 pb-4">
+                    <PDFPreview url={sensibilizacao.pdfUrl!} className="mb-3" />
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteAccident(accident._id!)}
-                      className="text-red-500 hover:text-red-700"
+                      variant="outline"
+                      className="w-full flex items-center justify-center gap-2 text-robbialac hover:text-robbialac-dark"
+                      onClick={() => handleViewPDF(sensibilizacao)}
                     >
-                      <FaTrash />
+                      <FaFilePdf /> Visualizar PDF
                     </Button>
                   </div>
-                  <p className="text-gray-600 text-sm mb-1">País: {accident.country}</p>
-                  <p className="text-gray-600 text-sm mb-3">
-                    Data: {format(new Date(accident.date), 'dd/MM/yyyy', { locale: ptBR })}
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="w-full flex items-center justify-center gap-2 text-robbialac hover:text-robbialac-dark"
-                    onClick={() => handleViewPDF(accident)}
-                  >
-                    <FaFilePdf /> Visualizar PDF
-                  </Button>
                 </div>
               ))}
             </div>
           )}
 
           <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Adicionar Novo Acidente</DialogTitle>
+                <DialogTitle>Adicionar Documento de Sensibilização</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Nome do Acidente</Label>
+                  <Label htmlFor="name">Nome</Label>
                   <Input
                     id="name"
-                    value={newAccident.name}
-                    onChange={(e) => setNewAccident(prev => ({ ...prev, name: e.target.value }))}
+                    value={newSensibilizacao.name}
+                    onChange={(e) => setNewSensibilizacao(prev => ({ ...prev, name: e.target.value }))}
                     className="mt-1"
                   />
                 </div>
                 <div>
                   <Label htmlFor="country">País</Label>
                   <Select
-                    value={newAccident.country}
+                    value={newSensibilizacao.country}
                     onValueChange={handleCountryChange}
                   >
                     <SelectTrigger id="country" className="mt-1">
                       <SelectValue placeholder="Selecione um país" />
                     </SelectTrigger>
                     <SelectContent>
-                      {COUNTRIES.map(country => (
+                      {COUNTRIES.map((country) => (
                         <SelectItem key={country.value} value={country.value}>
                           {country.label}
                         </SelectItem>
@@ -193,8 +207,8 @@ const Acidentes: React.FC = () => {
                   <Input
                     id="date"
                     type="date"
-                    value={newAccident.date ? format(newAccident.date, 'yyyy-MM-dd') : ''}
-                    onChange={(e) => setNewAccident(prev => ({ ...prev, date: new Date(e.target.value) }))}
+                    value={newSensibilizacao.date ? format(new Date(newSensibilizacao.date), 'yyyy-MM-dd') : ''}
+                    onChange={(e) => setNewSensibilizacao(prev => ({ ...prev, date: new Date(e.target.value) }))}
                     className="mt-1"
                   />
                 </div>
@@ -221,8 +235,8 @@ const Acidentes: React.FC = () => {
                     Cancelar
                   </Button>
                   <Button
-                    onClick={handleAddAccident}
-                    className="bg-robbialac hover:bg-robbialac-dark text-white"
+                    onClick={handleAddSensibilizacao}
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
                   >
                     Salvar
                   </Button>
@@ -234,6 +248,4 @@ const Acidentes: React.FC = () => {
       </NoScrollLayout>
     </Layout>
   );
-};
-
-export default Acidentes; 
+} 
