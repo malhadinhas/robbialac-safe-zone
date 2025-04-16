@@ -5,7 +5,7 @@ import { getIncidents, updateIncident, deleteIncident } from "@/services/inciden
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Search, Plus, Eye, Edit, Trash2, Archive, ArchiveX, Save } from "lucide-react";
 import { Incident } from "@/types";
@@ -499,6 +499,9 @@ const QuaseAcidentes = () => {
               <>
                 <DialogHeader>
                   <DialogTitle>{selectedIncident.title}</DialogTitle>
+                  <DialogDescription>
+                    Detalhes do Quase Acidente reportado.
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -590,6 +593,9 @@ const QuaseAcidentes = () => {
               <>
                 <DialogHeader>
                   <DialogTitle>Editar Quase Acidente</DialogTitle>
+                  <DialogDescription>
+                    Modifique os detalhes do Quase Acidente e salve as alterações.
+                  </DialogDescription>
                 </DialogHeader>
                 
                 <form onSubmit={handleSubmit} className="py-4">

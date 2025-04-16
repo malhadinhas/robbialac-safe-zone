@@ -1,6 +1,18 @@
 import path from 'path';
 import { randomUUID } from 'crypto';
 
+// Configurações do Cloudflare R2
+export const config = {
+  r2: {
+    endpoint: process.env.R2_ENDPOINT,
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    bucketName: process.env.R2_BUCKET_NAME,
+    region: process.env.R2_REGION || 'auto',
+    urlExpiration: parseInt(process.env.R2_URL_EXPIRATION || '3600')
+  }
+};
+
 // Configurações de armazenamento
 export const storageConfig = {
   // Diretório base para uploads

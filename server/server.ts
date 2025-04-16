@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -12,25 +13,38 @@ import zoneRoutes from './routes/zones';
 import statsRoutes from './routes/statsRoutes';
 import activityRoutes from './routes/activityRoutes';
 import systemRoutes from './routes/system';
-import logger from './utils/logger';
+import accidentRoutes from './routes/accidentRoutes';
 import { ensureStorageDirectories } from './config/storage';
 import { checkStorage } from './scripts/checkStorage';
+import logger from './utils/logger';
+
+// Verificar variáveis de ambiente críticas
+logger.info('Verificando variáveis de ambiente...');
+const requiredEnvVars = [
+  'R2_ENDPOINT',
+  'R2_ACCESS_KEY_ID',
+  'R2_SECRET_ACCESS_KEY',
+  'R2_BUCKET_NAME'
+];
+
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+if (missingVars.length > 0) {
+  logger.error('Variáveis de ambiente ausentes:', { missingVars });
+  throw new Error(`Variáveis de ambiente ausentes: ${missingVars.join(', ')}`);
+}
+
+logger.info('Variáveis de ambiente carregadas:', {
+  hasEndpoint: !!process.env.R2_ENDPOINT,
+  hasAccessKey: !!process.env.R2_ACCESS_KEY_ID,
+  hasSecretKey: !!process.env.R2_SECRET_ACCESS_KEY,
+  hasBucket: !!process.env.R2_BUCKET_NAME
+});
 
 const app = express();
 const port = 3000;
 
 // Diretório para arquivos temporários
 const TEMP_DIR = path.join(process.cwd(), 'temp');
-
-// Middleware para logar todas as requisições
-app.use((req, res, next) => {
-  logger.info('Nova requisição', {
-    method: req.method,
-    url: req.url,
-    ip: req.ip
-  });
-  next();
-});
 
 // Configurações de segurança
 app.use(helmet());
@@ -43,19 +57,25 @@ app.use(express.urlencoded({ limit: '10gb', extended: true }));
 // Servir arquivos estáticos do diretório temp
 app.use('/videos', express.static(TEMP_DIR));
 
+// Em desenvolvimento, servir arquivos temporários
+if (process.env.NODE_ENV === 'development') {
+  const TEMP_STORAGE_DIR = path.join(process.cwd(), 'storage', 'temp');
+  app.use('/temp', express.static(TEMP_STORAGE_DIR));
+  logger.info('Modo de desenvolvimento - Servindo arquivos temporários de:', TEMP_STORAGE_DIR);
+}
+
 // Verificar configuração de armazenamento
 checkStorage().catch(error => {
-  logger.error('Erro na verificação de armazenamento', { error });
-  process.exit(1);
+  throw new Error(`Erro na verificação de armazenamento: ${error.message}`);
 });
 
 // Middleware para tratar erros
 app.use((err: any, req: any, res: any, next: any) => {
-  logger.error('Erro no servidor', { error: err.message, stack: err.stack });
   res.status(500).json({ error: err.message });
 });
 
 // Rotas da API
+app.use('/api/accidents', accidentRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/secure-url', secureUrlRoutes);
@@ -75,8 +95,9 @@ app.get('/api/database/status', (req, res) => {
 // Inicializa o servidor
 connectToDatabase().then(() => {
   app.listen(port, () => {
-    logger.info(`Servidor rodando em http://localhost:${port}`);
+    // Mantido apenas o log essencial de inicialização do servidor
+    console.info(`Servidor rodando em http://localhost:${port}`);
   });
 }).catch(error => {
-  logger.error('Erro ao iniciar o servidor:', { error });
+  throw new Error(`Erro ao iniciar o servidor: ${error.message}`);
 }); 

@@ -98,3 +98,19 @@ export interface Department {
 export interface SystemConfig {
   annualIncidentTargetPerEmployee: number;
 }
+
+export interface Accident {
+  _id?: string;
+  name: string;
+  country: string;
+  date: Date;
+  pdfFile: {
+    key: string;
+    originalName: string;
+    size: number;
+    mimeType: string;
+  };
+  pdfUrl?: string; // URL assinada temporária para visualização
+  createdAt: Date;
+  updatedAt: Date;
+}

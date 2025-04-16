@@ -9,14 +9,15 @@ export interface DepartmentWithEmployees extends Department {
  * Busca todos os departamentos disponíveis
  * @returns Uma lista de departamentos com valor e rótulo
  */
-export async function getDepartments(): Promise<Department[]> {
+export const getDepartments = async (): Promise<Department[]> => {
   try {
     const response = await api.get('/departments');
     return response.data;
   } catch (error) {
-    throw error;
+    console.error('Erro ao buscar departamentos:', error);
+    throw new Error('Falha ao buscar departamentos');
   }
-}
+};
 
 /**
  * Busca um departamento específico pelo ID
