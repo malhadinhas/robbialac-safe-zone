@@ -4872,3 +4872,283 @@
 {"level":"info","message":"Diretório de vídeos processados verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\processed","timestamp":"2025-04-16T20:41:30.104Z"}
 {"level":"info","message":"Permissões de Diretório de vídeos processados verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\processed","timestamp":"2025-04-16T20:41:30.104Z"}
 {"level":"info","message":"Verificação de armazenamento concluída com sucesso","timestamp":"2025-04-16T20:41:30.104Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T20:43:19.120Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T20:43:19.121Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T20:43:19.121Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T20:43:19.121Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T20:43:19.121Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T20:43:19.179Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T20:43:19.180Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T20:43:19.180Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T20:43:19.181Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:43:19.190Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T204319Z&X-Amz-Expires=3600&X-Amz-Signature=61e1433bfb92423d5081f2eed7c024b64e0fc14032c1a555004be2f8c95febfb&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:43:19.190Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T20:43:19.190Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T20:44:17.930Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T20:44:17.931Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T20:44:17.931Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T20:44:17.931Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T20:44:17.931Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T20:44:17.980Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T20:44:17.981Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T20:44:17.981Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T20:44:17.982Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:44:17.984Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T204417Z&X-Amz-Expires=3600&X-Amz-Signature=ac86cd1971e74eea24555765e4378948e526dedfe12f556981f8aeba6e37b095&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:44:17.985Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T20:44:17.986Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T20:49:51.119Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T20:49:51.119Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T20:49:51.119Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T20:49:51.120Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T20:49:51.120Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T20:49:51.168Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T20:49:51.168Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T20:49:51.169Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T20:49:51.169Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:49:51.170Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T204951Z&X-Amz-Expires=3600&X-Amz-Signature=7344daf9b7e7ca72cf4292e5d0888fef7a62c32bcd46cf4aedb89f34abfbfa3f&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:49:51.171Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T20:49:51.171Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T20:50:12.117Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T20:50:12.117Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T20:50:12.117Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T20:50:12.118Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T20:50:12.118Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T20:50:12.174Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T20:50:12.175Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T20:50:12.175Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T20:50:12.175Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:50:12.177Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T205012Z&X-Amz-Expires=3600&X-Amz-Signature=f0098de1beb3940ec85f98f24e7a7155d54ef900b75d22c892b0570353d13948&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:50:12.177Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T20:50:12.177Z"}
+{"R2_ACCESS_KEY_ID":"56f3...","R2_ACCOUNT_ID":"Definido","R2_BUCKET_NAME":"Definido","R2_CONFIG_CalculatedEndpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","R2_ENDPOINT_ENV":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","R2_REGION":"auto","R2_SECRET_ACCESS_KEY":"Definido","level":"info","message":"[SecureUrlController] Verificando process.env ANTES de criar S3Client:","timestamp":"2025-04-16T20:51:38.007Z"}
+{"level":"info","message":"[SecureUrlController] Cliente S3 inicializado com sucesso no backend.","timestamp":"2025-04-16T20:51:38.010Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","level":"info","message":"Cliente S3 inicializado","region":"auto","timestamp":"2025-04-16T20:51:38.012Z"}
+{"level":"info","message":"Diretórios de armazenamento verificados com sucesso","timestamp":"2025-04-16T20:51:38.013Z"}
+{"level":"info","message":"Verificando variáveis de ambiente...","timestamp":"2025-04-16T20:51:38.014Z"}
+{"hasAccessKey":true,"hasBucket":true,"hasEndpoint":true,"hasSecretKey":true,"level":"info","message":"Variáveis de ambiente carregadas:","timestamp":"2025-04-16T20:51:38.014Z"}
+{"level":"info","message":"Iniciando verificação de armazenamento","timestamp":"2025-04-16T20:51:38.016Z"}
+{"level":"info","message":"Diretório de uploads verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads","timestamp":"2025-04-16T20:51:38.029Z"}
+{"level":"info","message":"Permissões de Diretório de uploads verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads","timestamp":"2025-04-16T20:51:38.031Z"}
+{"level":"info","message":"Diretório temporário verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\temp","timestamp":"2025-04-16T20:51:38.032Z"}
+{"level":"info","message":"Permissões de Diretório temporário verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\temp","timestamp":"2025-04-16T20:51:38.036Z"}
+{"level":"info","message":"Diretório de thumbnails verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\thumbnails","timestamp":"2025-04-16T20:51:38.037Z"}
+{"level":"info","message":"Permissões de Diretório de thumbnails verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\thumbnails","timestamp":"2025-04-16T20:51:38.037Z"}
+{"level":"info","message":"Diretório de vídeos processados verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\processed","timestamp":"2025-04-16T20:51:38.038Z"}
+{"level":"info","message":"Permissões de Diretório de vídeos processados verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\processed","timestamp":"2025-04-16T20:51:38.038Z"}
+{"level":"info","message":"Verificação de armazenamento concluída com sucesso","timestamp":"2025-04-16T20:51:38.039Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T20:51:44.031Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T20:51:44.031Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T20:51:44.032Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T20:51:44.032Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T20:51:44.032Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T20:51:44.089Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T20:51:44.090Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T20:51:44.090Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T20:51:44.091Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:51:44.101Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T205144Z&X-Amz-Expires=3600&X-Amz-Signature=e878d6846b7a11da03b5475ed4b7582617a7aff656bb5e8281fad68981d5f672&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:51:44.101Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T20:51:44.102Z"}
+{"R2_ACCESS_KEY_ID":"56f3...","R2_ACCOUNT_ID":"Definido","R2_BUCKET_NAME":"Definido","R2_CONFIG_CalculatedEndpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","R2_ENDPOINT_ENV":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","R2_REGION":"auto","R2_SECRET_ACCESS_KEY":"Definido","level":"info","message":"[SecureUrlController] Verificando process.env ANTES de criar S3Client:","timestamp":"2025-04-16T20:54:06.436Z"}
+{"level":"info","message":"[SecureUrlController] Cliente S3 inicializado com sucesso no backend.","timestamp":"2025-04-16T20:54:06.439Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","level":"info","message":"Cliente S3 inicializado","region":"auto","timestamp":"2025-04-16T20:54:06.442Z"}
+{"level":"info","message":"Diretórios de armazenamento verificados com sucesso","timestamp":"2025-04-16T20:54:06.442Z"}
+{"level":"info","message":"Verificando variáveis de ambiente...","timestamp":"2025-04-16T20:54:06.443Z"}
+{"hasAccessKey":true,"hasBucket":true,"hasEndpoint":true,"hasSecretKey":true,"level":"info","message":"Variáveis de ambiente carregadas:","timestamp":"2025-04-16T20:54:06.443Z"}
+{"level":"info","message":"Iniciando verificação de armazenamento","timestamp":"2025-04-16T20:54:06.446Z"}
+{"level":"info","message":"Diretório de uploads verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads","timestamp":"2025-04-16T20:54:06.459Z"}
+{"level":"info","message":"Permissões de Diretório de uploads verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads","timestamp":"2025-04-16T20:54:06.463Z"}
+{"level":"info","message":"Diretório temporário verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\temp","timestamp":"2025-04-16T20:54:06.466Z"}
+{"level":"info","message":"Permissões de Diretório temporário verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\temp","timestamp":"2025-04-16T20:54:06.468Z"}
+{"level":"info","message":"Diretório de thumbnails verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\thumbnails","timestamp":"2025-04-16T20:54:06.468Z"}
+{"level":"info","message":"Permissões de Diretório de thumbnails verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\thumbnails","timestamp":"2025-04-16T20:54:06.469Z"}
+{"level":"info","message":"Diretório de vídeos processados verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\processed","timestamp":"2025-04-16T20:54:06.470Z"}
+{"level":"info","message":"Permissões de Diretório de vídeos processados verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\processed","timestamp":"2025-04-16T20:54:06.470Z"}
+{"level":"info","message":"Verificação de armazenamento concluída com sucesso","timestamp":"2025-04-16T20:54:06.470Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T20:54:12.570Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T20:54:12.571Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T20:54:12.571Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T20:54:12.572Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T20:54:12.572Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T20:54:12.627Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T20:54:12.628Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T20:54:12.629Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T20:54:12.629Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:54:12.639Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T205412Z&X-Amz-Expires=3600&X-Amz-Signature=04d6a071c14f57b587de64c479603db81ca88c5d6b1b73b203f43523fd644484&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:54:12.639Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T20:54:12.639Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T20:55:19.113Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T20:55:19.113Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T20:55:19.114Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T20:55:19.114Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T20:55:19.114Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T20:55:19.163Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T20:55:19.163Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T20:55:19.165Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T20:55:19.165Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:55:19.167Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T205519Z&X-Amz-Expires=3600&X-Amz-Signature=cd7a1cc9724c6f9b21802f28deb4b2900ddb41690f974527275c85917cf51934&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:55:19.167Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T20:55:19.167Z"}
+{"R2_ACCESS_KEY_ID":"56f3...","R2_ACCOUNT_ID":"Definido","R2_BUCKET_NAME":"Definido","R2_CONFIG_CalculatedEndpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","R2_ENDPOINT_ENV":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","R2_REGION":"auto","R2_SECRET_ACCESS_KEY":"Definido","level":"info","message":"[SecureUrlController] Verificando process.env ANTES de criar S3Client:","timestamp":"2025-04-16T20:57:23.510Z"}
+{"level":"info","message":"[SecureUrlController] Cliente S3 inicializado com sucesso no backend.","timestamp":"2025-04-16T20:57:23.513Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","level":"info","message":"Cliente S3 inicializado","region":"auto","timestamp":"2025-04-16T20:57:23.515Z"}
+{"level":"info","message":"Diretórios de armazenamento verificados com sucesso","timestamp":"2025-04-16T20:57:23.516Z"}
+{"level":"info","message":"Verificando variáveis de ambiente...","timestamp":"2025-04-16T20:57:23.516Z"}
+{"hasAccessKey":true,"hasBucket":true,"hasEndpoint":true,"hasSecretKey":true,"level":"info","message":"Variáveis de ambiente carregadas:","timestamp":"2025-04-16T20:57:23.517Z"}
+{"level":"info","message":"Iniciando verificação de armazenamento","timestamp":"2025-04-16T20:57:23.519Z"}
+{"level":"info","message":"Diretório de uploads verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads","timestamp":"2025-04-16T20:57:23.529Z"}
+{"level":"info","message":"Permissões de Diretório de uploads verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads","timestamp":"2025-04-16T20:57:23.532Z"}
+{"level":"info","message":"Diretório temporário verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\temp","timestamp":"2025-04-16T20:57:23.533Z"}
+{"level":"info","message":"Permissões de Diretório temporário verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\temp","timestamp":"2025-04-16T20:57:23.534Z"}
+{"level":"info","message":"Diretório de thumbnails verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\thumbnails","timestamp":"2025-04-16T20:57:23.535Z"}
+{"level":"info","message":"Permissões de Diretório de thumbnails verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\thumbnails","timestamp":"2025-04-16T20:57:23.536Z"}
+{"level":"info","message":"Diretório de vídeos processados verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\processed","timestamp":"2025-04-16T20:57:23.537Z"}
+{"level":"info","message":"Permissões de Diretório de vídeos processados verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\processed","timestamp":"2025-04-16T20:57:23.538Z"}
+{"level":"info","message":"Verificação de armazenamento concluída com sucesso","timestamp":"2025-04-16T20:57:23.538Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T20:57:29.786Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T20:57:29.787Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T20:57:29.787Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T20:57:29.788Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T20:57:29.788Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T20:57:29.849Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T20:57:29.850Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T20:57:29.851Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T20:57:29.851Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:57:29.861Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T205729Z&X-Amz-Expires=3600&X-Amz-Signature=7625dce529c79e7ee04c2f3448c0ece19ad63e26cf1484dc0f596e5df68caa2d&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T20:57:29.861Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T20:57:29.862Z"}
+{"R2_ACCESS_KEY_ID":"56f3...","R2_ACCOUNT_ID":"Definido","R2_BUCKET_NAME":"Definido","R2_CONFIG_CalculatedEndpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","R2_ENDPOINT_ENV":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","R2_REGION":"auto","R2_SECRET_ACCESS_KEY":"Definido","level":"info","message":"[SecureUrlController] Verificando process.env ANTES de criar S3Client:","timestamp":"2025-04-16T21:03:33.109Z"}
+{"level":"info","message":"[SecureUrlController] Cliente S3 inicializado com sucesso no backend.","timestamp":"2025-04-16T21:03:33.112Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","level":"info","message":"Cliente S3 inicializado","region":"auto","timestamp":"2025-04-16T21:03:33.115Z"}
+{"level":"info","message":"Diretórios de armazenamento verificados com sucesso","timestamp":"2025-04-16T21:03:33.115Z"}
+{"level":"info","message":"Verificando variáveis de ambiente...","timestamp":"2025-04-16T21:03:33.116Z"}
+{"hasAccessKey":true,"hasBucket":true,"hasEndpoint":true,"hasSecretKey":true,"level":"info","message":"Variáveis de ambiente carregadas:","timestamp":"2025-04-16T21:03:33.116Z"}
+{"level":"info","message":"Iniciando verificação de armazenamento","timestamp":"2025-04-16T21:03:33.118Z"}
+{"level":"info","message":"Diretório de uploads verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads","timestamp":"2025-04-16T21:03:33.132Z"}
+{"level":"info","message":"Permissões de Diretório de uploads verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads","timestamp":"2025-04-16T21:03:33.136Z"}
+{"level":"info","message":"Diretório temporário verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\temp","timestamp":"2025-04-16T21:03:33.139Z"}
+{"level":"info","message":"Permissões de Diretório temporário verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\temp","timestamp":"2025-04-16T21:03:33.140Z"}
+{"level":"info","message":"Diretório de thumbnails verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\thumbnails","timestamp":"2025-04-16T21:03:33.140Z"}
+{"level":"info","message":"Permissões de Diretório de thumbnails verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\thumbnails","timestamp":"2025-04-16T21:03:33.141Z"}
+{"level":"info","message":"Diretório de vídeos processados verificado com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\processed","timestamp":"2025-04-16T21:03:33.141Z"}
+{"level":"info","message":"Permissões de Diretório de vídeos processados verificadas com sucesso","path":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\uploads\\processed","timestamp":"2025-04-16T21:03:33.142Z"}
+{"level":"info","message":"Verificação de armazenamento concluída com sucesso","timestamp":"2025-04-16T21:03:33.142Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T21:03:50.430Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T21:03:50.430Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T21:03:50.431Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T21:03:50.431Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T21:03:50.431Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T21:03:50.483Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T21:03:50.484Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T21:03:50.485Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T21:03:50.485Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:03:50.495Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T210350Z&X-Amz-Expires=3600&X-Amz-Signature=dae36dbd213f6472b8ea10b0c8d99a3094b89394a89fbab864ec300db01f1260&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:03:50.496Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T21:03:50.496Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T21:03:56.487Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T21:03:56.488Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T21:03:56.488Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T21:03:56.488Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T21:03:56.488Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T21:03:56.536Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T21:03:56.536Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T21:03:56.537Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T21:03:56.537Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:03:56.538Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T210356Z&X-Amz-Expires=3600&X-Amz-Signature=ecdd78bea4501ef7286c70fa6366047e27a4d2733846a825d7d32303760f170a&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:03:56.539Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T21:03:56.539Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T21:06:08.114Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T21:06:08.115Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T21:06:08.115Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T21:06:08.115Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T21:06:08.115Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T21:06:08.164Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T21:06:08.165Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T21:06:08.165Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T21:06:08.165Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:06:08.166Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T210608Z&X-Amz-Expires=3600&X-Amz-Signature=b4437eb96b36f7020e9c89a265f90bc2037e0560748c93c50f052ca2b7fe0395&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:06:08.167Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T21:06:08.167Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T21:08:42.501Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T21:08:42.501Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T21:08:42.501Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T21:08:42.501Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T21:08:42.502Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T21:08:42.551Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T21:08:42.551Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T21:08:42.551Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T21:08:42.551Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:08:42.552Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T210842Z&X-Amz-Expires=3600&X-Amz-Signature=4fadaa1fd378932c15c7841166c7084419703431001c5cbd464103591d9e8898&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:08:42.553Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T21:08:42.553Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T21:10:00.120Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T21:10:00.120Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T21:10:00.120Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T21:10:00.120Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T21:10:00.121Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T21:10:00.172Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T21:10:00.173Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T21:10:00.173Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T21:10:00.173Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:10:00.175Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T211000Z&X-Amz-Expires=3600&X-Amz-Signature=49ce9988694d3a72a8b15d9516fee1fd03eef5208b480dabbdde9450ee587b2a&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:10:00.175Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T21:10:00.175Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T21:10:58.524Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T21:10:58.524Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T21:10:58.525Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T21:10:58.525Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T21:10:58.525Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T21:10:58.575Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T21:10:58.575Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T21:10:58.576Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T21:10:58.576Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:10:58.577Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T211058Z&X-Amz-Expires=3600&X-Amz-Signature=a2e6dd31345946847ca5ed73c653a626db4b02be24217875da8a7a97f4d3a304&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:10:58.577Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T21:10:58.577Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T21:11:06.101Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T21:11:06.101Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T21:11:06.101Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T21:11:06.102Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T21:11:06.102Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T21:11:06.151Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T21:11:06.151Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T21:11:06.152Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T21:11:06.152Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:11:06.154Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T211106Z&X-Amz-Expires=3600&X-Amz-Signature=247bcf4ae65173bb947638cc936e3547843ad2604513b0af9559d87fbcb81e50&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:11:06.154Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T21:11:06.154Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T21:14:01.127Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T21:14:01.128Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T21:14:01.128Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T21:14:01.128Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T21:14:01.128Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T21:14:01.178Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T21:14:01.178Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T21:14:01.178Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T21:14:01.178Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:14:01.179Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T211401Z&X-Amz-Expires=3600&X-Amz-Signature=700771747e69f3e3ca744cbf6b2f4392fba9603b84e3129d3dc8fbe753171b62&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:14:01.179Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T21:14:01.180Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T21:17:18.348Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T21:17:18.348Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T21:17:18.348Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T21:17:18.349Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T21:17:18.349Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T21:17:18.399Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T21:17:18.399Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T21:17:18.399Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T21:17:18.400Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:17:18.401Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T211718Z&X-Amz-Expires=3600&X-Amz-Signature=a73ea517db0692b32266e94bc1332730362e40c43b37fb830b9cbb2418d9ddfb&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:17:18.401Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T21:17:18.402Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de autenticação","timestamp":"2025-04-16T21:18:46.120Z"}
+{"level":"warn","message":"BYPASS_AUTH ativado: Pulando verificação de papéis","timestamp":"2025-04-16T21:18:46.121Z"}
+{"level":"info","message":"Iniciando busca de acidentes","timestamp":"2025-04-16T21:18:46.121Z"}
+{"level":"info","message":"Filtros: country=undefined, startDate=undefined, endDate=undefined","timestamp":"2025-04-16T21:18:46.121Z"}
+{"level":"info","message":"Executando Accident.find() com query:","timestamp":"2025-04-16T21:18:46.121Z"}
+{"level":"info","message":"Encontrados 1 acidentes","timestamp":"2025-04-16T21:18:46.171Z"}
+{"accidentId":"68001165c8c52166af6b0de2","level":"info","message":"Gerando URL assinada para documento","pdfKey":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","timestamp":"2025-04-16T21:18:46.172Z"}
+{"bucket":"workplace-safety-videos","endpoint":"https://485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com","key":"accidents/1744834916589-Cromology_Accident Alert_Queda_AC_Mar25.pdf","level":"info","message":"Iniciando geração de URL assinada","timestamp":"2025-04-16T21:18:46.172Z"}
+{"expiresIn":3600,"hasAccessKey":true,"hasSecretKey":true,"level":"info","message":"Configuração do cliente S3","region":"auto","timestamp":"2025-04-16T21:18:46.172Z"}
+{"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:18:46.173Z","url":"https://workplace-safety-videos.485c3c736434b646ff46725121de873c.r2.cloudflarestorage.com/accidents/1744834916589-Cromology_Accident%20Alert_Queda_AC_Mar25.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=56f3925666837ff8ba99087b930e88cb%2F20250416%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250416T211846Z&X-Amz-Expires=3600&X-Amz-Signature=fc6166503cb40f85e60968019d7be29b414322a01fa6ceff427cca1799a35b06&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"}
+{"accidentId":"68001165c8c52166af6b0de2","hasUrl":true,"level":"info","message":"URL assinada gerada com sucesso","timestamp":"2025-04-16T21:18:46.174Z"}
+{"level":"info","message":"URLs geradas para 1 documentos","timestamp":"2025-04-16T21:18:46.174Z"}

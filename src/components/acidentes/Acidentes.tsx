@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
+import { PDFPreview } from '@/components/PDFPreview';
 
 const COUNTRIES = [
   { value: 'Portugal', label: 'Portugal' },
@@ -132,29 +133,35 @@ export function Acidentes() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {accidents.map((accident) => (
-              <div key={accident._id} className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-xl font-semibold">{accident.name}</h2>
+              <div key={accident._id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <h2 className="text-xl font-semibold">{accident.name}</h2>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteAccident(accident._id!)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <FaTrash />
+                    </Button>
+                  </div>
+                  <p className="text-gray-600 mb-2">País: {accident.country}</p>
+                  <p className="text-gray-600 mb-4">
+                    Data: {format(new Date(accident.date), 'dd/MM/yyyy', { locale: ptBR })}
+                  </p>
+                </div>
+
+                <div className="px-6 pb-6">
+                  <PDFPreview url={accident.pdfUrl} className="mb-4" />
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteAccident(accident._id!)}
-                    className="text-red-500 hover:text-red-700"
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2 text-blue-500 hover:text-blue-700"
+                    onClick={() => handleViewPDF(accident)}
                   >
-                    <FaTrash />
+                    <FaFilePdf /> Visualizar PDF
                   </Button>
                 </div>
-                <p className="text-gray-600 mb-2">País: {accident.country}</p>
-                <p className="text-gray-600 mb-4">
-                  Data: {format(new Date(accident.date), 'dd/MM/yyyy', { locale: ptBR })}
-                </p>
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-center gap-2 text-blue-500 hover:text-blue-700"
-                  onClick={() => handleViewPDF(accident)}
-                >
-                  <FaFilePdf /> Visualizar PDF
-                </Button>
               </div>
             ))}
           </div>
