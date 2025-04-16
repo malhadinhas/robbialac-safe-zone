@@ -178,12 +178,15 @@ interface SecureUrlResponse {
 
 // --- Função para buscar a URL segura do backend --- 
 export const getSecureR2Url = async (key: string): Promise<string> => {
+  // --- REMOVER LOG TEMPORÁRIO ---
+  // console.warn(`[videoService] getSecureR2Url chamada para key: ${key}`);
+  
   if (!key) {
-    throw new Error('Chave R2 inválida ou não fornecida.');
+    throw new Error('Chave R2 inválida ou não fornecida para URL segura');
   }
   try {
     const response = await axios.get(`${API_URL}/api/secure-url`, {
-      params: { key: key },
+      params: { key },
       timeout: 15000,
     });
     if (response.data?.url) {
@@ -196,7 +199,15 @@ export const getSecureR2Url = async (key: string): Promise<string> => {
       throw new Error('Resposta da API não contém URL válida');
     }
   } catch (error) {
-    throw new Error(`Falha ao buscar URL para chave: ${key}`);
+    // --- REMOVER LOG TEMPORÁRIO ---
+    // console.error(`[videoService] !!! Erro em getSecureR2Url para key: ${key}`, error);
+    
+    // Lança o erro novamente para que o chamador (VideoThumbnail) possa pegá-lo
+    if (error instanceof Error) {
+      throw new Error(`Erro ao buscar URL segura: ${error.message}`);
+    } else {
+      throw new Error('Erro desconhecido ao buscar URL segura');
+    }
   }
 };
 
@@ -216,15 +227,16 @@ export const getVideos = async (options?: { category?: string; limit?: string })
       id: video.id || video._id || '', 
       title: video.title || '',
       description: video.description || '',
-      r2Key: video.r2Key || video.r2VideoKey || '',
-      thumbnailR2Key: video.thumbnailR2Key || video.r2ThumbnailKey || '',
+      r2VideoKey: video.r2VideoKey || video.r2Key || '',
+      r2ThumbnailKey: video.r2ThumbnailKey || '',
       category: normalizeCategory(video.category || ''),
       zone: video.zone || '',
       views: typeof video.views === 'number' ? video.views : 0,
       uploadDate: new Date(video.uploadDate || Date.now()),
       duration: video.duration || 0,
       status: video.status || 'unknown',
-      r2Qualities: video.r2Qualities || { high: '', medium: '', low: '' }
+      r2Qualities: video.r2Qualities || { high: '', medium: '', low: '' },
+      videoId: video.videoId
     }));
 
     // Filtrar por categoria se fornecida

@@ -1,4 +1,5 @@
 import api from '@/lib/api';
+import { UserRanking } from "./types"; // Assumindo que UserRanking está em types.ts ou statsService.ts
 
 export interface UserPointsBreakdown {
   category: string;
@@ -10,6 +11,19 @@ export interface UserRanking {
   position: number;
   totalUsers: number;
   points: number;
+}
+
+// Adicionar interface para os dados do Leaderboard
+export interface LeaderboardEntry {
+  _id: string;
+  rank: number;
+  name: string;
+  points: number;
+  medalCount: number;
+  topMedals: Array<{ // Adicionar campo para top 3 medalhas
+    name: string;
+    imageSrc?: string; // Imagem pode ser opcional
+  }>;
 }
 
 /**
@@ -103,4 +117,17 @@ function getDefaultRanking(): UserRanking {
     totalUsers: 10,
     points: 100
   };
+}
+
+/**
+ * Busca os dados gerais do leaderboard.
+ */
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
+  try {
+    const response = await api.get('/stats/leaderboard');
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao buscar leaderboard:", error);
+    throw error; // Relançar para react-query
+  }
 } 

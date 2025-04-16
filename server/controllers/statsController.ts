@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import { getCollection } from '../services/database';
 import { ObjectId } from 'mongodb';
 import logger from '../utils/logger';
+import { User } from '../types/user';
+import { UserMedal } from '../types/userMedal';
+import { Medal } from '../types/medal';
 
 interface UserPointsBreakdown {
   category: string;
@@ -156,4 +159,74 @@ function formatCategoryName(category: string): string {
     default:
       return category.charAt(0).toUpperCase() + category.slice(1);
   }
-} 
+}
+
+// Obter Leaderboard Geral
+export const getLeaderboard = async (req: Request, res: Response) => {
+  try {
+    const usersCollection = await getCollection<User>('users');
+    const userMedalsCollection = await getCollection<UserMedal>('user_medals');
+    const medalsCollection = await getCollection<Medal>('medals');
+
+    // Buscar todos os usuários
+    const users = await usersCollection.find({}, {
+      projection: { _id: 1, name: 1, points: 1 } 
+    }).toArray();
+
+    // Buscar todas as definições de medalhas para mapeamento fácil
+    const allMedals = await medalsCollection.find({}, {
+      projection: { _id: 1, name: 1, imageSrc: 1, requiredPoints: 1 }
+    }).toArray();
+    const medalsMap = new Map(allMedals.map(m => [m._id.toString(), m]));
+
+    // Obter medalhas e top 3 para cada usuário
+    const leaderboardData = await Promise.all(users.map(async (user) => {
+      // Buscar as medalhas do usuário
+      const userMedalsDocs = await userMedalsCollection.find({ userId: user._id.toString() }).toArray();
+      const medalCount = userMedalsDocs.length;
+      
+      // Mapear para obter detalhes completos das medalhas
+      const userFullMedals = userMedalsDocs
+        .map(um => medalsMap.get(um.medalId))
+        .filter((medal): medal is Medal => !!medal);
+
+      // Ordenar por pontos necessários (descendente) e pegar top 3
+      const topMedals = userFullMedals
+        .sort((a, b) => (b.requiredPoints || 0) - (a.requiredPoints || 0))
+        .slice(0, 3)
+        .map(m => ({ name: m.name, imageSrc: m.imageSrc }));
+
+      return {
+        _id: user._id.toString(),
+        name: user.name || `Utilizador ${user._id.toString().substring(0, 5)}`,
+        points: user.points || 0,
+        medalCount: medalCount,
+        topMedals: topMedals
+      };
+    }));
+
+    // Ordenar por pontos (descendente), depois por contagem de medalhas (descendente), depois por nome (ascendente)
+    leaderboardData.sort((a, b) => {
+      if (b.points !== a.points) {
+        return b.points - a.points;
+      }
+      if (b.medalCount !== a.medalCount) {
+        return b.medalCount - a.medalCount;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    // Adicionar ranking
+    const rankedLeaderboard = leaderboardData.map((user, index) => ({
+      ...user,
+      rank: index + 1
+    }));
+
+    logger.info('Leaderboard recuperado com sucesso', { count: rankedLeaderboard.length });
+    res.json(rankedLeaderboard);
+
+  } catch (error) {
+    logger.error('Erro ao recuperar leaderboard', { error });
+    res.status(500).json({ message: 'Erro ao recuperar leaderboard' });
+  }
+}; 

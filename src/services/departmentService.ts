@@ -84,9 +84,9 @@ export async function getDepartmentsWithEmployees(): Promise<DepartmentWithEmplo
 /**
  * Atualiza o número de funcionários de um departamento
  */
-export async function updateDepartmentEmployeeCount(departmentId: string, employeeCount: number): Promise<boolean> {
+export async function updateDepartmentEmployeeCount(department_Id: string, employeeCount: number): Promise<boolean> {
   try {
-    await api.put(`/departments/${departmentId}/employee-count`, { employeeCount });
+    await api.put(`/departments/${department_Id}/employee-count`, { employeeCount });
     return true;
   } catch (error) {
     throw error;

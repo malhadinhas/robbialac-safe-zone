@@ -10,14 +10,12 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Play } from 'lucide-react';
 import { getVideos } from '@/services/videoService';
 import { toast } from 'sonner';
-import logger from '@/utils/logger';
-import { VideoThumbnail } from '@/components/video/VideoThumbnail';
+import { VideoCardItem } from '@/components/VideoCardItem';
 
 export default function Videos() {
   const { zone } = useParams<{ zone: string }>();
   const navigate = useNavigate();
   const [videos, setVideos] = useState<Video[]>([]);
-  const [hoveredVideo, setHoveredVideo] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
   const capitalizeFirstLetter = (string: string) => {
@@ -28,35 +26,27 @@ export default function Videos() {
   
   useEffect(() => {
     const fetchVideos = async () => {
-      logger.info(`Iniciando busca de vídeos para zona: ${zone}`);
       try {
         setLoading(true);
         const allVideos = await getVideos();
-        logger.info(`Vídeos recebidos da API: ${allVideos?.length ?? 0}`, { firstVideo: allVideos?.[0] });
         
         if (!Array.isArray(allVideos)) {
-          logger.error('Dados de vídeos inválidos recebidos da API', { received: allVideos });
           toast.error('Erro ao carregar vídeos: formato inválido');
           setVideos([]);
           setLoading(false);
           return;
         }
 
-        // Log detalhado dos status recebidos ANTES de filtrar
-        logger.info('Verificando status dos vídeos recebidos:', allVideos.map(v => ({ id: v.id, status_recebido: v.status, tipo: typeof v.status })));
-
         // Filtra primeiro para pegar apenas vídeos prontos (comparação mais robusta)
         const readyVideos = allVideos.filter(video => 
           typeof video.status === 'string' && video.status.trim().toLowerCase() === 'ready'
         );
-        logger.info(`Vídeos filtrados como 'ready' (comparação robusta): ${readyVideos.length}`);
 
         // Garantir que videosToDisplay é sempre um array
         let videosToDisplay: Video[] = []; 
 
         if (zone) {
           const normalizedZoneParam = zone.charAt(0).toUpperCase() + zone.slice(1).toLowerCase();
-          logger.info(`Zona normalizada do parâmetro URL: '${normalizedZoneParam}'`);
           
           // Filtra os vídeos prontos pela zona
           const filteredReadyVideos = readyVideos.filter(video => {
@@ -64,29 +54,20 @@ export default function Videos() {
             const isMatch = videoZone && videoZone.toLowerCase() === normalizedZoneParam.toLowerCase();
             return isMatch;
           });
-          
-          logger.info(`Vídeos prontos após filtro para zona '${normalizedZoneParam}': ${filteredReadyVideos.length}`, { 
-            firstFilteredVideo: filteredReadyVideos?.[0] 
-          });
 
           if (filteredReadyVideos.length === 0 && readyVideos.length > 0) {
-            logger.warn(`Nenhum vídeo pronto encontrado para a zona '${normalizedZoneParam}', mas ${readyVideos.length} vídeos prontos totais recebidos. Verifique a correspondência de zona.`);
             const allReadyZones = Array.from(new Set(readyVideos.map(v => v.zone).filter(Boolean)));
-            logger.warn(`Zonas presentes nos vídeos prontos recebidos:`, allReadyZones);
           }
           
           videosToDisplay = filteredReadyVideos;
         } else {
-          logger.info('Nenhuma zona especificada, exibindo todos os vídeos prontos.');
           // Se não houver zona, mostrar todos os vídeos prontos
           videosToDisplay = readyVideos; 
         }
         
-        // ** LOG ANTES DE setVideos **
-        logger.info('Definindo estado de vídeos com:', { count: videosToDisplay.length, isArray: Array.isArray(videosToDisplay) });
         setVideos(videosToDisplay);
       } catch (error) {
-        logger.error('Erro detalhado ao carregar vídeos', { 
+        console.error('Erro detalhado ao carregar vídeos', { 
           error,
           zone,
           message: error instanceof Error ? error.message : 'Erro desconhecido',
@@ -96,7 +77,6 @@ export default function Videos() {
         setVideos([]);
       } finally {
         setLoading(false);
-        logger.info(`Busca de vídeos finalizada para zona: ${zone}`);
       }
     };
 
@@ -110,9 +90,6 @@ export default function Videos() {
   const handleBackClick = () => {
     navigate('/formacoes');
   };
-  
-  // Log no início da função de renderização (usando info)
-  logger.info('Videos component rendering...', { loading, videosLength: videos.length });
   
   return (
     <Layout>
@@ -131,9 +108,6 @@ export default function Videos() {
           </div>
         ) : (
           (() => {
-            // Log do estado no momento da renderização pós-loading (usando info)
-            logger.info('Renderizando após loading', { videosLength: videos.length });
-
             if (videos.length === 0) {
               return (
                 <div className="text-center py-12 border rounded-lg bg-gray-50">
@@ -175,48 +149,9 @@ export default function Videos() {
                   {Object.entries(videosByCategory).map(([category, categoryVideos]) => (
                     <TabsContent key={category} value={category}>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {categoryVideos.map(video => {
-                          // Log da URL da thumbnail (usando info)
-                          logger.info(`Renderizando thumbnail para vídeo ID ${video.id}`, { thumbnailUrl: video.r2ThumbnailKey });
-                          return (
-                            <Card 
-                              key={video.id}
-                              className="overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
-                              onClick={() => handleVideoClick(video.id)}
-                              onMouseEnter={() => setHoveredVideo(video.id)}
-                              onMouseLeave={() => setHoveredVideo(null)}
-                            >
-                              <div className="relative aspect-video">
-                                <VideoThumbnail
-                                  thumbnailKey={video.r2ThumbnailKey}
-                                  alt={video.title}
-                                  className="w-full h-full object-cover"
-                                />
-                                {hoveredVideo === video.id && (
-                                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                    <Play className="h-12 w-12 text-white" />
-                                  </div>
-                                )}
-                              </div>
-                              
-                              <CardContent className="p-4">
-                                <h3 className="font-medium text-lg line-clamp-2 mb-1">{video.title}</h3>
-                                <div className="flex items-center justify-between text-sm text-gray-500">
-                                  <span>{video.views} visualizações</span>
-                                  <span>
-                                    {video.uploadDate 
-                                      ? formatDistanceToNow(new Date(video.uploadDate), { 
-                                          addSuffix: true, 
-                                          locale: ptBR 
-                                        })
-                                      : 'Data indisponível'
-                                    }
-                                  </span>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          );
-                        })}
+                        {categoryVideos.map(video => (
+                          <VideoCardItem key={video.id || video._id} video={video} />
+                        ))}
                       </div>
                       
                       {categoryVideos.length === 0 && (

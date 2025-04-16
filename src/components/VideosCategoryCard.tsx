@@ -72,6 +72,10 @@ const HoverVideoPreview = ({ video }: { video: Video }) => {
             muted
             loop
             playsInline
+            onError={(e) => {
+              console.error('Erro ao carregar preview do vídeo:', e);
+              toast.error(`Falha ao carregar preview: ${video.title}`);
+            }}
           />
         )}
         
@@ -105,6 +109,9 @@ const HoverVideoPreview = ({ video }: { video: Video }) => {
 };
 
 const VideosCategoryCard = ({ category, displayTitle, description }: VideosCategoryCardProps) => {
+  // --- LOG DE TESTE INICIAL ---
+  console.log(`[VideosCategoryCard] Renderizando para Categoria: ${category}, Título: ${displayTitle}`);
+  
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -172,7 +179,7 @@ const VideosCategoryCard = ({ category, displayTitle, description }: VideosCateg
                   <span>{lastSeenTitle}</span>
                 </div>
               )}
-              <HoverVideoPreview key={videos[0].id} video={videos[0]} />
+              {videos[0] && <HoverVideoPreview key={videos[0].id} video={videos[0]} />}
             </div>
             
             {/* Vídeo recomendado */}
@@ -184,7 +191,7 @@ const VideosCategoryCard = ({ category, displayTitle, description }: VideosCateg
                     <span>{recommendedTitle}</span>
                   </div>
                 )}
-                <HoverVideoPreview key={videos[1].id} video={videos[1]} />
+                {videos[1] && <HoverVideoPreview key={videos[1].id} video={videos[1]} />}
               </div>
             )}
             

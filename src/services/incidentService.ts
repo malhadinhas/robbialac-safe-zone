@@ -1,16 +1,21 @@
 import { Incident } from "@/types";
 import api from '@/lib/api';
 
-export async function getIncidents(): Promise<Incident[]> {
+export async function getIncidents(status?: 'active' | 'archived'): Promise<Incident[]> {
   try {
-    const response = await api.get('/incidents');
-    return response.data.map((incident: Incident) => ({
+    let url = '/incidents';
+    if (status) {
+      url += `?status=${status === 'active' ? 'not_archived' : 'archived'}`;
+    }
+    const response = await api.get(url);
+    return response.data.map((incident: any) => ({
       ...incident,
-      date: new Date(incident.date),
+      date: incident.date ? new Date(incident.date) : new Date(),
       completionDate: incident.completionDate ? new Date(incident.completionDate) : undefined,
       resolutionDeadline: incident.resolutionDeadline ? new Date(incident.resolutionDeadline) : undefined
     }));
   } catch (error) {
+    console.error("Erro ao buscar incidentes:", error);
     throw error;
   }
 }
@@ -42,11 +47,11 @@ export async function createIncident(incident: Omit<Incident, "id">): Promise<In
   }
 }
 
-export async function updateIncident(incident: Incident): Promise<void> {
+export async function updateIncident(id: string, updateData: Partial<Omit<Incident, '_id' | 'id'>>): Promise<void> {
   try {
-    const { _id, ...incidentWithoutId } = incident;
-    await api.put(`/incidents/${incident.id}`, incidentWithoutId);
+    await api.put(`/incidents/${id}`, updateData);
   } catch (error) {
+    console.error("Erro ao atualizar incidente:", error);
     throw error;
   }
 }
@@ -134,11 +139,26 @@ interface IncidentsByDepartment {
   [departmentId: string]: number;
 }
 
-export async function getIncidentsByDepartment(): Promise<IncidentsByDepartment> {
+export async function getIncidentsByDepartment(year?: number): Promise<{ department: string; count: number }[]> {
   try {
-    const response = await api.get('/api/incidents/by-department');
+    // Constrói a URL com o parâmetro de ano, se fornecido
+    const url = year ? `/incidents/by-department?year=${year}` : '/incidents/by-department';
+    const response = await api.get(url);
+    // Removido o log daqui, pois estava no sítio errado
+    // console.warn('[incidentService] Resposta BRUTA de /incidents/by-department:', response.data);
     return response.data;
   } catch (error) {
+    // Logar o erro e retornar array vazio para não quebrar o frontend
+    console.error("Erro ao buscar incidentes por departamento:", error);
+    return []; 
+  }
+}
+
+export async function deleteIncident(id: string): Promise<void> {
+  try {
+    await api.delete(`/incidents/${id}`);
+  } catch (error) {
+    console.error("Erro ao apagar incidente:", error);
     throw error;
   }
 }

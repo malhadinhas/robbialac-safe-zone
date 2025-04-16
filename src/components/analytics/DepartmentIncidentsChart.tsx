@@ -17,6 +17,7 @@ interface DepartmentData {
     name: string;
     color: string;
     employeeCount: number;
+    label: string;
   };
   incidents: number;
   target: number;
@@ -35,7 +36,7 @@ export default function DepartmentIncidentsChart({ data }: Props) {
   const chartData = data.map(item => {
     // Remover: console.log('Processando item para o gráfico:', item);
     return {
-      name: item.department.name,
+      name: item.department.label,
       incidentes: item.incidents,
       meta: item.target,
       color: item.department.color
@@ -44,12 +45,44 @@ export default function DepartmentIncidentsChart({ data }: Props) {
 
   // Remover: console.log('Dados processados para o gráfico:', chartData);
 
+  // Calcular o valor máximo para o domínio do eixo Y (NOVA LÓGICA)
+  const calculateMaxYDomain = () => {
+    if (!data || data.length === 0) {
+      return 10; // Retorna 10 se não houver dados
+    }
+
+    // Encontra a meta máxima
+    const maxTarget = data.reduce((max, item) => Math.max(max, item.target), 0);
+    
+    // Encontra o máximo de incidentes reportados
+    const maxIncidents = data.reduce((max, item) => Math.max(max, item.incidents), 0);
+    
+    // O valor base é o maior entre a meta máxima e os incidentes máximos
+    const baseValue = Math.max(maxTarget, maxIncidents);
+
+    // Garante que o máximo seja pelo menos 10
+    const baseMax = Math.max(10, baseValue);
+    
+    // Adiciona uma pequena margem (ex: 10%)
+    const paddedMax = Math.ceil(baseMax * 1.1);
+
+    return paddedMax;
+  };
+
+  const maxYDomain = calculateMaxYDomain();
+
   const CustomTooltip = ({ active, payload, label }: any) => {
+    // DEBUG: Logar o conteúdo do payload -- REMOVER
+    // console.log("Tooltip Payload:", payload);
+
     if (active && payload && payload.length) {
       const reportados = payload.find(p => p.name === 'Quase Acidentes Reportados')?.value || 0;
       const meta = payload.find(p => p.name === 'Meta do Departamento')?.value || 0;
       const percentagem = meta > 0 ? Math.round((reportados / meta) * 100) : 0;
       
+      // DEBUG: Logar valores encontrados -- REMOVER
+      // console.log(`Tooltip - Label: ${label}, Reportados: ${reportados}, Meta: ${meta}`);
+
       return (
         <div className="bg-white p-3 border rounded-lg shadow-lg">
           <p className="font-semibold mb-2">{label}</p>
@@ -91,7 +124,7 @@ export default function DepartmentIncidentsChart({ data }: Props) {
           >
             <Label value="Departamentos" offset={-60} position="insideBottom" />
           </XAxis>
-          <YAxis>
+          <YAxis domain={[0, maxYDomain]}>
             <Label value="Quantidade de Quase Acidentes" angle={-90} position="insideLeft" offset={0} />
           </YAxis>
           <Tooltip content={<CustomTooltip />} />

@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { getIncidents, updateIncident } from "@/services/incidentService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getIncidents, updateIncident, deleteIncident } from "@/services/incidentService";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Search, Plus, Eye, Edit, Trash2, Save } from "lucide-react";
+import { Search, Plus, Eye, Edit, Trash2, Archive, ArchiveX, Save } from "lucide-react";
 import { Incident } from "@/types";
 import { Layout } from "@/components/Layout";
 import ImageGallery from "@/components/incidents/ImageGallery";
@@ -30,22 +30,26 @@ import {
 const QuaseAcidentes = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [formData, setFormData] = useState<any>({});
   const [images, setImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [incidentToModify, setIncidentToModify] = useState<Incident | null>(null);
+  const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'active' | 'archived'>('active');
   const itemsPerPage = 10;
 
   const isAdmin = user?.role === "admin_app" || user?.role === "admin_qa";
 
   const { data: incidents, isLoading, error, refetch } = useQuery({
-    queryKey: ["incidents"],
-    queryFn: getIncidents
+    queryKey: ["incidents", viewMode],
+    queryFn: () => getIncidents(viewMode === 'active' ? 'active' : 'archived')
   });
 
   const filteredIncidents = incidents?.filter(incident =>
@@ -115,27 +119,56 @@ const QuaseAcidentes = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteClick = (event: React.MouseEvent, incident: Incident) => {
+  const handleArchiveClick = (event: React.MouseEvent, incident: Incident) => {
     event.stopPropagation();
-    setSelectedIncident(incident);
-    setIsDeleteDialogOpen(true);
+    setIncidentToModify(incident);
+    setIsArchiveConfirmOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (!selectedIncident) return;
-    
-    try {
-      await updateIncident({
-        ...selectedIncident,
-        status: "Arquivado"
-      });
-      
+  const handleDeleteClick = (event: React.MouseEvent, incident: Incident) => {
+    event.stopPropagation();
+    setIncidentToModify(incident);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const archiveMutation = useMutation({
+    mutationFn: (incident: Incident) => updateIncident(incident._id, { status: 'Arquivado' }),
+    onSuccess: () => {
       toast.success("Quase acidente arquivado com sucesso");
-      setIsDeleteDialogOpen(false);
-      refetch();
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ['incidents', viewMode] });
+      setIsArchiveConfirmOpen(false);
+      setIncidentToModify(null);
+    },
+    onError: () => {
       toast.error("Erro ao arquivar quase acidente");
+      setIsArchiveConfirmOpen(false);
+      setIncidentToModify(null);
     }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (incidentId: string) => deleteIncident(incidentId),
+    onSuccess: () => {
+      toast.success("Quase acidente apagado permanentemente");
+      queryClient.invalidateQueries({ queryKey: ['incidents', viewMode] });
+      setIsDeleteConfirmOpen(false);
+      setIncidentToModify(null);
+    },
+    onError: () => {
+      toast.error("Erro ao apagar quase acidente");
+      setIsDeleteConfirmOpen(false);
+      setIncidentToModify(null);
+    }
+  });
+
+  const confirmArchive = () => {
+    if (!incidentToModify) return;
+    archiveMutation.mutate(incidentToModify);
+  };
+
+  const confirmDelete = () => {
+    if (!incidentToModify) return;
+    deleteMutation.mutate(incidentToModify._id);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -151,12 +184,38 @@ const QuaseAcidentes = () => {
     setImages(newImages);
   };
 
+  const calculateRiskAndQuality = (severity?: string, frequency?: string) => {
+    const gravityMap = { 'Baixo': 1, 'Médio': 4, 'Alto': 7 };
+    const frequencyMap = { 'Baixa': 2, 'Moderada': 6, 'Alta': 8 };
+
+    const gravityValue = severity ? gravityMap[severity] || 0 : 0;
+    const frequencyValue = frequency ? frequencyMap[frequency] || 0 : 0;
+    
+    const risk = gravityValue * frequencyValue;
+    
+    let qaQuality: "Baixa" | "Média" | "Alta" = "Baixa";
+    if (risk > 24) qaQuality = "Alta";
+    else if (risk >= 8) qaQuality = "Média";
+    
+    return { risk, qaQuality };
+  };
+
+  const { risk, qaQuality } = calculateRiskAndQuality(formData.severity, formData.frequency);
+
+  const getQualityColor = (quality: "Baixa" | "Média" | "Alta") => {
+    switch (quality) {
+      case 'Baixa': return 'bg-yellow-100 text-yellow-800';
+      case 'Média': return 'bg-orange-100 text-orange-800';
+      case 'Alta': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      // Garante que todos os campos obrigatórios estejam presentes
       const updatedIncident = {
         ...selectedIncident!,
         ...formData,
@@ -172,17 +231,16 @@ const QuaseAcidentes = () => {
         pointsAwarded: formData.pointsAwarded || selectedIncident!.pointsAwarded || 0,
         resolutionDeadline: formData.resolutionDeadline ? new Date(formData.resolutionDeadline) : undefined,
         images: images,
-        // Campos opcionais
         implementedAction: formData.implementedAction,
         responsible: formData.responsible,
         adminNotes: formData.adminNotes,
         suggestionToFix: formData.suggestionToFix,
         factoryArea: formData.factoryArea,
         gravityValue: formData.gravityValue,
-        frequency: formData.frequency,
+        frequency: formData.frequency as "Baixa" | "Moderada" | "Alta",
         frequencyValue: formData.frequencyValue,
-        risk: formData.risk,
-        qaQuality: formData.qaQuality,
+        risk: risk,
+        qaQuality: qaQuality,
         resolutionDays: formData.resolutionDays,
         reporterName: formData.reporterName,
         completionDate: formData.completionDate ? new Date(formData.completionDate) : undefined
@@ -206,7 +264,7 @@ const QuaseAcidentes = () => {
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         items.push(
-          <PaginationItem key={i}>
+          <PaginationItem key={`page-${i}`}>
             <PaginationLink 
               onClick={() => setCurrentPage(i)}
               isActive={currentPage === i}
@@ -218,7 +276,7 @@ const QuaseAcidentes = () => {
       }
     } else {
       items.push(
-        <PaginationItem key={1}>
+        <PaginationItem key="page-1">
           <PaginationLink 
             onClick={() => setCurrentPage(1)}
             isActive={currentPage === 1}
@@ -230,7 +288,7 @@ const QuaseAcidentes = () => {
       
       if (currentPage > 3) {
         items.push(
-          <PaginationItem key="ellipsis-start">
+          <PaginationItem key="page-ellipsis-start">
             <PaginationLink>...</PaginationLink>
           </PaginationItem>
         );
@@ -241,7 +299,7 @@ const QuaseAcidentes = () => {
       
       for (let i = startPage; i <= endPage; i++) {
         items.push(
-          <PaginationItem key={i}>
+          <PaginationItem key={`page-${i}`}>
             <PaginationLink 
               onClick={() => setCurrentPage(i)}
               isActive={currentPage === i}
@@ -254,24 +312,22 @@ const QuaseAcidentes = () => {
       
       if (currentPage < totalPages - 2) {
         items.push(
-          <PaginationItem key="ellipsis-end">
+          <PaginationItem key="page-ellipsis-end">
             <PaginationLink>...</PaginationLink>
           </PaginationItem>
         );
       }
       
-      if (totalPages > 1) {
-        items.push(
-          <PaginationItem key={totalPages}>
-            <PaginationLink 
-              onClick={() => setCurrentPage(totalPages)}
-              isActive={currentPage === totalPages}
-            >
-              {totalPages}
-            </PaginationLink>
-          </PaginationItem>
-        );
-      }
+      items.push(
+        <PaginationItem key={`page-${totalPages}`}>
+          <PaginationLink 
+            onClick={() => setCurrentPage(totalPages)}
+            isActive={currentPage === totalPages}
+          >
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
     }
     
     return items;
@@ -296,7 +352,7 @@ const QuaseAcidentes = () => {
     <Layout>
       <div className="container p-4">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-          <h1 className="text-2xl font-bold">Quase Acidentes</h1>
+          <h1 className="text-2xl font-bold">Quase Acidentes ({viewMode === 'active' ? 'Ativos' : 'Arquivados'})</h1>
           <div className="flex w-full md:w-auto gap-2">
             <div className="relative flex-grow md:flex-grow-0">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -308,6 +364,14 @@ const QuaseAcidentes = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            {isAdmin && (
+              <Button 
+                variant="outline"
+                onClick={() => setViewMode(prev => prev === 'active' ? 'archived' : 'active')}
+              >
+                {viewMode === 'active' ? 'Ver Arquivados' : 'Ver Ativos'}
+              </Button>
+            )}
             <Button onClick={() => navigate("/quase-acidentes/novo")}>
               <Plus className="h-4 w-4 mr-2" /> Novo
             </Button>
@@ -336,7 +400,7 @@ const QuaseAcidentes = () => {
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {paginatedIncidents.map((incident) => (
-              <Card key={incident.id} className="overflow-hidden">
+              <Card key={incident._id} className="overflow-hidden">
                 <div 
                   className="flex items-center gap-4 p-4 cursor-pointer hover:bg-slate-50"
                   onClick={() => handleIncidentClick(incident)}
@@ -377,6 +441,14 @@ const QuaseAcidentes = () => {
                           onClick={(e) => handleEditIncident(e, incident)}
                         >
                           <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="text-yellow-500"
+                          onClick={(e) => handleArchiveClick(e, incident)}
+                        >
+                          <Archive className="h-4 w-4" />
                         </Button>
                         <Button 
                           size="icon" 
@@ -500,10 +572,10 @@ const QuaseAcidentes = () => {
                       variant="destructive"
                       onClick={() => {
                         setIsViewModalOpen(false);
-                        setIsDeleteDialogOpen(true);
+                        setIsArchiveConfirmOpen(true);
                       }}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" /> Arquivar
+                      <Archive className="h-4 w-4 mr-2" /> Arquivar
                     </Button>
                   </DialogFooter>
                 )}
@@ -624,7 +696,7 @@ const QuaseAcidentes = () => {
                           Gravidade <span className="text-red-500">*</span>
                         </label>
                         <Select
-                          value={formData.severity}
+                          value={formData.severity || ''}
                           onValueChange={(value) => handleSelectChange("severity", value)}
                         >
                           <SelectTrigger id="severity">
@@ -638,6 +710,45 @@ const QuaseAcidentes = () => {
                         </Select>
                       </div>
                       
+                      <div>
+                        <label htmlFor="frequency" className="block text-sm font-medium mb-1">
+                          Frequência <span className="text-red-500">*</span>
+                        </label>
+                        <Select
+                          value={formData.frequency || ''}
+                          onValueChange={(value) => handleSelectChange("frequency", value)}
+                        >
+                          <SelectTrigger id="frequency">
+                            <SelectValue placeholder="Selecione a frequência" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Baixa">Baixa</SelectItem>
+                            <SelectItem value="Moderada">Moderada</SelectItem>
+                            <SelectItem value="Alta">Alta</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Risco (Calculado)
+                        </label>
+                        <Input
+                          value={`${risk} pts`}
+                          readOnly
+                          className="bg-gray-100 cursor-not-allowed"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Qualidade QA (Calculada)
+                        </label>
+                        <div className={`px-3 py-2 rounded-md text-sm font-medium ${getQualityColor(qaQuality)}`}>
+                          {qaQuality}
+                        </div>
+                      </div>
+
                       <div>
                         <label htmlFor="status" className="block text-sm font-medium mb-1">
                           Status <span className="text-red-500">*</span>
@@ -783,18 +894,43 @@ const QuaseAcidentes = () => {
           </DialogContent>
         </Dialog>
 
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialog open={isArchiveConfirmOpen} onOpenChange={setIsArchiveConfirmOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Arquivar quase acidente</AlertDialogTitle>
+              <AlertDialogTitle>Arquivar quase acidente?</AlertDialogTitle>
               <AlertDialogDescription>
-                Tem certeza que deseja arquivar este quase acidente? Esta ação não pode ser desfeita.
+                Tem certeza que deseja arquivar este quase acidente? Ele será movido para a vista de arquivados.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmDelete} className="bg-red-500 text-white hover:bg-red-600">
-                Arquivar
+              <AlertDialogCancel onClick={() => setIncidentToModify(null)}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={confirmArchive} 
+                className="bg-yellow-500 hover:bg-yellow-600" 
+                disabled={archiveMutation.isPending}
+              >
+                {archiveMutation.isPending ? "Arquivando..." : "Arquivar"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Apagar quase acidente?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação é PERMANENTE e não pode ser desfeita. Tem certeza que deseja apagar este quase acidente?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setIncidentToModify(null)}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={confirmDelete} 
+                className="bg-red-600 hover:bg-red-700" 
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? "Apagando..." : "Apagar Permanentemente"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

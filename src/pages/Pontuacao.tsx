@@ -13,9 +13,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NoScrollLayout } from "@/components/NoScrollLayout";
 import { useIsCompactView } from "@/hooks/use-mobile";
 import MedalCard from "@/components/MedalCard";
+import { useNavigate } from "react-router-dom";
 
 export default function Pontuacao() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isCompactView = useIsCompactView();
   const [medals, setMedals] = useState<Medal[]>([]);
   const [unacquiredMedals, setUnacquiredMedals] = useState<Medal[]>([]);
@@ -185,7 +187,7 @@ export default function Pontuacao() {
                 ) : (
                   // Mostrar dados reais
                   pointsBreakdown.map((item, index) => (
-                    <div key={index}>
+                    <div key={item.category}>
                       <div className="flex justify-between text-sm mb-1">
                         <span>{item.category}</span>
                         <span>{item.points} pts</span>
@@ -224,7 +226,10 @@ export default function Pontuacao() {
                   `Ranking: #${userRanking.position} de ${userRanking.totalUsers}`
                 )}
               </p>
-              <Button className="mt-4 w-full bg-robbialac hover:bg-robbialac-dark">
+              <Button 
+                className="mt-4 w-full bg-robbialac hover:bg-robbialac-dark"
+                onClick={() => navigate('/ranking')}
+              >
                 Ver Ranking Completo
               </Button>
             </div>
@@ -260,7 +265,7 @@ export default function Pontuacao() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {medals.map((medal) => (
               <MedalCard 
-                key={medal.id} 
+                key={`earned-${medal._id}`} 
                 medal={medal} 
                 isAcquired={true} 
                 userPoints={user?.points || 0} 
@@ -294,7 +299,7 @@ export default function Pontuacao() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {unacquiredMedals.map((medal) => (
               <MedalCard 
-                key={medal.id} 
+                key={`unacquired-${medal._id}`} 
                 medal={medal} 
                 isAcquired={false} 
                 userPoints={user?.points || 0} 
@@ -403,8 +408,8 @@ export default function Pontuacao() {
             <h3 className="font-medium text-yellow-800 mb-2">Conquistas e Bônus</h3>
             <ul className="text-sm space-y-2 text-gray-700">
               <li>• Nova Medalha: 100 pts</li>
-              <li>• Primeiro da semana: 50 pts</li>
-              <li>• Sequência de 5 dias: 75 pts</li>
+              <li>• Primeiro da semana: 10 pts</li>
+              <li>• Sequência de 5 dias: 50 pts</li>
               <li>• Completar área: 200 pts</li>
             </ul>
           </div>

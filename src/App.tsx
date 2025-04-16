@@ -20,6 +20,7 @@ import QuaseAcidentesNovo from "./pages/QuaseAcidentesNovo";
 import QuaseAcidentesEstatisticas from "./pages/QuaseAcidentesEstatisticas";
 import Pontuacao from "./pages/Pontuacao";
 import Definicoes from "./pages/Definicoes";
+import Ranking from "./pages/Ranking";
 import NotFound from "./pages/NotFound";
 import TestApi from './pages/TestApi';
 
@@ -41,33 +42,12 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  useEffect(() => {
-    console.log("=== APP COMPONENT RENDERED ===");
-    
-    // Add a safety timeout to detect if app is stuck in loading
-    const safetyTimeout = setTimeout(() => {
-      console.log("SAFETY CHECK: App might be stuck in loading state");
-      console.log("SAFETY CHECK: Current route:", window.location.pathname);
-      console.log("SAFETY CHECK: Current URL:", window.location.href);
-      
-      // Log detailed React tree state
-      console.log("SAFETY CHECK: Trying to identify where rendering might be stuck");
-    }, 5000); // Reduced from 10 seconds to 5 seconds
-    
-    return () => {
-      clearTimeout(safetyTimeout);
-      console.log("App component cleanup");
-    };
-  }, []);
-
-  console.log("App component rendering...");
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner position="top-right" />
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <DatabaseProvider>
             <AuthProvider>
               <div className="app-container">
@@ -89,6 +69,7 @@ const App = () => {
                     <Route path="/quase-acidentes/estatisticas" element={<QuaseAcidentesEstatisticas />} />
                     <Route path="/pontuacao" element={<Pontuacao />} />
                     <Route path="/definicoes" element={<Definicoes />} />
+                    <Route path="/ranking" element={<Ranking />} />
                   </Route>
                   
                   {/* Error Route */}

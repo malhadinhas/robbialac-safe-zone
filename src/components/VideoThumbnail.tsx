@@ -9,6 +9,11 @@ interface VideoThumbnailProps {
 }
 
 const VideoThumbnail = ({ thumbnailR2Key, altText = 'Thumbnail' }: VideoThumbnailProps) => {
+  
+  // --- REMOVER LOG DE PROP ---
+  // console.warn(`[VideoThumbnail] Renderizando. Prop thumbnailR2Key recebida:`, thumbnailR2Key);
+  // -----------------------------------
+  
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,14 +35,19 @@ const VideoThumbnail = ({ thumbnailR2Key, altText = 'Thumbnail' }: VideoThumbnai
     // console.log(`VideoThumbnail: Buscando URL para ${altText}`, { thumbnailR2Key });
 
     const fetchUrl = async () => {
+      // --- REMOVER LOG TEMPORÁRIO --- 
+      // console.warn(`[VideoThumbnail] ==> Tentando buscar URL para key: ${thumbnailR2Key}`);
       try {
         const url = await getSecureR2Url(thumbnailR2Key);
+        // --- REMOVER LOG TEMPORÁRIO --- 
+        // console.warn(`[VideoThumbnail] URL obtida com sucesso para key ${thumbnailR2Key}:`, url ? url.substring(0, 50) + '...' : 'URL VAZIA/NULLA');
         if (isMounted) {
           // console.log(`VideoThumbnail: URL obtida para ${altText}`);
           setThumbnailUrl(url);
         }
       } catch (err) {
-        // console.error("Erro ao buscar URL segura da thumbnail:", err);
+        // --- REMOVER LOG TEMPORÁRIO --- 
+        // console.error(`[VideoThumbnail] !!! Erro ao buscar URL para key: ${thumbnailR2Key}`, err);
         if (isMounted) {
           setError('Falha ao carregar thumbnail.');
         }

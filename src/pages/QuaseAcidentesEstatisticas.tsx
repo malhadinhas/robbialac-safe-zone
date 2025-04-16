@@ -25,20 +25,24 @@ export default function QuaseAcidentesEstatisticas() {
   const [totalTarget, setTotalTarget] = useState(0);
   const [targetPercentage, setTargetPercentage] = useState(0);
   const [daysRemaining, setDaysRemaining] = useState(0);
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadData(currentYear);
+  }, [currentYear]);
 
-  const loadData = async () => {
+  const loadData = async (year: number) => {
     setIsLoading(true);
     setHasError(false);
     try {
       const [departments, config, incidents] = await Promise.all([
         getDepartmentsWithEmployees(),
         getSystemConfig(),
-        getIncidentsByDepartment()
+        getIncidentsByDepartment(year)
       ]);
+
+      console.log(`Incidentes recebidos para o ano ${year}:`, JSON.stringify(incidents));
+
       if (!Array.isArray(departments)) {
         throw new Error('Departamentos não é um array');
       }
@@ -46,8 +50,21 @@ export default function QuaseAcidentesEstatisticas() {
         throw new Error('Configuração inválida');
       }
       const data: DepartmentData[] = departments.map(dept => {
-        const deptIncidents = incidents[dept.id] || 0;
-        const target = dept.employeeCount * config.annualIncidentTargetPerEmployee;
+        const deptLabelNormalized = dept.label?.trim().toLowerCase();
+        
+        const incidentData = Array.isArray(incidents) 
+          ? incidents.find(item => {
+              const itemDeptNormalized = item.department?.trim().toLowerCase();
+              return itemDeptNormalized === deptLabelNormalized;
+            }) 
+          : null;
+          
+        const deptIncidents = incidentData ? incidentData.count : 0;
+        
+        const validEmployeeCount = Number(dept.employeeCount) || 0;
+        const validTargetPerEmployee = Number(config.annualIncidentTargetPerEmployee) || 0;
+        const target = validEmployeeCount * validTargetPerEmployee;
+
         return {
           department: dept,
           incidents: deptIncidents,
@@ -75,7 +92,7 @@ export default function QuaseAcidentesEstatisticas() {
   };
 
   const handleRetry = () => {
-    loadData();
+    loadData(currentYear);
   };
 
   return (

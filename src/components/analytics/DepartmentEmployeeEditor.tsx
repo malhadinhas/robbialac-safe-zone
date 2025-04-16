@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -27,17 +32,17 @@ export default function DepartmentEmployeeEditor() {
     }
   };
 
-  const handleEmployeeCountChange = (departmentId: string, value: string) => {
+  const handleEmployeeCountChange = (department_Id: string, value: string) => {
     const numValue = parseInt(value) || 0;
     setDepartments(prev => prev.map(dept => 
-      dept.id === departmentId ? { ...dept, employeeCount: numValue } : dept
+      dept._id === department_Id ? { ...dept, employeeCount: numValue } : dept
     ));
   };
 
-  const handleSave = async (departmentId: string, employeeCount: number) => {
+  const handleSave = async (department_Id: string, employeeCount: number) => {
     setSaving(true);
     try {
-      const success = await updateDepartmentEmployeeCount(departmentId, employeeCount);
+      const success = await updateDepartmentEmployeeCount(department_Id, employeeCount);
       if (success) {
         toast.success("Número de funcionários atualizado com sucesso");
       } else {
@@ -55,36 +60,39 @@ export default function DepartmentEmployeeEditor() {
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-4 md:grid-cols-2">
+      <h3 className="text-lg font-semibold md:col-span-2">Funcionários por Departamento</h3>
       {departments.map((department) => (
-        <Card key={department.id} className="border-l-4" style={{ borderLeftColor: department.color }}>
-          <CardContent className="pt-6">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor={`employee-count-${department.id}`} className="text-base font-medium">
-                  {department.name}
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id={`employee-count-${department.id}`}
-                    type="number"
-                    min="0"
-                    value={department.employeeCount}
-                    onChange={(e) => handleEmployeeCountChange(department.id, e.target.value)}
-                    className="max-w-[120px]"
-                  />
-                  <span className="text-sm text-muted-foreground">funcionários</span>
-                </div>
+        <Card key={department._id} className="border-l-4 flex flex-col" style={{ borderLeftColor: department.color || '#ccc' }}>
+          <CardHeader>
+            <CardTitle className="text-xl">{department.label}</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-2 flex-grow flex flex-col justify-between">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <Label htmlFor={`employee-count-${department._id}`} className="sr-only">
+                Número de funcionários para {department.label}
+              </Label>
+              <div className="flex items-center gap-2 flex-grow justify-end">
+                <Input
+                  id={`employee-count-${department._id}`}
+                  type="number"
+                  min="0"
+                  value={department.employeeCount}
+                  onChange={(e) => handleEmployeeCountChange(department._id, e.target.value)}
+                  className="max-w-[100px] text-right"
+                  aria-label={`Número de funcionários para ${department.label}`}
+                />
+                <span className="text-sm text-muted-foreground">funcionários</span>
               </div>
-              <div className="flex justify-end">
-                <Button 
-                  onClick={() => handleSave(department.id, department.employeeCount)}
-                  disabled={saving}
-                  size="sm"
-                >
-                  Salvar
-                </Button>
-              </div>
+            </div>
+            <div className="flex justify-end mt-auto">
+              <Button 
+                onClick={() => handleSave(department._id, department.employeeCount)}
+                disabled={saving}
+                size="sm"
+              >
+                Salvar
+              </Button>
             </div>
           </CardContent>
         </Card>

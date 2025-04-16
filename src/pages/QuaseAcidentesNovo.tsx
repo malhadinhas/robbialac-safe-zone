@@ -5,7 +5,7 @@ import ChatbotModal from "@/components/incidents/ChatbotModal";
 import { Incident } from "@/types";
 import { toast } from "sonner";
 import { createIncident } from "@/services/incidentService";
-import { getDepartments, Department } from "@/services/departmentService";
+import { getDepartmentsWithEmployees, Department } from "@/services/departmentService";
 
 const QuaseAcidentesNovo = () => {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ const QuaseAcidentesNovo = () => {
     const fetchDepartments = async () => {
       try {
         setIsLoading(true);
-        const data = await getDepartments();
+        const data = await getDepartmentsWithEmployees();
         setDepartments(data);
       } catch (error) {
         toast.error("Erro ao carregar departamentos. Tente novamente.");

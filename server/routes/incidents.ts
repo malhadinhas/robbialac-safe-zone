@@ -11,22 +11,22 @@ import { isAuthenticated, isAdmin } from '../middleware/authMiddleware';
 
 const router = Router();
 
-// Listar todos os incidentes
+// GET /api/incidents - Listar incidentes (com filtro de status opcional)
 router.get('/', getIncidents);
 
-// Buscar incidentes por departamento
+// GET /api/incidents/by-department - Listar por departamento (com filtro de ano opcional)
 router.get('/by-department', getIncidentsByDepartment);
 
-// Buscar um incidente específico
-router.get('/:id', getIncidentById);
-
-// Criar um novo incidente (requer autenticação)
+// POST /api/incidents - Criar novo incidente (requer autenticação)
 router.post('/', isAuthenticated, createIncident);
 
-// Atualizar um incidente (requer autenticação)
-router.put('/:id', isAuthenticated, updateIncident);
+// GET /api/incidents/:incidentId - Obter incidente específico
+router.get('/:incidentId', getIncidentById);
 
-// Excluir um incidente (requer privilégios de administrador)
-router.delete('/:id', isAdmin, deleteIncident);
+// PUT /api/incidents/:incidentId - Atualizar incidente (requer autenticação)
+router.put('/:incidentId', isAuthenticated, updateIncident);
 
-export default router; 
+// DELETE /api/incidents/:incidentId - Apagar incidente permanentemente (requer privilégios de administrador)
+router.delete('/:incidentId', isAdmin, deleteIncident);
+
+export default router;

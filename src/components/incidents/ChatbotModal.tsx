@@ -21,12 +21,26 @@ interface ChatbotModalProps {
 }
 
 const factoryLocations = [
-  "Uf1 - Enchimento",
-  "Uf1 - fabrico",
-  "Uf1 - Piso Intermédio",
-  "Armazêm de matérias primas",
+  "Uf1-Enchimento",
+  "Uf1-Fabrico",
+  "Uf1-Piso Intermédio",
+  "Uf1-Controlo Qualidade",
+  "Uf2 Enchimento",
+  "Uf2 Fabrico",
   "Uf3",
-  "Silos Areia Uf3"
+  "Expedição",
+  "Armazêm de matérias Primas",
+  "Armazêm de Embalagens 1",
+  "Armazêm de Embalagens 2",
+  "Rotulagem",
+  "Etar",
+  "Zona de Residuos",
+  "Manutenção",
+  "Edificio Administrativo",
+  "Edificio de Escritórios",
+  "Portaria",
+  "Silos", 
+  "Parques de Estacionamento"
 ];
 
 enum ChatStep {
@@ -37,7 +51,6 @@ enum ChatStep {
   INCIDENT_LOCATION,
   DESCRIPTION,
   SUGGESTION,
-  SEVERITY,
   CONFIRMATION,
   HELP
 }
@@ -55,6 +68,7 @@ export default function ChatbotModal({
   const [currentStep, setCurrentStep] = useState<ChatStep>(ChatStep.NAME);
   const [previousStep, setPreviousStep] = useState<ChatStep>(ChatStep.NAME);
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -152,11 +166,13 @@ export default function ChatbotModal({
         break;
         
       case ChatStep.DEPARTMENT:
-        const selectedDepartment = departments.find(d => 
-          message.toLowerCase().includes(d.name.toLowerCase())
-        )?.name || departments[0].name;
+        const selectedDepartmentObject = departments.find(d => 
+          d.label && message.toLowerCase() === d.label.toLowerCase()
+        );
         
-        setCurrentIncident(prev => ({ ...prev, department: selectedDepartment }));
+        const selectedDepartmentLabel = selectedDepartmentObject?.label || message;
+        
+        setCurrentIncident(prev => ({ ...prev, department: selectedDepartmentLabel }));
         setTimeout(() => {
           setChatMessages(prev => [...prev, { 
             text: "Em qual área da fábrica ocorreu o quase acidente?", 
@@ -212,78 +228,41 @@ export default function ChatbotModal({
         }
         
         setCurrentIncident(prev => ({ ...prev, suggestionToFix: message }));
-        setTimeout(() => {
-          setChatMessages(prev => [...prev, { 
-            text: "Qual a gravidade potencial deste quase acidente?", 
-            isBot: true,
-            options: ["Baixo", "Médio", "Alto"]
-          }]);
-          setCurrentStep(ChatStep.SEVERITY);
-        }, 500);
-        break;
-        
-      case ChatStep.SEVERITY:
-        const severity = message.toLowerCase().includes("alto") 
-          ? "Alto" 
-          : message.toLowerCase().includes("médio") || message.toLowerCase().includes("medio")
-          ? "Médio" 
-          : "Baixo";
-        
-        const gravityValue = severity === "Alto" ? 7 : severity === "Médio" ? 4 : 1;
-        const frequency = "Baixa";
-        const frequencyValue = 2;
-        const risk = frequencyValue * gravityValue;
-        
-        let qaQuality: "Baixa" | "Média" | "Alta" = "Baixa";
-        if (risk > 24) qaQuality = "Alta";
-        else if (risk >= 8) qaQuality = "Média";
-        else qaQuality = "Baixa";
-        
-        const resolutionDays = severity === "Alto" ? 7 : severity === "Médio" ? 14 : 30;
-        const resolutionDeadline = new Date();
-        resolutionDeadline.setDate(resolutionDeadline.getDate() + resolutionDays);
-        
+
         const incidentDescription = currentIncident.description || "Sem descrição";
         const incidentLocation = currentIncident.location || "Local não especificado";
-        const departmentName = currentIncident.department || departments[0].name;
-        const suggestionToFix = currentIncident.suggestionToFix || "Sem sugestão";
-        
-        const finalIncident: Incident = {
+        const departmentName = currentIncident.department || departments[0].label;
+        const suggestionToFix = message;
+
+        const finalIncident: Partial<Incident> = {
           ...currentIncident as Partial<Incident>,
-          title: currentIncident.description?.substring(0, 50) + "...",
+          title: incidentDescription?.substring(0, 50) + "...",
           description: incidentDescription,
           location: incidentLocation,
           department: departmentName,
-          severity: severity as "Baixo" | "Médio" | "Alto",
           date: date || new Date(),
           reportedBy: user?.email || "",
+          reporterName: currentIncident.reporterName,
+          factoryArea: currentIncident.factoryArea,
+          suggestionToFix: suggestionToFix,
           status: "Reportado",
-          id: Date.now().toString(),
-          pointsAwarded: severity === "Alto" ? 100 : severity === "Médio" ? 75 : 50,
-          gravityValue,
-          frequency,
-          frequencyValue,
-          risk,
-          qaQuality,
-          resolutionDays,
-          resolutionDeadline,
-          suggestionToFix,
+          severity: "Não Definido",
           images: []
         };
-        
+
         setCurrentIncident(finalIncident);
         
         setTimeout(() => {
           setChatMessages(prev => [...prev, { 
             text: "Obrigado pelo seu relato! Aqui está um resumo do quase acidente reportado:\n\n" +
-                  `Nome: ${finalIncident.reporterName}\n` +
-                  `Data: ${format(finalIncident.date, 'dd/MM/yyyy')}\n` +
+                  `Nome: ${finalIncident.reporterName || 'N/A'}\n` +
+                  `Data: ${format(finalIncident.date!, 'dd/MM/yyyy')}\n` +
                   `Departamento: ${finalIncident.department}\n` +
-                  `Área da fábrica: ${finalIncident.factoryArea}\n` +
+                  `Área da fábrica: ${finalIncident.factoryArea || 'N/A'}\n` +
                   `Local específico: ${finalIncident.location}\n` +
                   `Descrição: ${finalIncident.description}\n` +
-                  `Sugestão: ${finalIncident.suggestionToFix}\n` +
-                  `Gravidade: ${finalIncident.severity}\n\n` +
+                  `Sugestão: ${finalIncident.suggestionToFix}\n\n` +
+                  "A gravidade será avaliada posteriormente pela equipa de segurança.\n\n" +
                   "Deseja confirmar este relato?", 
             isBot: true,
             options: ["Confirmar", "Cancelar"]
@@ -328,85 +307,110 @@ export default function ChatbotModal({
     processUserInput(option);
   };
   
-  const handleCalendarSelect = (selectedDate: Date | undefined) => {
-    if (!selectedDate) return;
-    
-    setDate(selectedDate);
+  const proceedToDepartmentStep = (selectedDate: Date) => {
     setCurrentIncident(prev => ({ ...prev, date: selectedDate }));
+    const userDateMessage = { text: format(selectedDate, 'dd/MM/yyyy', { locale: ptBR }), isBot: false };
     
-    setChatMessages(prev => [
-      ...prev, 
-      { text: format(selectedDate, 'dd/MM/yyyy', { locale: ptBR }), isBot: false }
-    ]);
+    setChatMessages(prev => [...prev, userDateMessage]);
     
     setTimeout(() => {
       setChatMessages(prev => [...prev, { 
         text: "A qual departamento você pertence?", 
         isBot: true,
-        options: departments.map(d => d.name)
+        options: departments.map(d => d.label) 
       }]);
       setCurrentStep(ChatStep.DEPARTMENT);
-    }, 500);
+    }, 300);
+  };
+
+  const handleCalendarSelect = (selectedDate: Date | undefined) => {
+    if (!selectedDate) return;
+    setDate(selectedDate);
+    setIsCalendarOpen(false);
+    proceedToDepartmentStep(selectedDate);
+  };
+
+  const handleUseToday = () => {
+    const today = new Date();
+    setDate(today);
+    proceedToDepartmentStep(today);
   };
   
   const renderMessages = () => {
-    return chatMessages.map((message, index) => (
-      <div 
-        key={index} 
-        className={`mb-4 ${message.isBot ? 'flex' : 'flex justify-end'}`}
-      >
-        <div 
-          className={`max-w-[80%] p-3 rounded-lg ${
-            message.isBot 
-              ? 'bg-gray-100 text-gray-800' 
-              : 'bg-robbialac text-white'
-          }`}
-        >
-          {message.text}
-          
-          {message.calendar && (
-            <div className="mt-3">
-              <Popover>
-                <PopoverTrigger asChild>
+    return chatMessages.map((msg, index) => {
+      const messageKey = `msg-${index}`;
+
+      if (msg.isBot) {
+        return (
+          <div key={messageKey} className="flex flex-col gap-2 mb-4">
+            <div className="flex items-start gap-2.5">
+              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200">
+                <MessageSquare size={16} />
+              </span>
+              <div className="flex flex-col w-full max-w-[480px] leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl">
+                <p className="text-sm font-normal text-gray-900 whitespace-pre-wrap">{msg.text}</p>
+              </div>
+            </div>
+            {msg.options && (
+              <div className="flex flex-wrap gap-2 mt-2 ml-10">
+                {msg.options.map((option) => (
                   <Button 
+                    key={option} 
                     variant="outline" 
-                    className="w-full flex justify-between items-center bg-white border border-gray-300"
+                    size="sm" 
+                    onClick={() => handleOptionClick(option)}
                   >
-                    <span>{date ? format(date, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecione uma data'}</span>
-                    <CalendarIcon className="ml-2 h-4 w-4" />
+                    {option}
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={handleCalendarSelect}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          )}
-          
-          {message.options && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {message.options.map((option) => (
-                <Button
-                  key={option}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white hover:bg-gray-100"
-                  onClick={() => handleOptionClick(option)}
-                >
-                  {option}
+                ))}
+              </div>
+            )}
+            {msg.calendar && (
+              <div className="mt-2 ml-10 flex items-center gap-2">
+                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-[200px] justify-start text-left font-normal",
+                        !date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {date ? format(date, "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={handleCalendarSelect}
+                      locale={ptBR}
+                      initialFocus
+                      disabled={{ before: undefined, after: undefined }}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Button variant="secondary" size="sm" onClick={handleUseToday}>
+                  Hoje
                 </Button>
-              ))}
+              </div>
+            )}
+          </div>
+        );
+      } else {
+        return (
+          <div key={messageKey} className="flex items-start justify-end gap-2.5 mb-4">
+            <div className="flex flex-col w-full max-w-[480px] leading-1.5 p-4 border-gray-200 bg-blue-500 rounded-s-xl rounded-ee-xl">
+              <p className="text-sm font-normal text-white">{msg.text}</p>
             </div>
-          )}
-        </div>
-      </div>
-    ));
+            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600">
+              {user?.email?.[0].toUpperCase() || 'U'}
+            </span>
+          </div>
+        );
+      }
+    });
   };
   
   if (!isOpen) return null;
