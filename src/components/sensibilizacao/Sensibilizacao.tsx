@@ -5,7 +5,7 @@ import { Sensibilizacao } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
-import { FaPlus, FaFilePdf, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaFilePdf, FaTrash, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { getSensibilizacoes, createSensibilizacao, deleteSensibilizacao } from '@/services/sensibilizacaoService';
 import { Layout } from '@/components/Layout';
 import { Input } from '@/components/ui/input';
@@ -13,8 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useNavigate } from 'react-router-dom';
-import { PDFPreview } from '@/components/PDFPreview';
+import { PDFViewer } from '@/components/PDFViewer';
 import { NoScrollLayout } from '@/components/NoScrollLayout';
 
 const COUNTRIES = [
@@ -27,7 +26,6 @@ const COUNTRIES = [
 type Country = typeof COUNTRIES[number]['value'];
 
 export function Sensibilizacao() {
-  const navigate = useNavigate();
   const [sensibilizacoes, setSensibilizacoes] = useState<Sensibilizacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -37,15 +35,20 @@ export function Sensibilizacao() {
     country: 'Portugal',
     date: new Date(),
   });
+  const [currentDocumentIndex, setCurrentDocumentIndex] = useState(0);
 
   useEffect(() => {
     loadSensibilizacoes();
   }, []);
 
   const loadSensibilizacoes = async () => {
+    setLoading(true);
     try {
       const sensibilizacoesList = await getSensibilizacoes();
       setSensibilizacoes(sensibilizacoesList);
+      setCurrentDocumentIndex(prevIndex => 
+        sensibilizacoesList.length > 0 ? Math.min(prevIndex, sensibilizacoesList.length - 1) : 0
+      );
     } catch (error) {
       toast.error('Erro ao carregar documentos de sensibilização');
     } finally {
@@ -100,74 +103,96 @@ export function Sensibilizacao() {
     try {
       await deleteSensibilizacao(id);
       toast.success('Documento removido com sucesso');
+      setCurrentDocumentIndex(0);
       loadSensibilizacoes();
     } catch (error) {
       toast.error('Erro ao remover documento');
     }
   };
 
-  const handleViewPDF = (sensibilizacao: Sensibilizacao) => {
-    const searchParams = new URLSearchParams({
-      url: sensibilizacao.pdfUrl!,
-      title: sensibilizacao.name
-    });
-    navigate(`/pdf-viewer/${sensibilizacao._id}?${searchParams.toString()}`);
+  const handlePreviousDocument = () => {
+    setCurrentDocumentIndex(prevIndex => Math.max(0, prevIndex - 1));
   };
+
+  const handleNextDocument = () => {
+    setCurrentDocumentIndex(prevIndex => Math.min(sensibilizacoes.length - 1, prevIndex + 1));
+  };
+
+  const currentDocument = sensibilizacoes.length > 0 ? sensibilizacoes[currentDocumentIndex] : null;
 
   return (
     <Layout>
-      <NoScrollLayout>
-        <div className="h-full">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold">Sensibilização</h1>
+      {/* <NoScrollLayout> */}
+        <div className="h-full flex flex-col">
+          <div className="flex justify-between items-center mb-2 p-2 border-b flex-shrink-0">
+            <h1 className="text-xl font-semibold">Sensibilização</h1>
             <Button
               onClick={() => setShowAddModal(true)}
               className="bg-robbialac hover:bg-robbialac-dark text-white"
+              size="sm"
             >
-              <FaPlus className="mr-2" /> Adicionar Documento
+              <FaPlus className="mr-1" /> Adicionar Documento
             </Button>
           </div>
 
-          {loading ? (
-            <div className="flex items-center justify-center h-[calc(100%-4rem)]">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-robbialac"></div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sensibilizacoes.map((sensibilizacao) => (
-                <div key={sensibilizacao._id} className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <h2 className="text-lg font-medium">{sensibilizacao.name}</h2>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteSensibilizacao(sensibilizacao._id!)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <FaTrash />
-                      </Button>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-1">País: {sensibilizacao.country}</p>
-                    <p className="text-gray-600 text-sm mb-3">
-                      Data: {format(new Date(sensibilizacao.date), 'dd/MM/yyyy', { locale: ptBR })}
-                    </p>
-                  </div>
-
-                  <div className="px-4 pb-4">
-                    <PDFPreview url={sensibilizacao.pdfUrl!} className="mb-3" />
+          <div className="flex-grow overflow-y-auto">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-robbialac"></div>
+              </div>
+            ) : !currentDocument ? (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500">Nenhum documento de sensibilização encontrado.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col h-full">
+                <div className="w-full mb-2 p-2 flex justify-between items-center flex-shrink-0 border-b">
+                  <h2 className="text-xl font-medium truncate mr-4">{currentDocument.name}</h2>
+                  
+                  <div className="flex items-center justify-center gap-3 flex-grow">
                     <Button
-                      variant="outline"
-                      className="w-full flex items-center justify-center gap-2 text-robbialac hover:text-robbialac-dark"
-                      onClick={() => handleViewPDF(sensibilizacao)}
+                      onClick={handlePreviousDocument}
+                      disabled={currentDocumentIndex === 0}
+                      variant="ghost"
+                      size="sm"
                     >
-                      <FaFilePdf /> Visualizar PDF
+                      <FaChevronLeft className="mr-1 h-4 w-4" /> Anterior
+                    </Button>
+                    <span className="text-gray-600 text-sm whitespace-nowrap">
+                      Documento {currentDocumentIndex + 1} de {sensibilizacoes.length}
+                    </span>
+                    <Button
+                      onClick={handleNextDocument}
+                      disabled={currentDocumentIndex === sensibilizacoes.length - 1}
+                      variant="ghost"
+                      size="sm"
+                    >
+                      Próximo <FaChevronRight className="ml-1 h-4 w-4" />
                     </Button>
                   </div>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteSensibilizacao(currentDocument._id!)}
+                    className="text-red-500 hover:text-red-700 ml-4"
+                  >
+                    <FaTrash />
+                  </Button>
                 </div>
-              ))}
-            </div>
-          )}
+
+                <div className="w-full flex-grow border rounded-lg shadow-md overflow-hidden">
+                  {currentDocument.pdfUrl ? (
+                     <PDFViewer url={currentDocument.pdfUrl} />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400">
+                      URL do PDF não disponível.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
             <DialogContent className="sm:max-w-md">
@@ -245,7 +270,7 @@ export function Sensibilizacao() {
             </DialogContent>
           </Dialog>
         </div>
-      </NoScrollLayout>
+      {/* </NoScrollLayout> */}
     </Layout>
   );
 } 

@@ -9,7 +9,6 @@ import { PrivateRoute, PublicOnlyRoute } from "@/components/PrivateRoute";
 import { useEffect } from "react";
 import { Acidentes } from '@/components/acidentes/Acidentes';
 import { Sensibilizacao } from '@/components/sensibilizacao/Sensibilizacao';
-import { PDFViewerPage } from '@/components/PDFViewer/PDFViewerPage';
 
 // Pages
 import Login from "./pages/Login";
@@ -78,7 +77,6 @@ const App = () => {
                     <Route path="/acidentes/novo" element={<AcidenteForm />} />
                     <Route path="/acidentes/:id/editar" element={<AcidenteForm />} />
                     <Route path="/sensibilizacao" element={<Sensibilizacao />} />
-                    <Route path="/pdf-viewer/:id" element={<PDFViewerPage />} />
                   </Route>
                   
                   {/* Error Route */}
