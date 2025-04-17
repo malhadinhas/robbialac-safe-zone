@@ -80,7 +80,7 @@ export default function TestApi() {
             />
             <Input
               type="password"
-              placeholder="Senha"
+              placeholder="Palavra-passe"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -88,9 +88,9 @@ export default function TestApi() {
           
           <div className="flex gap-2">
             <Button onClick={testApi}>Testar API</Button>
-            <Button onClick={login}>Login</Button>
-            <Button onClick={createUser}>Criar Usuário</Button>
-            <Button onClick={getMedals}>Buscar Medalhas</Button>
+            <Button onClick={login}>Iniciar Sessão</Button>
+            <Button onClick={createUser}>Criar Utilizador</Button>
+            <Button onClick={getMedals}>Obter Medalhas</Button>
           </div>
 
           <div className="mt-4">
@@ -99,6 +99,9 @@ export default function TestApi() {
               {JSON.stringify(result, null, 2)}
             </pre>
           </div>
+
+          <div className="text-center py-8 text-red-600">Erro ao testar a API. Tente novamente mais tarde.</div>
+          <div className="text-center py-8 text-gray-500">Nenhum resultado disponível para exibir.</div>
         </CardContent>
       </Card>
     </div>

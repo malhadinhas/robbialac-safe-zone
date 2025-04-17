@@ -38,7 +38,7 @@ export default function VideosVisualizar() {
     let isMounted = true;
     const fetchVideoAndUrls = async () => {
       if (!id) {
-        setErrorLoadingUrls("ID do vídeo não encontrado na URL.");
+        setErrorLoadingUrls("ID do vídeo não encontrado no URL.");
         setIsLoadingUrls(false);
         return;
       }
@@ -97,7 +97,7 @@ export default function VideosVisualizar() {
 
         } else {
            console.warn(`Vídeo ${id} não está pronto (status: ${foundVideo.status}). URLs assinadas não serão buscadas.`);
-           setErrorLoadingUrls(`O vídeo ainda está a ser processado (status: ${foundVideo.status}).`);
+           setErrorLoadingUrls(`O vídeo ainda está a ser processado (estado: ${foundVideo.status}).`);
         }
 
       } catch (error) {
@@ -130,7 +130,7 @@ export default function VideosVisualizar() {
       console.log(`Tentando atribuir pontos para vídeo ${video._id} ao user ${user.id}`);
       try {
         await awardVideoPoints(video._id, user.id);
-        toast.success("Pontos ganhos pela visualização do vídeo!");
+        toast.success("Pontos obtidos pela visualização do vídeo!");
         setHasAwardedPoints(true);
       } catch (error) {
         console.error("Erro ao atribuir pontos pela visualização do vídeo:", error);
@@ -144,8 +144,8 @@ export default function VideosVisualizar() {
   
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href)
-      .then(() => toast.success("Link copiado para a área de transferência!"))
-      .catch(() => toast.error("Erro ao copiar o link!"));
+      .then(() => toast.success("Ligação copiada para a área de transferência!"))
+      .catch(() => toast.error("Erro ao copiar a ligação!"));
   };
   
   const duration = video?.duration || 0;
@@ -157,7 +157,7 @@ export default function VideosVisualizar() {
           <Button variant="ghost" onClick={handleGoBack} className="mr-4">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-semibold">{video?.title || 'Carregando vídeo...'}</h1>
+          <h1 className="text-2xl font-semibold">{video?.title || 'A carregar vídeo...'}</h1>
         </div>
         
         <div className="bg-black relative rounded-lg overflow-hidden aspect-video max-h-[70vh]">

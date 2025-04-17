@@ -21,7 +21,7 @@ const HoverVideoPreview = ({ video }: { video: Video }) => {
   const navigate = useNavigate();
 
   const fetchVideoUrl = async () => {
-    const videoKey = video.r2Key || video.r2VideoKey;
+    const videoKey = video.r2VideoKey;
     if (!videoKey || videoUrl) return;
     
     setIsLoadingUrl(true);
@@ -29,7 +29,7 @@ const HoverVideoPreview = ({ video }: { video: Video }) => {
       const response = await getSecureR2Url(videoKey);
       setVideoUrl(response);
     } catch (error) {
-      toast.error("Erro ao buscar URL segura do vídeo.");
+      toast.error("Erro ao obter URL seguro do vídeo.");
     } finally {
       setIsLoadingUrl(false);
     }
@@ -58,7 +58,7 @@ const HoverVideoPreview = ({ video }: { video: Video }) => {
       >
         <div className={`transition-opacity duration-300 ${isHovering && videoUrl ? 'opacity-0' : 'opacity-100'}`}>
           <VideoThumbnail 
-            thumbnailR2Key={video.thumbnailR2Key || video.r2ThumbnailKey} 
+            thumbnailR2Key={video.r2ThumbnailKey} 
             altText={video.title} 
           />
         </div>
@@ -73,8 +73,8 @@ const HoverVideoPreview = ({ video }: { video: Video }) => {
             loop
             playsInline
             onError={(e) => {
-              console.error('Erro ao carregar preview do vídeo:', e);
-              toast.error(`Falha ao carregar preview: ${video.title}`);
+              console.error('Erro ao carregar pré-visualização do vídeo:', e);
+              toast.error(`Falha ao carregar pré-visualização: ${video.title}`);
             }}
           />
         )}
@@ -101,7 +101,7 @@ const HoverVideoPreview = ({ video }: { video: Video }) => {
         <h4 className="text-sm font-medium line-clamp-2">{video.title}</h4>
         <div className="flex items-center justify-between text-xs text-gray-500 mt-0.5">
           <span>{video.views || 0} visualizações</span>
-          <span>{Math.floor((video.duration || 0) / 60)}:{((video.duration || 0) % 60).toString().padStart(2, '0')}</span>
+          <span>{Math.floor((video.duration || 0) / 60)}:{((video.duration || 0) % 60).toString().padStart(2, '0')} min</span>
         </div>
       </div>
     </div>
@@ -120,7 +120,7 @@ const VideosCategoryCard = ({ category, displayTitle, description }: VideosCateg
       setLoading(true);
       try {
         const fetchedVideos = await getVideos({ category: category, limit: '4' });
-        const validVideos = fetchedVideos.filter(v => v.r2Key && v.thumbnailR2Key);
+        const validVideos = fetchedVideos.filter(v => v.r2VideoKey && v.r2ThumbnailKey);
         setVideos(validVideos.slice(0, 4));
       } catch (error) {
         toast.error(`Erro ao carregar vídeos de ${displayTitle}.`);
@@ -148,8 +148,8 @@ const VideosCategoryCard = ({ category, displayTitle, description }: VideosCateg
   const accentClass = colorInfo.accent;
 
   // Preparar os títulos dos cards
-  const lastSeenTitle = videos.length > 0 ? "Último assistido" : "";
-  const recommendedTitle = videos.length > 1 ? "Recomendado para você" : "";
+  const lastSeenTitle = videos.length > 0 ? "Último visualizado" : "";
+  const recommendedTitle = videos.length > 1 ? "Recomendado para si" : "";
 
   return (
     <Card className={`h-full flex flex-col ${colorClass} shadow-sm transition-shadow hover:shadow-md`}>
@@ -176,7 +176,7 @@ const VideosCategoryCard = ({ category, displayTitle, description }: VideosCateg
               {lastSeenTitle && (
                 <div className={`text-xs font-medium ${accentClass} mb-1 flex items-center space-x-1`}>
                   <span className="inline-block w-2 h-2 rounded-full bg-current"></span>
-                  <span>{lastSeenTitle}</span>
+                  <span>Último visualizado</span>
                 </div>
               )}
               {videos[0] && <HoverVideoPreview key={videos[0].id} video={videos[0]} />}
@@ -188,7 +188,7 @@ const VideosCategoryCard = ({ category, displayTitle, description }: VideosCateg
                 {recommendedTitle && (
                   <div className={`text-xs font-medium ${accentClass} mb-1 flex items-center space-x-1`}>
                     <span className="inline-block w-2 h-2 rounded-full bg-current"></span>
-                    <span>{recommendedTitle}</span>
+                    <span>Recomendado para si</span>
                   </div>
                 )}
                 {videos[1] && <HoverVideoPreview key={videos[1].id} video={videos[1]} />}
@@ -199,14 +199,14 @@ const VideosCategoryCard = ({ category, displayTitle, description }: VideosCateg
             {videos.length === 1 && (
               <div className="aspect-video flex items-center justify-center border border-dashed rounded-md p-2 text-center">
                 <div className="text-gray-500 text-xs">
-                  <p>Assista mais vídeos para receber recomendações</p>
+                  <p>Visualize mais vídeos para receber recomendações</p>
                 </div>
               </div>
             )}
           </div>
         ) : (
           <div className="text-center py-4 text-gray-500">
-            <p>Nenhum vídeo de pré-visualização disponível.</p>
+            <p>Não existem vídeos disponíveis para pré-visualização.</p>
             <p className="mt-2 text-xs">Adicione vídeos a esta categoria para que apareçam aqui</p>
           </div>
         )}

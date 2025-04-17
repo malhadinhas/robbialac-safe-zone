@@ -80,7 +80,7 @@ export default function ChatbotModal({
   const resetChat = () => {
     setChatMessages([
       { 
-        text: "Olá! Obrigado por contribuir para a segurança de todos! Vamos registrar um quase acidente para melhorar nosso ambiente de trabalho. Para começar, qual é o seu nome?", 
+        text: "Olá! Obrigado por contribuir para a segurança de todos! Vamos registar um quase acidente para melhorar o nosso ambiente de trabalho. Para começar, qual é o seu nome?", 
         isBot: true 
       }
     ]);
@@ -198,7 +198,7 @@ export default function ChatbotModal({
         setCurrentIncident(prev => ({ ...prev, location: message }));
         setTimeout(() => {
           setChatMessages(prev => [...prev, { 
-            text: "Agora, por favor descreva com detalhes a situação de risco que você observou:", 
+            text: "Agora, por favor descreva com detalhes a situação de risco que observou:", 
             isBot: true 
           }]);
           setCurrentStep(ChatStep.DESCRIPTION);
@@ -392,7 +392,7 @@ export default function ChatbotModal({
                   </PopoverContent>
                 </Popover>
                 <Button variant="secondary" size="sm" onClick={handleUseToday}>
-                  Hoje
+                  Usar data atual
                 </Button>
               </div>
             )}

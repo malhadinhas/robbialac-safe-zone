@@ -32,19 +32,19 @@ class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen flex flex-col items-center justify-center p-4">
           <Alert variant="destructive" className="max-w-lg">
-            <AlertTitle>Something went wrong</AlertTitle>
+            <AlertTitle>Algo deu errado</AlertTitle>
             <AlertDescription>
               <div className="mt-2">
-                <p className="mb-2">An error occurred while rendering the application:</p>
+                <p className="mb-2">Ocorreu um erro ao renderizar a aplicação:</p>
                 <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-40 mb-4">
-                  {this.state.error?.message || "Unknown error"}
+                  {this.state.error?.message || "Erro desconhecido"}
                 </pre>
                 <Button 
                   onClick={() => window.location.reload()}
                   className="flex items-center gap-2"
                 >
                   <RefreshCw size={16} />
-                  Reload Application
+                  Recarregar Aplicação
                 </Button>
               </div>
             </AlertDescription>

@@ -28,6 +28,9 @@ const VideoStats = () => {
           {/* Você pode adicionar mais cards de estatísticas aqui */}
         </div>
       </div>
+      <div className="text-center py-8">A carregar estatísticas...</div>
+      <div className="text-center py-8 text-red-600">Erro ao carregar estatísticas. Tente novamente mais tarde.</div>
+      <div className="text-center py-8 text-gray-500">Nenhuma estatística disponível para exibir.</div>
     </Layout>
   );
 };

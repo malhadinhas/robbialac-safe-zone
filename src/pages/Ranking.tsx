@@ -15,7 +15,7 @@ export default function Ranking() {
   return (
     <Layout>
       <div className="container py-6 space-y-6">
-        <h1 className="text-3xl font-bold">Ranking Geral</h1>
+        <h1 className="text-3xl font-bold">Classificação Geral</h1>
         
         <Card>
           <CardHeader>
@@ -23,7 +23,7 @@ export default function Ranking() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-8">Carregando ranking...</div>
+              <div className="text-center py-8">A carregar classificação...</div>
             ) : error ? (
               <div className="text-center py-8 text-red-600">Erro ao carregar o ranking. Tente novamente mais tarde.</div>
             ) : !leaderboardData || leaderboardData.length === 0 ? (
@@ -32,11 +32,11 @@ export default function Ranking() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[80px] text-center">Rank</TableHead>
+                    <TableHead className="w-[80px] text-center">Posição</TableHead>
                     <TableHead>Utilizador</TableHead>
                     <TableHead className="text-right">Pontos</TableHead>
                     <TableHead className="text-center">Medalhas</TableHead>
-                    <TableHead>Top Medalhas</TableHead>
+                    <TableHead>Melhores Medalhas</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>{leaderboardData.map((user, index) => (

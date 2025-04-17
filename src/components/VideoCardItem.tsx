@@ -84,7 +84,7 @@ export const VideoCardItem = ({ video }: VideoCardItemProps) => {
             loop
             playsInline
             onError={(e) => {
-              toast.error(`Falha ao carregar preview: ${video.title}`);
+              toast.error(`Falha ao carregar pré-visualização: ${video.title}`);
               setVideoUrl(null); // Limpa a URL se o vídeo falhar, voltando para thumbnail
             }}
           />

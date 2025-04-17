@@ -189,7 +189,7 @@ export const RecentActivityCard = ({ videos, incidents = [], className = "" }: A
                   <p className="font-medium text-gray-900 truncate text-sm">{video.title}</p>
                   <div className="flex items-center text-xs text-gray-500">
                     <Eye className="w-3 h-3 mr-1" /> {video.views} visualizações
-                    <Clock className="w-3 h-3 ml-2 mr-1" /> {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
+                    <Clock className="w-3 h-3 ml-2 mr-1" /> {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')} min
                   </div>
                 </div>
                 <div className="ml-2 flex-shrink-0">
@@ -202,7 +202,7 @@ export const RecentActivityCard = ({ videos, incidents = [], className = "" }: A
             
             {videos.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                <p>Nenhum vídeo visualizado recentemente.</p>
+                <p>Não existem vídeos visualizados recentemente.</p>
               </div>
             )}
           </div>
@@ -224,7 +224,7 @@ export const RecentActivityCard = ({ videos, incidents = [], className = "" }: A
                         ? "text-orange-500"
                         : "text-yellow-500"
                     }`} /> 
-                    Severidade: {incident.severity} • Status: {incident.status}
+                    Gravidade: {incident.severity} • Estado: {incident.status}
                     <Calendar className="w-3 h-3 ml-2 mr-1" /> {formatDate(incident.date)}
                   </div>
                 </div>
@@ -236,7 +236,7 @@ export const RecentActivityCard = ({ videos, incidents = [], className = "" }: A
               </div>
             )) : (
               <div className="text-center py-8 text-gray-500">
-                <p>Nenhum quase acidente reportado recentemente.</p>
+                <p>Não existem quase acidentes reportados recentemente.</p>
               </div>
             )}
           </div>

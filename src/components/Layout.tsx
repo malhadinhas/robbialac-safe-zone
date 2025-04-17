@@ -77,14 +77,14 @@ export function Layout({ children }: LayoutProps) {
           className="bg-robbialac text-white p-3 flex items-center justify-between fixed top-0 left-0 right-0 z-30"
           style={{ paddingLeft: adaptiveSpacing.md, paddingRight: adaptiveSpacing.md }}
         >
-          <div className="flex items-center space-x-2 max-w-[75%]">
+          <div className="flex items-center space-x-3 max-w-[75%]">
             <img 
               src="/lovable-uploads/a3de5e63-ebb5-4968-b16b-6769bce13858.png" 
               alt="RobbiSeg Logo" 
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white shrink-0" 
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white shrink-0" 
             />
             <div className="flex items-center">
-              <span className="font-bold text-sm sm:text-base">RobbiSeg</span>
+              <span className="font-bold text-lg sm:text-xl">RobbiSeg</span>
             </div>
           </div>
         </header>
@@ -116,11 +116,11 @@ export function Layout({ children }: LayoutProps) {
               <img 
                 src="/lovable-uploads/6e68a784-6498-4199-a8ef-936b67038a4b.png" 
                 alt="RobbiSeg Logo" 
-                className="w-8 h-8 rounded-full bg-white" 
+                className="w-12 h-12 rounded-full bg-white" 
               />
               {menuOpen && (
-                <div className="flex-1 ml-3">
-                  <h1 className="font-bold text-sm transition-opacity whitespace-normal">RobbiSeg</h1>
+                <div className="flex-1 ml-4">
+                  <h1 className="font-bold text-xl transition-opacity whitespace-normal">RobbiSeg</h1>
                 </div>
               )}
             </div>

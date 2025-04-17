@@ -68,7 +68,7 @@ export async function getUserPointsBreakdown(userId?: string): Promise<UserPoint
  */
 function getDefaultPointsDistribution(): UserPointsBreakdown[] {
   return [
-    { category: "Vídeos Assistidos", points: 50, color: "#0071CE" },
+    { category: "Vídeos Visualizados", points: 50, color: "#0071CE" },
     { category: "Quase Acidentes", points: 25, color: "#FF7A00" },
     { category: "Formações Concluídas", points: 25, color: "#28a745" }
   ];
