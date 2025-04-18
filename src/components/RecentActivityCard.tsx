@@ -148,14 +148,14 @@ export const RecentActivityCard = ({ videos, incidents = [], className = "" }: A
   return (
     <Card className={`${className}`}>
       <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <CardTitle className="text-lg">Atividade Recente</CardTitle>
-          <div className="flex space-x-1">
+          <div className="flex w-full sm:w-auto space-x-1">
             <Button 
               variant={activeTab === "videos" ? "default" : "outline"}
               size="sm"
               onClick={() => setActiveTab("videos")}
-              className={activeTab === "videos" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
+              className={`flex-1 sm:flex-none ${activeTab === "videos" ? "bg-robbialac hover:bg-robbialac-dark" : ""}`}
             >
               <Film className="w-4 h-4 mr-1" /> Vídeos
             </Button>
@@ -163,13 +163,14 @@ export const RecentActivityCard = ({ videos, incidents = [], className = "" }: A
               variant={activeTab === "quaseAcidentes" ? "default" : "outline"}
               size="sm"
               onClick={() => setActiveTab("quaseAcidentes")}
-              className={activeTab === "quaseAcidentes" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
+              className={`flex-1 sm:flex-none ${activeTab === "quaseAcidentes" ? "bg-robbialac hover:bg-robbialac-dark" : ""}`}
             >
               <AlertTriangle className="w-4 h-4 mr-1" /> Quase Acidentes
             </Button>
           </div>
         </div>
       </CardHeader>
+      
       <CardContent>
         {activeTab === "videos" ? (
           <div className="space-y-3">
@@ -187,9 +188,13 @@ export const RecentActivityCard = ({ videos, incidents = [], className = "" }: A
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-900 truncate text-sm">{video.title}</p>
-                  <div className="flex items-center text-xs text-gray-500">
-                    <Eye className="w-3 h-3 mr-1" /> {video.views} visualizações
-                    <Clock className="w-3 h-3 ml-2 mr-1" /> {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')} min
+                  <div className="flex flex-wrap gap-2 items-center text-xs text-gray-500">
+                    <span className="flex items-center">
+                      <Eye className="w-3 h-3 mr-1" /> {video.views} visualizações
+                    </span>
+                    <span className="flex items-center">
+                      <Clock className="w-3 h-3 mr-1" /> {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')} min
+                    </span>
                   </div>
                 </div>
                 <div className="ml-2 flex-shrink-0">
@@ -216,16 +221,23 @@ export const RecentActivityCard = ({ videos, incidents = [], className = "" }: A
               >
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-900 truncate">{incident.title}</p>
-                  <div className="flex items-center text-xs text-gray-500">
-                    <AlertTriangle className={`w-3 h-3 mr-1 ${
-                      incident.severity === "Alto" 
-                        ? "text-red-500" 
-                        : incident.severity === "Médio"
-                        ? "text-orange-500"
-                        : "text-yellow-500"
-                    }`} /> 
-                    Gravidade: {incident.severity} • Estado: {incident.status}
-                    <Calendar className="w-3 h-3 ml-2 mr-1" /> {formatDate(incident.date)}
+                  <div className="flex flex-wrap gap-2 items-center text-xs text-gray-500">
+                    <span className="flex items-center">
+                      <AlertTriangle className={`w-3 h-3 mr-1 ${
+                        incident.severity === "Alto" 
+                          ? "text-red-500" 
+                          : incident.severity === "Médio"
+                          ? "text-orange-500"
+                          : "text-yellow-500"
+                      }`} /> 
+                      Gravidade: {incident.severity}
+                    </span>
+                    <span className="flex items-center">
+                      Estado: {incident.status}
+                    </span>
+                    <span className="flex items-center">
+                      <Calendar className="w-3 h-3 mr-1" /> {formatDate(incident.date)}
+                    </span>
                   </div>
                 </div>
                 <div className="ml-2 flex-shrink-0">

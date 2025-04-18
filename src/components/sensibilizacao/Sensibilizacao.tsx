@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Sensibilizacao } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { toast } from 'react-hot-toast';
 import { FaPlus, FaFilePdf, FaTrash, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { getSensibilizacoes, createSensibilizacao, deleteSensibilizacao } from '@/services/sensibilizacaoService';
 import { Layout } from '@/components/Layout';
@@ -15,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PDFViewer } from '@/components/PDFViewer';
 import { NoScrollLayout } from '@/components/NoScrollLayout';
+import { toast } from "sonner";
+import { useAuth } from '@/contexts/AuthContext';
 
 const COUNTRIES = [
   { value: 'Portugal', label: 'Portugal' },
@@ -26,6 +27,7 @@ const COUNTRIES = [
 type Country = typeof COUNTRIES[number]['value'];
 
 export function Sensibilizacao() {
+  const { user } = useAuth();
   const [sensibilizacoes, setSensibilizacoes] = useState<Sensibilizacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -36,6 +38,12 @@ export function Sensibilizacao() {
     date: new Date(),
   });
   const [currentDocumentIndex, setCurrentDocumentIndex] = useState(0);
+
+  // Verificar se o usuário tem permissão para adicionar documentos
+  const hasAddPermission = user?.role === 'admin_qa' || user?.role === 'admin_app';
+  
+  // Verificar se o usuário tem permissão para excluir documentos (apenas admin_qa)
+  const hasDeletePermission = user?.role === 'admin_qa';
 
   useEffect(() => {
     loadSensibilizacoes();
@@ -73,6 +81,11 @@ export function Sensibilizacao() {
 
   const handleAddSensibilizacao = async () => {
     try {
+      if (!newSensibilizacao.name || newSensibilizacao.name.trim() === '') {
+        toast.error('Por favor, insira um nome para o documento');
+        return;
+      }
+      
       if (!selectedFile) {
         toast.error('Por favor, selecione um arquivo PDF');
         return;
@@ -80,10 +93,17 @@ export function Sensibilizacao() {
 
       const formData = new FormData();
       formData.append('name', newSensibilizacao.name || '');
-      formData.append('country', newSensibilizacao.country || '');
+      formData.append('country', newSensibilizacao.country || 'Portugal');
       formData.append('date', newSensibilizacao.date?.toISOString() || new Date().toISOString());
       formData.append('document', selectedFile);
 
+      toast("A processar o upload e a criar o documento...");
+      console.log("Enviando formulário para criar documento de sensibilização:", {
+        nome: newSensibilizacao.name,
+        país: newSensibilizacao.country,
+        data: newSensibilizacao.date
+      });
+      
       await createSensibilizacao(formData);
       setShowAddModal(false);
       setNewSensibilizacao({
@@ -93,20 +113,32 @@ export function Sensibilizacao() {
       });
       setSelectedFile(null);
       loadSensibilizacoes();
-      toast.success('Documento de sensibilização adicionado com sucesso');
     } catch (error) {
-      toast.error('Erro ao adicionar documento de sensibilização');
+      console.error("Erro ao adicionar documento de sensibilização:", error);
     }
   };
 
   const handleDeleteSensibilizacao = async (id: string) => {
     try {
+      // Verificar permissões novamente como medida de segurança
+      if (!hasDeletePermission) {
+        toast.error('Você não tem permissão para excluir documentos de sensibilização');
+        return;
+      }
+      
       await deleteSensibilizacao(id);
       toast.success('Documento removido com sucesso');
       setCurrentDocumentIndex(0);
       loadSensibilizacoes();
     } catch (error) {
-      toast.error('Erro ao remover documento');
+      console.error("Erro ao remover documento:", error);
+      
+      // Se for um erro de permissão
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        toast.error('Sem permissão para excluir este documento');
+      } else {
+        toast.error('Erro ao remover documento');
+      }
     }
   };
 
@@ -126,13 +158,15 @@ export function Sensibilizacao() {
         <div className="h-full flex flex-col">
           <div className="flex justify-between items-center mb-2 p-2 border-b flex-shrink-0">
             <h1 className="text-xl font-semibold">Sensibilização</h1>
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="bg-robbialac hover:bg-robbialac-dark text-white"
-              size="sm"
-            >
-              <FaPlus className="mr-1" /> Adicionar Documento
-            </Button>
+            {hasAddPermission && (
+              <Button
+                onClick={() => setShowAddModal(true)}
+                className="bg-robbialac hover:bg-robbialac-dark text-white"
+                size="sm"
+              >
+                <FaPlus className="mr-1" /> Adicionar Documento
+              </Button>
+            )}
           </div>
 
           <div className="flex-grow overflow-y-auto">
@@ -171,14 +205,16 @@ export function Sensibilizacao() {
                     </Button>
                   </div>
 
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteSensibilizacao(currentDocument._id!)}
-                    className="text-red-500 hover:text-red-700 ml-4"
-                  >
-                    <FaTrash />
-                  </Button>
+                  {hasDeletePermission && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteSensibilizacao(currentDocument._id!)}
+                      className="text-red-500 hover:text-red-700 ml-4"
+                    >
+                      <FaTrash />
+                    </Button>
+                  )}
                 </div>
 
                 <div className="w-full flex-grow border rounded-lg shadow-md overflow-hidden">

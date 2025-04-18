@@ -76,36 +76,68 @@ export async function getIncidentById(req: Request, res: Response) {
 
 export async function createIncident(req: Request, res: Response) {
   try {
-    const incidentData = req.body;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const incidentData = req.body as Partial<Incident>; // Tipar como Partial<Incident>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const authenticatedUser = (req as any).user; // Obter o usuário do middleware
 
-    // --- Verificação e Criação de Departamento --- 
+    // 1. Validação básica de campos obrigatórios
+    const requiredFields: (keyof Incident)[] = ['title', 'description', 'location', 'date', 'department', 'suggestionToFix'];
+    const missingFields = requiredFields.filter(field => !incidentData[field]);
+
+    if (missingFields.length > 0) {
+      logger.warn(`Tentativa de criar incidente com campos em falta: ${missingFields.join(', ')}`, { data: incidentData });
+      return res.status(400).json({ 
+        error: 'Campos obrigatórios em falta',
+        details: `Os seguintes campos são necessários: ${missingFields.join(', ')}`
+      });
+    }
+
+    // 2. Validação da data
+    let incidentDate: Date;
+    try {
+      incidentDate = new Date(incidentData.date!); // Usar a data do frontend
+      if (isNaN(incidentDate.getTime())) {
+        throw new Error('Data inválida');
+      }
+    } catch (dateError) {
+      logger.warn('Data inválida recebida ao criar incidente:', { date: incidentData.date });
+      return res.status(400).json({ error: 'Formato de data inválido' });
+    }
+    
+    // 3. Obter reportedBy do usuário autenticado
+    const reportedBy = authenticatedUser?.email; 
+    if (!reportedBy) {
+        logger.error('Não foi possível obter o email do usuário autenticado para reportedBy');
+        return res.status(401).json({ error: 'Usuário não autenticado ou sem email' });
+    }
+
+
+    // --- Verificação e Criação de Departamento (mantém-se a lógica) --- 
     if (incidentData.department && typeof incidentData.department === 'string') {
       const departmentName = incidentData.department.trim();
       if (departmentName) {
         const departmentsCollection = await getCollection<Department>('departments');
         const existingDepartment = await departmentsCollection.findOne({ 
-          $or: [ // Verifica por label ou value para mais robustez
+          $or: [ 
             { label: departmentName }, 
-            { value: departmentName.toLowerCase().replace(/\s+/g, '_') } // Exemplo de criação de value
+            { value: departmentName.toLowerCase().replace(/\\s+/g, '_') } 
           ]
         });
 
         if (!existingDepartment) {
-          logger.info(`Departamento "${departmentName}" não encontrado. Criando novo departamento.`);
+          logger.info(`Departamento \"${departmentName}\" não encontrado. Criando novo departamento.`);
           const newDepartment: Omit<Department, '_id'> = {
-            //_id: new ObjectId(), // O MongoDB gera automaticamente se omitido
             label: departmentName,
-            value: departmentName.toLowerCase().replace(/\s+/g, '_'), // Cria um 'value' simples
-            employeeCount: 0 // Assumir 0 funcionários inicialmente
-            // Adicione outros campos padrão se necessário
+            value: departmentName.toLowerCase().replace(/\\s+/g, '_'), 
+            employeeCount: 0 
           };
           try {
             await departmentsCollection.insertOne(newDepartment as Department);
-            logger.info(`Departamento "${departmentName}" criado com sucesso.`);
+            logger.info(`Departamento \"${departmentName}\" criado com sucesso.`);
           } catch (deptError) {
-            logger.error(`Falha ao criar automaticamente o departamento "${departmentName}":`, deptError);
-            // Decide se quer falhar a criação do incidente ou apenas loggar o erro do departamento
-            // Aqui, vamos apenas loggar e continuar com a criação do incidente
+            logger.error(`Falha ao criar automaticamente o departamento \"${departmentName}\":`, deptError);
+            // Continuar mesmo se a criação do departamento falhar
           }
         }
       }
@@ -114,23 +146,51 @@ export async function createIncident(req: Request, res: Response) {
 
     const incidentsCollection = await getCollection<Incident>('incidents');
     
+    // Construir o novo incidente com dados validados e corrigidos
     const newIncident: Omit<Incident, '_id'> = {
-      ...incidentData,
-      // _id: new ObjectId(), // Deixar o MongoDB gerar
-      id: crypto.randomUUID(),
-      date: new Date(),
-      status: 'Reportado',
-      reportedBy: req.body.reportedBy // Idealmente, isto viria do user autenticado
+      // Campos obrigatórios validados
+      title: incidentData.title!,
+      description: incidentData.description!,
+      location: incidentData.location!,
+      date: incidentDate, // Usar a data validada
+      department: incidentData.department!,
+      suggestionToFix: incidentData.suggestionToFix!,
+      // Campos opcionais do body (se existirem)
+      factoryArea: incidentData.factoryArea,
+      images: incidentData.images || [], // Default para array vazio
+      // Campos definidos pelo sistema/backend
+      id: crypto.randomUUID(), // Gerar UUID
+      status: 'Reportado', // Definir status inicial
+      reportedBy: reportedBy, // Usar email do usuário autenticado
+      reporterName: incidentData.reporterName, // Manter o nome do reporter do frontend
+      // Campos relacionados com admin/QA (a serem preenchidos depois)
+      severity: "Não Definido", // Default inicial
+      frequency: undefined, // Default inicial
+      implementedAction: undefined,
+      responsible: undefined,
+      adminNotes: undefined,
+      resolutionDeadline: undefined,
+      completionDate: undefined,
+      pointsAwarded: 0,
+      gravityValue: undefined,
+      frequencyValue: undefined,
+      risk: undefined,
+      qaQuality: undefined,
+      resolutionDays: undefined
     };
     
     const result = await incidentsCollection.insertOne(newIncident as Incident);
-    // Buscar o documento inserido para retornar com o _id gerado
     const createdIncident = await incidentsCollection.findOne({ _id: result.insertedId });
     
+    logger.info(`Novo incidente criado com _id: ${result.insertedId} por ${reportedBy}`);
     res.status(201).json(createdIncident);
+
   } catch (error) {
-    console.error('Erro ao criar incidente:', error);
-    res.status(500).json({ error: 'Erro ao criar incidente' });
+    logger.error('Erro detalhado ao criar incidente:', error); // Log mais detalhado
+    res.status(500).json({ 
+        error: 'Erro interno ao criar incidente',
+        details: error instanceof Error ? error.message : 'Erro desconhecido' 
+    });
   }
 }
 

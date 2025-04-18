@@ -11,11 +11,16 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getDepartmentsWithEmployees, updateDepartmentEmployeeCount } from '@/services/departmentService';
 import { DepartmentWithEmployees } from '@/services/departmentService';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function DepartmentEmployeeEditor() {
   const [departments, setDepartments] = useState<DepartmentWithEmployees[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { user } = useAuth();
+
+  // Verificar se o usuário tem permissão para editar
+  const isAuthorized = user?.role === 'admin_app' || user?.role === 'admin_qa';
 
   useEffect(() => {
     loadDepartments();
@@ -33,6 +38,8 @@ export default function DepartmentEmployeeEditor() {
   };
 
   const handleEmployeeCountChange = (department_Id: string, value: string) => {
+    if (!isAuthorized) return;
+    
     const numValue = parseInt(value) || 0;
     setDepartments(prev => prev.map(dept => 
       dept._id === department_Id ? { ...dept, employeeCount: numValue } : dept
@@ -40,6 +47,11 @@ export default function DepartmentEmployeeEditor() {
   };
 
   const handleSave = async (department_Id: string, employeeCount: number) => {
+    if (!isAuthorized) {
+      toast.error('Você não tem permissão para editar o número de funcionários');
+      return;
+    }
+    
     setSaving(true);
     try {
       const success = await updateDepartmentEmployeeCount(department_Id, employeeCount);
@@ -57,6 +69,15 @@ export default function DepartmentEmployeeEditor() {
 
   if (loading) {
     return <div>Carregando departamentos...</div>;
+  }
+
+  // Se o usuário não tiver permissão, exibir mensagem
+  if (!isAuthorized) {
+    return (
+      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+        <p className="text-yellow-700">Você não tem permissão para editar o número de funcionários por departamento.</p>
+      </div>
+    );
   }
 
   return (
@@ -81,6 +102,7 @@ export default function DepartmentEmployeeEditor() {
                   onChange={(e) => handleEmployeeCountChange(department._id, e.target.value)}
                   className="max-w-[100px] text-right"
                   aria-label={`Número de funcionários para ${department.label}`}
+                  disabled={saving}
                 />
                 <span className="text-sm text-muted-foreground">funcionários</span>
               </div>

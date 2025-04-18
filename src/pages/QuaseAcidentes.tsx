@@ -26,6 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import Image from "next/image";
 
 const QuaseAcidentes = () => {
   const navigate = useNavigate();
@@ -132,7 +133,10 @@ const QuaseAcidentes = () => {
   };
 
   const archiveMutation = useMutation({
-    mutationFn: (incident: Incident) => updateIncident(incident._id, { status: 'Arquivado' }),
+    mutationFn: (incident: Incident) => {
+      const incidentId = incident._id || incident.id;
+      return updateIncident(incidentId, { status: 'Arquivado' });
+    },
     onSuccess: () => {
       toast.success("Quase acidente arquivado com sucesso");
       queryClient.invalidateQueries({ queryKey: ['incidents', viewMode] });
@@ -168,7 +172,8 @@ const QuaseAcidentes = () => {
 
   const confirmDelete = () => {
     if (!incidentToModify) return;
-    deleteMutation.mutate(incidentToModify._id);
+    const incidentId = incidentToModify._id || incidentToModify.id;
+    deleteMutation.mutate(incidentId);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -216,41 +221,42 @@ const QuaseAcidentes = () => {
     setIsSubmitting(true);
     
     try {
-      const updatedIncident = {
-        ...selectedIncident!,
-        ...formData,
-        id: selectedIncident!.id,
+      // Preparar apenas os dados que precisam ser atualizados
+      const updateData = {
         title: formData.title,
         description: formData.description,
         location: formData.location,
         date: new Date(formData.date),
-        status: formData.status as "Reportado" | "Em Análise" | "Resolvido" | "Arquivado",
-        severity: formData.severity as "Baixo" | "Médio" | "Alto",
-        reportedBy: formData.reportedBy || selectedIncident!.reportedBy,
+        status: formData.status,
+        severity: formData.severity,
         department: formData.department,
-        pointsAwarded: formData.pointsAwarded || selectedIncident!.pointsAwarded || 0,
+        factoryArea: formData.factoryArea || undefined,
+        implementedAction: formData.implementedAction || undefined,
+        responsible: formData.responsible || undefined,
+        adminNotes: formData.adminNotes || undefined,
+        suggestionToFix: formData.suggestionToFix || undefined,
         resolutionDeadline: formData.resolutionDeadline ? new Date(formData.resolutionDeadline) : undefined,
         images: images,
-        implementedAction: formData.implementedAction,
-        responsible: formData.responsible,
-        adminNotes: formData.adminNotes,
-        suggestionToFix: formData.suggestionToFix,
-        factoryArea: formData.factoryArea,
-        gravityValue: formData.gravityValue,
-        frequency: formData.frequency as "Baixa" | "Moderada" | "Alta",
-        frequencyValue: formData.frequencyValue,
-        risk: risk,
-        qaQuality: qaQuality,
-        resolutionDays: formData.resolutionDays,
-        reporterName: formData.reporterName,
-        completionDate: formData.completionDate ? new Date(formData.completionDate) : undefined
-      } as Incident;
+        frequency: formData.frequency || undefined,
+        risk: risk || undefined,
+        qaQuality: qaQuality || undefined,
+        pointsAwarded: formData.pointsAwarded || 0
+      };
       
-      await updateIncident(updatedIncident);
+      // Remover campos undefined
+      Object.keys(updateData).forEach(key => 
+        updateData[key] === undefined && delete updateData[key]
+      );
+      
+      // Usar o ID correto - pode ser _id ou id dependendo de como o MongoDB responde
+      const incidentId = selectedIncident!._id || selectedIncident!.id;
+      
+      await updateIncident(incidentId, updateData);
       toast.success("Quase acidente atualizado com sucesso");
       setIsEditModalOpen(false);
       refetch();
     } catch (error) {
+      console.error("Erro ao atualizar quase acidente:", error);
       toast.error("Erro ao atualizar quase acidente");
     } finally {
       setIsSubmitting(false);
@@ -348,6 +354,26 @@ const QuaseAcidentes = () => {
     }
   };
 
+  const reactivateMutation = useMutation({
+    mutationFn: (incident: Incident) => {
+      const incidentId = incident._id || incident.id;
+      return updateIncident(incidentId, { status: 'Reportado' });
+    },
+    onSuccess: () => {
+      toast.success("Quase acidente reativado com sucesso");
+      queryClient.invalidateQueries({ queryKey: ['incidents', viewMode] });
+      setIsViewModalOpen(false);
+    },
+    onError: () => {
+      toast.error("Erro ao reativar quase acidente");
+    }
+  });
+
+  const handleReactivateClick = (event: React.MouseEvent, incident: Incident) => {
+    event.stopPropagation();
+    reactivateMutation.mutate(incident);
+  };
+
   return (
     <Layout>
       <div className="container p-4">
@@ -372,9 +398,11 @@ const QuaseAcidentes = () => {
                 {viewMode === 'active' ? 'Ver Arquivados' : 'Ver Ativos'}
               </Button>
             )}
-            <Button onClick={() => navigate("/quase-acidentes/novo")}>
-              <Plus className="h-4 w-4 mr-2" /> Novo
-            </Button>
+            {isAdmin && (
+              <Button onClick={() => navigate("/quase-acidentes/novo")}>
+                <Plus className="h-4 w-4 mr-2" /> Novo
+              </Button>
+            )}
           </div>
         </div>
 
@@ -432,32 +460,57 @@ const QuaseAcidentes = () => {
                       <Eye className="h-4 w-4" />
                     </Button>
                     
-                    {isAdmin && incident.status !== "Arquivado" && (
+                    {isAdmin && (
                       <>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="text-blue-500"
-                          onClick={(e) => handleEditIncident(e, incident)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="text-yellow-500"
-                          onClick={(e) => handleArchiveClick(e, incident)}
-                        >
-                          <Archive className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="text-red-500"
-                          onClick={(e) => handleDeleteClick(e, incident)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {incident.status === "Arquivado" ? (
+                          <>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="text-green-500"
+                              onClick={(e) => handleReactivateClick(e, incident)}
+                              title="Reativar"
+                            >
+                              <ArchiveX className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="text-red-500"
+                              onClick={(e) => handleDeleteClick(e, incident)}
+                              title="Apagar Permanentemente"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="text-blue-500"
+                              onClick={(e) => handleEditIncident(e, incident)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="text-yellow-500"
+                              onClick={(e) => handleArchiveClick(e, incident)}
+                            >
+                              <Archive className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="text-red-500"
+                              onClick={(e) => handleDeleteClick(e, incident)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </>
                     )}
                   </div>
@@ -494,92 +547,164 @@ const QuaseAcidentes = () => {
         )}
 
         <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-6xl w-[95vw] sm:w-auto h-[90vh] sm:h-auto overflow-y-auto p-4 sm:p-6">
             {selectedIncident && (
               <>
-                <DialogHeader>
-                  <DialogTitle>{selectedIncident.title}</DialogTitle>
+                <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b">
+                  <DialogTitle className="text-xl break-words">{selectedIncident.title}</DialogTitle>
                   <DialogDescription>
                     Detalhes do Quase Acidente reportado.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Local</h3>
-                      <p className="text-sm">{selectedIncident.location}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Data</h3>
-                      <p className="text-sm">{new Date(selectedIncident.date).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Departamento</h3>
-                      <p className="text-sm">{selectedIncident.department}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Gravidade</h3>
-                      <p className="text-sm">{selectedIncident.severity}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Status</h3>
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${getStatusStyle(selectedIncident.status)}`}>
-                        {selectedIncident.status}
+                
+                <div className="space-y-4 sm:space-y-6 py-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                    {/* Coluna da esquerda - Informações do incidente */}
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="bg-slate-50 p-3 rounded-lg">
+                          <h3 className="text-sm font-medium mb-1">Local</h3>
+                          <p className="text-sm break-words">{selectedIncident.location}</p>
+                        </div>
+                        <div className="bg-slate-50 p-3 rounded-lg">
+                          <h3 className="text-sm font-medium mb-1">Data</h3>
+                          <p className="text-sm">{new Date(selectedIncident.date).toLocaleDateString()}</p>
+                        </div>
+                        <div className="bg-slate-50 p-3 rounded-lg">
+                          <h3 className="text-sm font-medium mb-1">Departamento</h3>
+                          <p className="text-sm break-words">{selectedIncident.department}</p>
+                        </div>
+                        <div className="bg-slate-50 p-3 rounded-lg">
+                          <h3 className="text-sm font-medium mb-1">Gravidade</h3>
+                          <p className="text-sm">{selectedIncident.severity}</p>
+                        </div>
                       </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="bg-slate-50 p-3 rounded-lg">
+                          <h3 className="text-sm font-medium mb-1">Status</h3>
+                          <div className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${getStatusStyle(selectedIncident.status)}`}>
+                            {selectedIncident.status}
+                          </div>
+                        </div>
+                        <div className="bg-slate-50 p-3 rounded-lg">
+                          <h3 className="text-sm font-medium mb-1">Reportado por</h3>
+                          <p className="text-sm break-words">{selectedIncident.reporterName || selectedIncident.reportedBy}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-slate-50 p-3 rounded-lg">
+                        <h3 className="text-sm font-medium mb-1">Descrição</h3>
+                        <p className="text-sm whitespace-pre-wrap break-words">{selectedIncident.description}</p>
+                      </div>
+                      
+                      {selectedIncident.suggestionToFix && (
+                        <div className="bg-slate-50 p-3 rounded-lg">
+                          <h3 className="text-sm font-medium mb-1">Sugestão de Correção</h3>
+                          <p className="text-sm whitespace-pre-wrap break-words">{selectedIncident.suggestionToFix}</p>
+                        </div>
+                      )}
+                      
+                      {selectedIncident.implementedAction && (
+                        <div className="bg-slate-50 p-3 rounded-lg">
+                          <h3 className="text-sm font-medium mb-1">Ação Implementada</h3>
+                          <p className="text-sm whitespace-pre-wrap break-words">{selectedIncident.implementedAction}</p>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Reportado por</h3>
-                      <p className="text-sm">{selectedIncident.reporterName || selectedIncident.reportedBy}</p>
+                    
+                    {/* Coluna da direita - Imagens do incidente */}
+                    <div className="space-y-4">
+                      {selectedIncident.images && selectedIncident.images.length > 0 ? (
+                        <div className="bg-slate-50 p-4 rounded-lg">
+                          <h3 className="text-sm font-medium mb-3">Imagens do Quase Acidente</h3>
+                          <div className="relative aspect-[4/3] w-full">
+                            <ImageGallery 
+                              images={selectedIncident.images} 
+                              showControls={true}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full bg-slate-50 p-8 rounded-lg">
+                          <div className="text-slate-400 mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                              <circle cx="9" cy="9" r="2" />
+                              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                            </svg>
+                          </div>
+                          <p className="text-slate-500 text-center">Nenhuma imagem disponível para este quase acidente.</p>
+                        </div>
+                      )}
+                      
+                      {selectedIncident.qaQuality && (
+                        <div className="bg-slate-50 p-4 rounded-lg">
+                          <h3 className="text-sm font-medium mb-2">Análise de Risco</h3>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-xs text-slate-500">Nível de Risco</p>
+                              <p className="font-medium">{selectedIncident.risk || "N/A"} pontos</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-slate-500">Qualidade QA</p>
+                              <div className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${getQualityColor(selectedIncident.qaQuality)}`}>
+                                {selectedIncident.qaQuality}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  
-                  <div>
-                    <h3 className="text-sm font-medium mb-1">Descrição</h3>
-                    <p className="text-sm whitespace-pre-line">{selectedIncident.description}</p>
-                  </div>
-                  
-                  {selectedIncident.suggestionToFix && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Sugestão de Correção</h3>
-                      <p className="text-sm">{selectedIncident.suggestionToFix}</p>
-                    </div>
-                  )}
-                  
-                  {selectedIncident.implementedAction && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Ação Implementada</h3>
-                      <p className="text-sm">{selectedIncident.implementedAction}</p>
-                    </div>
-                  )}
-                  
-                  {selectedIncident.images && selectedIncident.images.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-1">Imagens</h3>
-                      <ImageGallery images={selectedIncident.images} />
-                    </div>
-                  )}
                 </div>
 
-                {isAdmin && selectedIncident.status !== "Arquivado" && (
-                  <DialogFooter className="flex justify-end space-x-2 mt-6">
-                    <Button 
-                      variant="outline"
-                      onClick={() => {
-                        setIsViewModalOpen(false);
-                        setIsEditModalOpen(true);
-                      }}
-                    >
-                      <Edit className="h-4 w-4 mr-2" /> Editar
-                    </Button>
-                    <Button 
-                      variant="destructive"
-                      onClick={() => {
-                        setIsViewModalOpen(false);
-                        setIsArchiveConfirmOpen(true);
-                      }}
-                    >
-                      <Archive className="h-4 w-4 mr-2" /> Arquivar
-                    </Button>
+                {isAdmin && (
+                  <DialogFooter className="sticky bottom-0 bg-white z-10 pt-4 border-t mt-6">
+                    {selectedIncident?.status === "Arquivado" ? (
+                      <>
+                        <Button 
+                          variant="outline"
+                          onClick={() => {
+                            reactivateMutation.mutate(selectedIncident);
+                          }}
+                          className="bg-green-50 hover:bg-green-100 text-green-600"
+                        >
+                          <ArchiveX className="h-4 w-4 mr-2" /> Reativar
+                        </Button>
+                        <Button 
+                          variant="destructive"
+                          onClick={() => {
+                            setIsViewModalOpen(false);
+                            setIsDeleteConfirmOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Apagar
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button 
+                          variant="outline"
+                          onClick={() => {
+                            setIsViewModalOpen(false);
+                            setIsEditModalOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-2" /> Editar
+                        </Button>
+                        <Button 
+                          variant="destructive"
+                          onClick={() => {
+                            setIsViewModalOpen(false);
+                            setIsArchiveConfirmOpen(true);
+                          }}
+                        >
+                          <Archive className="h-4 w-4 mr-2" /> Arquivar
+                        </Button>
+                      </>
+                    )}
                   </DialogFooter>
                 )}
               </>

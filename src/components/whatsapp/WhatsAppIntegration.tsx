@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +19,7 @@ export function WhatsAppIntegration() {
     if (checked) {
       toast.success("Integração com WhatsApp ativada! Os usuários podem enviar mensagens para " + WHATSAPP_NUMBER);
     } else {
-      toast.info("Integração com WhatsApp desativada");
+      toast("Integração com WhatsApp desativada");
     }
     
     // Aqui seria feita a chamada para a API para ativar/desativar a integração

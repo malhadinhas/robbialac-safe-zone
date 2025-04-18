@@ -2,6 +2,7 @@ import { Layout } from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   PieChart, 
   Pie, 
@@ -14,7 +15,7 @@ import {
   Cell, 
   ResponsiveContainer
 } from "recharts";
-import { Eye, AlertTriangle, Film, Clock, BookOpen, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, AlertTriangle, Film, Clock, BookOpen, TrendingUp, ChevronLeft, ChevronRight, User, Video as VideoIcon, AlertCircle } from "lucide-react";
 import { useIsMobile, useIsTablet, useIsCompactView } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -31,8 +32,7 @@ export default function Dashboard() {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const isCompactView = useIsCompactView();
-  const [activeTab, setActiveTab] = useState<"videos" | "quaseAcidentes">("videos");
-  const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState<"overview" | "videos" | "incidents" | "stats">("overview");
   const [qAChartTab, setQAChartTab] = useState<"severity" | "risk" | "frequency" | "quality">("severity");
   
   // Estados para dados da API
@@ -47,13 +47,15 @@ export default function Dashboard() {
       try {
         setLoading(true);
         const [videosData, incidentsData] = await Promise.all([
-          getVideos(),
-          getIncidents()
+          getVideos().catch(() => []),
+          getIncidents().catch(() => [])
         ]);
-        setVideos(videosData);
-        setIncidents(incidentsData);
+        setVideos(videosData || []);
+        setIncidents(incidentsData || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erro ao carregar dados');
+        setVideos([]);
+        setIncidents([]);
       } finally {
         setLoading(false);
       }
@@ -63,8 +65,8 @@ export default function Dashboard() {
   }, []);
 
   // Dados processados
-  const recentVideos = videos.slice(0, 3);
-  const recentIncidents = incidents.slice(0, 3);
+  const recentVideos = videos?.slice(0, 3) || [];
+  const recentIncidents = incidents?.slice(0, 3) || [];
   
   // Cálculo da próxima medalha
   const nextMedal = user?.medals ? user.medals.find(medal => !medal.acquired) : null;
@@ -83,9 +85,12 @@ export default function Dashboard() {
       acc.push({
         category: video.category,
         count: 1,
-        color: video.category === 'Segurança' ? '#44AA44' : // Verde 
-               video.category === 'Qualidade' ? '#4444FF' : // Azul
-               '#FF8800'  // Laranja para "Procedimentos e Regras"
+        color: video.category === 'Segurança' ? '#FF4444' : // Vermelho para Segurança
+               video.category === 'Qualidade' ? '#4444FF' : // Azul para Qualidade
+               video.category === 'Procedimentos e Regras' ? '#44AA44' : // Verde para Procedimentos
+               video.category === 'Treinamento' ? '#FFAA44' : // Laranja para Treinamento
+               video.category === 'Equipamentos' ? '#AA44AA' : // Roxo para Equipamentos
+               '#888888' // Cinza para Outros
       });
     }
     return acc;
@@ -189,30 +194,9 @@ export default function Dashboard() {
     );
   };
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-full">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-robbialac"></div>
-        </div>
-      </Layout>
-    );
-  }
-
-  if (error) {
-    return (
-      <Layout>
-        <div className="flex flex-col items-center justify-center h-full">
-          <div className="text-red-500 mb-4">Erro ao carregar dados: {error}</div>
-          <Button onClick={() => window.location.reload()}>Tentar Novamente</Button>
-        </div>
-      </Layout>
-    );
-  }
-
   // Define dashboard sections for mobile/tablet view
   const dashboardSections = [
-    // Section 1: User Stats
+    // Section 1: Overview
     <>
       <div className="mb-4">
         <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
@@ -245,233 +229,62 @@ export default function Dashboard() {
               <div className="text-4xl font-bold text-robbialac">{user?.points || 0}</div>
               <TrendingUp className="ml-2 text-green-500" />
             </div>
-            <div className="text-sm text-gray-500 text-center mt-2">
-              Continue participando para ganhar mais pontos!
-            </div>
           </CardContent>
         </Card>
-        
+      </div>
+    </>,
+    
+    // Section 2: Videos
+    <>
+      <div className="grid grid-cols-1 gap-4 mb-4">
         <Card className="bg-white shadow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium">Próxima Medalha</CardTitle>
+            <CardTitle className="text-lg font-medium">Vídeos Recentes</CardTitle>
           </CardHeader>
           <CardContent>
-            {nextMedal ? (
-              <div className="flex items-center">
-                <div className="text-4xl mr-3">{nextMedal.image}</div>
-                <div>
-                  <div className="font-medium">{nextMedal.name}</div>
-                  <div className="text-sm text-gray-500">{nextMedal.description}</div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-gray-500">Todas as medalhas conquistadas!</div>
-            )}
+            <div className="space-y-4">
+              <RecentActivityCard videos={recentVideos || []} incidents={[]} />
+            </div>
           </CardContent>
         </Card>
       </div>
     </>,
     
-    // Section 2: Charts
+    // Section 3: Incidents
     <>
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Estatísticas</h2>
-      
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-4 mb-4">
         <Card className="bg-white shadow">
-          <CardHeader>
-            <CardTitle className="text-lg font-medium">Estatísticas por Categoria</CardTitle>
-            <CardDescription>Distribuição de vídeos visualizados por categoria</CardDescription>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium">Quase Acidentes Recentes</CardTitle>
           </CardHeader>
-          <CardContent className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={statsByCategory}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={renderCustomPieChartLabel}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="count"
-                  nameKey="category"
-                >
-                  {statsByCategory.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-white shadow">
-          <CardHeader>
-            <CardTitle className="text-lg font-medium">Quase Acidentes por Parâmetros</CardTitle>
-            <CardDescription>Análise de incidentes por diferentes métricas</CardDescription>
-            <div className="flex mt-2 space-x-1">
-              <Button
-                variant={qAChartTab === "severity" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setQAChartTab("severity")}
-                className={qAChartTab === "severity" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
-              >
-                Gravidade
-              </Button>
-              <Button
-                variant={qAChartTab === "risk" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setQAChartTab("risk")}
-                className={qAChartTab === "risk" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
-              >
-                Risco
-              </Button>
-              <Button
-                variant={qAChartTab === "frequency" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setQAChartTab("frequency")}
-                className={qAChartTab === "frequency" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
-              >
-                Frequência
-              </Button>
-              <Button
-                variant={qAChartTab === "quality" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setQAChartTab("quality")}
-                className={qAChartTab === "quality" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
-              >
-                Qualidade QA
-              </Button>
+          <CardContent>
+            <div className="space-y-4">
+              <RecentActivityCard videos={[]} incidents={recentIncidents || []} />
             </div>
-          </CardHeader>
-          <CardContent className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              {qAChartTab === "severity" && (
-                <BarChart data={statsBySeverity}>
-                  <XAxis dataKey="severity" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="count" name="Quantidade">
-                    {statsBySeverity.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              )}
-              {qAChartTab === "risk" && (
-                <BarChart data={statsByRisk}>
-                  <XAxis dataKey="risk" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="count" name="Quantidade">
-                    {statsByRisk.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              )}
-              {qAChartTab === "frequency" && (
-                <BarChart data={statsByFrequency}>
-                  <XAxis dataKey="frequency" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="count" name="Quantidade">
-                    {statsByFrequency.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              )}
-              {qAChartTab === "quality" && (
-                <BarChart data={statsByQAQuality}>
-                  <XAxis dataKey="quality" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="count" name="Quantidade">
-                    {statsByQAQuality.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              )}
-            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
     </>,
     
-    // Section 3: Recent Activity
+    // Section 4: Statistics
     <>
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Atividade Recente</h2>
-      
-      <RecentActivityCard 
-        videos={recentVideos}
-        incidents={recentIncidents}
-        className="bg-white shadow mb-4"
-      />
-      
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-4 mb-4">
         <Card className="bg-white shadow">
-          <CardContent className="pt-4">
-            <div className="flex items-center">
-              <div className="p-1.5 bg-blue-100 rounded-md mr-2">
-                <Eye className="text-robbialac h-3.5 w-3.5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500">Visualizações</p>
-                <p className="text-lg font-semibold">{totalViews}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-white shadow">
-          <CardContent className="pt-4">
-            <div className="flex items-center">
-              <div className="p-1.5 bg-yellow-100 rounded-md mr-2">
-                <AlertTriangle className="text-robbialac-orange h-3.5 w-3.5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500">Quase Acidentes</p>
-                <p className="text-lg font-semibold">{totalIncidents}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-white shadow">
-          <CardContent className="pt-4">
-            <div className="flex items-center">
-              <div className="p-1.5 bg-green-100 rounded-md mr-2">
-                <BookOpen className="text-green-600 h-3.5 w-3.5" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500">Formações</p>
-                <p className="text-lg font-semibold">{totalVideos}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-white shadow">
-          <CardContent className="pt-4">
-            <div className="flex items-center">
-              <div className="p-1.5 bg-purple-100 rounded-md mr-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" 
-                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
-                    className="text-purple-600">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500">Medalhas</p>
-                <p className="text-lg font-semibold">{totalMedalsAcquired}</p>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-medium">Estatísticas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <VideoCategoryPieChart videos={videos || []} />
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={statsBySeverity}>
+                    <XAxis dataKey="severity" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </CardContent>
@@ -480,272 +293,79 @@ export default function Dashboard() {
     </>
   ];
 
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-robbialac"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center justify-center h-full">
+          <div className="text-red-500 mb-4">Erro ao carregar dados: {error}</div>
+          <Button onClick={() => window.location.reload()}>Tentar Novamente</Button>
+        </div>
+      </Layout>
+    );
+  }
+
+  const pageContent = isCompactView ? (
+    <div className="p-4">
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
+        <TabsList className="grid w-full grid-cols-4 mb-4">
+          <TabsTrigger value="overview" className="flex flex-col items-center gap-1">
+            <User className="h-4 w-4" />
+            <span className="text-xs">Visão Geral</span>
+          </TabsTrigger>
+          <TabsTrigger value="videos" className="flex flex-col items-center gap-1">
+            <VideoIcon className="h-4 w-4" />
+            <span className="text-xs">Vídeos</span>
+          </TabsTrigger>
+          <TabsTrigger value="incidents" className="flex flex-col items-center gap-1">
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-xs">Quase Acidentes</span>
+          </TabsTrigger>
+          <TabsTrigger value="stats" className="flex flex-col items-center gap-1">
+            <TrendingUp className="h-4 w-4" />
+            <span className="text-xs">Estatísticas</span>
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview">
+          {dashboardSections[0]}
+        </TabsContent>
+        
+        <TabsContent value="videos">
+          {dashboardSections[1]}
+        </TabsContent>
+        
+        <TabsContent value="incidents">
+          {dashboardSections[2]}
+        </TabsContent>
+        
+        <TabsContent value="stats">
+          {dashboardSections[3]}
+        </TabsContent>
+      </Tabs>
+    </div>
+  ) : (
+    <div className="p-4">
+      {dashboardSections.map((section, index) => (
+        <div key={index} className="mb-8">
+          {section}
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <Layout>
-      {isCompactView ? (
-        <NoScrollLayout sections={dashboardSections} />
-      ) : (
-        <>
-          {/* Dashboard Header */}
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-            <p className="text-gray-600">Bem-vindo de volta, {user?.name}!</p>
-          </div>
-    
-          {/* Top Section - User Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card className="bg-white shadow">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium">Seu Progresso</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-500">Nível {currentLevel}</span>
-                  <span className="text-gray-500">Nível {currentLevel + 1}</span>
-                </div>
-                <Progress value={progressToNextLevel} className="mb-2" />
-                <div className="text-sm text-gray-500 text-center">
-                  {pointsToNextLevel} pontos para o próximo nível
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-white shadow">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium">Pontuação Total</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-center">
-                  <div className="text-4xl font-bold text-robbialac">{user?.points || 0}</div>
-                  <TrendingUp className="ml-2 text-green-500" />
-                </div>
-                <div className="text-sm text-gray-500 text-center mt-2">
-                  Continue participando para ganhar mais pontos!
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-white shadow">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium">Próxima Medalha</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {nextMedal ? (
-                  <div className="flex items-center">
-                    <div className="text-4xl mr-3">{nextMedal.image}</div>
-                    <div>
-                      <div className="font-medium">{nextMedal.name}</div>
-                      <div className="text-sm text-gray-500">{nextMedal.description}</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center text-gray-500">Todas as medalhas conquistadas!</div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-    
-          {/* Middle Section - Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <Card className="bg-white shadow">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">Estatísticas por Categoria</CardTitle>
-                <CardDescription>Distribuição de vídeos visualizados por categoria</CardDescription>
-              </CardHeader>
-              <CardContent className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={statsByCategory}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={renderCustomPieChartLabel}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="count"
-                      nameKey="category"
-                    >
-                      {statsByCategory.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-white shadow">
-              <CardHeader>
-                <CardTitle className="text-lg font-medium">Quase Acidentes por Parâmetros</CardTitle>
-                <CardDescription>Análise de incidentes por diferentes métricas</CardDescription>
-                <div className="flex mt-2 space-x-1">
-                  <Button
-                    variant={qAChartTab === "severity" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setQAChartTab("severity")}
-                    className={qAChartTab === "severity" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
-                  >
-                    Gravidade
-                  </Button>
-                  <Button
-                    variant={qAChartTab === "risk" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setQAChartTab("risk")}
-                    className={qAChartTab === "risk" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
-                  >
-                    Risco
-                  </Button>
-                  <Button
-                    variant={qAChartTab === "frequency" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setQAChartTab("frequency")}
-                    className={qAChartTab === "frequency" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
-                  >
-                    Frequência
-                  </Button>
-                  <Button
-                    variant={qAChartTab === "quality" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setQAChartTab("quality")}
-                    className={qAChartTab === "quality" ? "bg-robbialac hover:bg-robbialac-dark" : ""}
-                  >
-                    Qualidade QA
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  {qAChartTab === "severity" && (
-                    <BarChart data={statsBySeverity}>
-                      <XAxis dataKey="severity" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="count" name="Quantidade">
-                        {statsBySeverity.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  )}
-                  {qAChartTab === "risk" && (
-                    <BarChart data={statsByRisk}>
-                      <XAxis dataKey="risk" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="count" name="Quantidade">
-                        {statsByRisk.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  )}
-                  {qAChartTab === "frequency" && (
-                    <BarChart data={statsByFrequency}>
-                      <XAxis dataKey="frequency" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="count" name="Quantidade">
-                        {statsByFrequency.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  )}
-                  {qAChartTab === "quality" && (
-                    <BarChart data={statsByQAQuality}>
-                      <XAxis dataKey="quality" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="count" name="Quantidade">
-                        {statsByQAQuality.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  )}
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-    
-          {/* Bottom Section - Recent Activity */}
-          <RecentActivityCard 
-            videos={recentVideos}
-            incidents={recentIncidents}
-            className="bg-white shadow mb-6"
-          />
-    
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-white shadow">
-              <CardContent className="pt-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-blue-100 rounded-md mr-4">
-                    <Eye className="text-robbialac h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Total Visualizações</p>
-                    <p className="text-2xl font-semibold">{totalViews}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-white shadow">
-              <CardContent className="pt-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-yellow-100 rounded-md mr-4">
-                    <AlertTriangle className="text-robbialac-orange h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Quase Acidentes</p>
-                    <p className="text-2xl font-semibold">{totalIncidents}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-white shadow">
-              <CardContent className="pt-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-md mr-4">
-                    <BookOpen className="text-green-600 h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Formações Completas</p>
-                    <p className="text-2xl font-semibold">{totalVideos}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-white shadow">
-              <CardContent className="pt-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-purple-100 rounded-md mr-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" 
-                        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" 
-                        className="text-purple-600">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Medalhas Ganhas</p>
-                    <p className="text-2xl font-semibold">{totalMedalsAcquired}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </>
-      )}
+      {pageContent}
     </Layout>
   );
 }

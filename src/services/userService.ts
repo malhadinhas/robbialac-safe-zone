@@ -14,6 +14,8 @@ export async function getUserByEmail(email: string): Promise<User | null> {
 
 export async function validateUser(email: string, password: string): Promise<{ user: User, token: string } | null> {
   try {
+    console.log(`[userService] Making login request for email: ${email} with password: ${password}`);
+    
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {

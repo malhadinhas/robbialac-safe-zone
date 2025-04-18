@@ -1,5 +1,5 @@
 import { Collection, ObjectId } from 'mongodb';
-import bcrypt from 'bcrypt';
+import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getCollection } from './database';
 import logger from '../utils/logger';
@@ -22,18 +22,36 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const SALT_ROUNDS = 10;
 
 export async function validateCredentials(email: string, password: string): Promise<User | null> {
+  // ---- REMOVER DEBUG LOGS DIRETOS ---- 
+  // console.log(`[validateCredentials - Direct Log] Received Email: ${email}`);
+  // console.log(`[validateCredentials - Direct Log] Received Password: ${password}`); 
+  // ---- FIM REMOVER DEBUG LOGS DIRETOS ----
+
+  logger.info('[validateCredentials] Attempting login for:', { email });
+  logger.info('[validateCredentials] Password received (length):', password ? password.length : 'undefined/empty');
+  
   try {
     const usersCollection = await getCollection<User>('users');
     const user = await usersCollection.findOne({ email });
 
     if (!user) {
-      logger.warn('Tentativa de login falhou: Email não encontrado', { email });
+      logger.warn('[validateCredentials] User not found in DB', { email });
       return null;
     }
+    
+    logger.info('[validateCredentials] User found in DB:', { userId: user.id, userEmail: user.email });
+    logger.info('[validateCredentials] Stored password hash:', user.password); 
 
-    const isValid = await bcrypt.compare(password, user.password);
+    // ---- REMOVER DEBUG LOG DIRETO --- 
+    // console.log(`[validateCredentials - Direct Log] Stored Hash: ${user.password}`);
+    // ---- FIM REMOVER DEBUG LOG DIRETO ---
+
+    const isValid = await bcryptjs.compare(password, user.password); 
+    
+    logger.info('[validateCredentials] bcryptjs.compare result:', { isValid }); 
+        
     if (!isValid) {
-      logger.warn('Tentativa de login falhou: Senha inválida', { email });
+      logger.warn('Tentativa de login falhou: Senha inválida (bcryptjs compare returned false)', { email });
       return null;
     }
 
@@ -85,7 +103,7 @@ export async function verifyToken(token: string): Promise<{ id: string; email: s
 }
 
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, SALT_ROUNDS);
+  return bcryptjs.hash(password, SALT_ROUNDS);
 }
 
 export async function createUser(userData: Omit<User, 'id' | 'password'> & { password: string }): Promise<User> {

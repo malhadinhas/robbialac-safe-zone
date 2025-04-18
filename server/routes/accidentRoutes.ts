@@ -30,10 +30,13 @@ const upload = multer({
 router.use(isAuthenticated);
 
 // Rotas para acidentes (documentos)
-router.get('/', hasRole(['admin_qa', 'admin_app']), getAccidents);
-router.get('/:id', hasRole(['admin_qa', 'admin_app']), getAccidentById);
+// Permitir que qualquer usuário autenticado visualize acidentes
+router.get('/', getAccidents);
+router.get('/:id', getAccidentById);
+
+// Manter restrições para operações de modificação
 router.post('/', hasRole(['admin_qa', 'admin_app']), upload.single('document'), createAccident);
 router.put('/:id', hasRole(['admin_qa', 'admin_app']), upload.single('document'), updateAccident);
-router.delete('/:id', hasRole(['admin_qa', 'admin_app']), deleteAccident);
+router.delete('/:id', hasRole(['admin_qa']), deleteAccident); // Apenas admin_qa pode excluir
 
 export default router; 

@@ -44,6 +44,7 @@ export interface Video {
 }
 
 export interface Incident {
+  _id?: string;
   id: string;
   title: string;
   description: string;

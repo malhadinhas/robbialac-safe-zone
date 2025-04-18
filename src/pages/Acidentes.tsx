@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Accident } from '../types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { toast } from 'react-hot-toast';
+import { toast } from "sonner";
 import { FaPlus, FaFilePdf, FaTrash } from 'react-icons/fa';
 import { getAccidents, createAccident, deleteAccident } from '../services/accidentService';
 import { Layout } from '@/components/Layout';
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
 import { NoScrollLayout } from '@/components/NoScrollLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
 const COUNTRIES = [
   { value: 'Portugal', label: 'Portugal' },
@@ -25,6 +26,7 @@ type Country = typeof COUNTRIES[number]['value'];
 
 const Acidentes: React.FC = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const [accidents, setAccidents] = useState<Accident[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -34,6 +36,10 @@ const Acidentes: React.FC = () => {
     country: 'Portugal', // Valor padrão
     date: new Date(),
   });
+
+  // Verificar permissões do usuário
+  const hasAddPermission = user?.role === 'admin_qa' || user?.role === 'admin_app';
+  const hasDeletePermission = user?.role === 'admin_qa';
 
   useEffect(() => {
     loadAccidents();
@@ -67,6 +73,11 @@ const Acidentes: React.FC = () => {
 
   const handleAddAccident = async () => {
     try {
+      if (!newAccident.name || newAccident.name.trim() === '') {
+        toast.error('Por favor, insira um nome para o acidente');
+        return;
+      }
+      
       if (!selectedFile) {
         toast.error('Por favor, selecione um arquivo PDF');
         return;
@@ -78,6 +89,18 @@ const Acidentes: React.FC = () => {
       formData.append('date', newAccident.date?.toISOString() || new Date().toISOString());
       formData.append('document', selectedFile);
 
+      if (formData.has('document')) {
+        const file = formData.get('document') as File;
+        formData.append('file', file);
+      }
+
+      toast("A processar o upload e a criar o acidente...");
+      console.log("Enviando formulário para criar acidente:", {
+        nome: newAccident.name,
+        país: newAccident.country,
+        data: newAccident.date
+      });
+      
       await createAccident(formData);
       setShowAddModal(false);
       setNewAccident({
@@ -87,18 +110,31 @@ const Acidentes: React.FC = () => {
       });
       setSelectedFile(null);
       loadAccidents();
+      toast.success('Acidente adicionado com sucesso');
     } catch (error) {
+      console.error("Erro ao adicionar acidente:", error);
       toast.error('Erro ao adicionar acidente');
     }
   };
 
   const handleDeleteAccident = async (id: string) => {
     try {
+      // Verificar permissões novamente como medida de segurança
+      if (!hasDeletePermission) {
+        toast.error('Você não tem permissão para excluir acidentes');
+        return;
+      }
+
       await deleteAccident(id);
       toast.success('Acidente removido com sucesso');
       loadAccidents();
     } catch (error) {
-      toast.error('Erro ao remover acidente');
+      console.error("Erro ao remover acidente:", error);
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        toast.error('Sem permissão para excluir este acidente');
+      } else {
+        toast.error('Erro ao remover acidente');
+      }
     }
   };
 
@@ -112,12 +148,14 @@ const Acidentes: React.FC = () => {
         <div className="h-full">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-semibold">Acidentes</h1>
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="bg-robbialac hover:bg-robbialac-dark text-white"
-            >
-              <FaPlus className="mr-2" /> Adicionar Acidente
-            </Button>
+            {hasAddPermission && (
+              <Button
+                onClick={() => setShowAddModal(true)}
+                className="bg-robbialac hover:bg-robbialac-dark text-white"
+              >
+                <FaPlus className="mr-2" /> Adicionar Acidente
+              </Button>
+            )}
           </div>
 
           {loading ? (
@@ -125,30 +163,37 @@ const Acidentes: React.FC = () => {
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-robbialac"></div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5">
               {accidents.map((accident) => (
-                <div key={accident._id} className="bg-white rounded-lg shadow-md p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <h2 className="text-lg font-medium">{accident.name}</h2>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteAccident(accident._id!)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <FaTrash />
-                    </Button>
+                <div key={accident._id} className="bg-white border rounded-md p-1.5">
+                  <div className="flex justify-between items-start gap-1 mb-1">
+                    <h2 className="text-[13px] leading-tight font-medium line-clamp-1">{accident.name}</h2>
+                    {hasDeletePermission && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteAccident(accident._id!)}
+                        className="text-red-500 hover:text-red-700 h-6 w-6 p-0"
+                      >
+                        <FaTrash className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
-                  <p className="text-gray-600 text-sm mb-1">País: {accident.country}</p>
-                  <p className="text-gray-600 text-sm mb-3">
-                    Data: {format(new Date(accident.date), 'dd/MM/yyyy', { locale: ptBR })}
-                  </p>
+                  <div className="space-y-0.5 mb-1.5">
+                    <p className="text-[11px] text-gray-600 leading-tight">
+                      <span className="font-medium">País:</span> {accident.country}
+                    </p>
+                    <p className="text-[11px] text-gray-600 leading-tight">
+                      <span className="font-medium">Data:</span> {format(new Date(accident.date), 'dd/MM/yyyy', { locale: ptBR })}
+                    </p>
+                  </div>
                   <Button
                     variant="outline"
-                    className="w-full flex items-center justify-center gap-2 text-robbialac hover:text-robbialac-dark"
+                    size="sm"
+                    className="w-full flex items-center justify-center gap-1 text-robbialac hover:text-robbialac-dark text-[11px] h-6 px-2"
                     onClick={() => handleViewPDF(accident)}
                   >
-                    <FaFilePdf /> Visualizar PDF
+                    <FaFilePdf className="h-3 w-3" /> Ver PDF
                   </Button>
                 </div>
               ))}
@@ -156,13 +201,13 @@ const Acidentes: React.FC = () => {
           )}
 
           <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-            <DialogContent>
+            <DialogContent className="max-w-[98vw] sm:max-w-lg h-[98vh] sm:h-auto p-2 sm:p-4 overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Adicionar Novo Acidente</DialogTitle>
+                <DialogTitle className="text-base sm:text-xl">Adicionar Novo Acidente</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <Label htmlFor="name">Nome do Acidente</Label>
+                  <Label htmlFor="name" className="text-xs sm:text-sm font-medium">Nome do Acidente</Label>
                   <Input
                     id="name"
                     value={newAccident.name}
@@ -171,16 +216,13 @@ const Acidentes: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="country">País</Label>
-                  <Select
-                    value={newAccident.country}
-                    onValueChange={handleCountryChange}
-                  >
+                  <Label htmlFor="country" className="text-xs sm:text-sm font-medium">País</Label>
+                  <Select value={newAccident.country} onValueChange={handleCountryChange}>
                     <SelectTrigger id="country" className="mt-1">
                       <SelectValue placeholder="Selecione um país" />
                     </SelectTrigger>
                     <SelectContent>
-                      {COUNTRIES.map(country => (
+                      {COUNTRIES.map((country) => (
                         <SelectItem key={country.value} value={country.value}>
                           {country.label}
                         </SelectItem>
@@ -189,42 +231,33 @@ const Acidentes: React.FC = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="date">Data</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={newAccident.date ? format(newAccident.date, 'yyyy-MM-dd') : ''}
-                    onChange={(e) => setNewAccident(prev => ({ ...prev, date: new Date(e.target.value) }))}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="pdf">Arquivo PDF</Label>
+                  <Label htmlFor="pdf" className="text-xs sm:text-sm font-medium">Documento PDF</Label>
                   <Input
                     id="pdf"
                     type="file"
-                    accept="application/pdf"
+                    accept=".pdf"
                     onChange={handleFileChange}
                     className="mt-1"
                   />
                   {selectedFile && (
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-1">
                       Arquivo selecionado: {selectedFile.name}
                     </p>
                   )}
                 </div>
-                <div className="mt-6 flex justify-end gap-4">
+                <div className="flex justify-end gap-2 pt-4">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     onClick={() => setShowAddModal(false)}
+                    className="text-xs sm:text-sm"
                   >
                     Cancelar
                   </Button>
                   <Button
                     onClick={handleAddAccident}
-                    className="bg-robbialac hover:bg-robbialac-dark text-white"
+                    className="bg-robbialac hover:bg-robbialac-dark text-white text-xs sm:text-sm"
                   >
-                    Salvar
+                    Adicionar
                   </Button>
                 </div>
               </div>

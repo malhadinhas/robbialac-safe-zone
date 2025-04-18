@@ -8,24 +8,50 @@ import {
   Legend 
 } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface VideoCategoryData {
-  category: string;
-  count: number;
-  color: string;
-}
+import { Video } from "@/types";
 
 interface VideoCategoryPieChartProps {
-  data: VideoCategoryData[];
+  videos: Video[];
   title?: string;
   description?: string;
 }
 
 export const VideoCategoryPieChart = ({ 
-  data, 
+  videos = [], 
   title = "Estatísticas por Categoria",
   description = "Distribuição de vídeos visualizados por categoria"
 }: VideoCategoryPieChartProps) => {
+  
+  // Processa os dados dos vídeos para o formato do gráfico
+  const processData = (videos: Video[]) => {
+    const categoryMap = new Map<string, { count: number; color: string }>();
+    
+    videos.forEach(video => {
+      const category = video.category;
+      const current = categoryMap.get(category) || { 
+        count: 0, 
+        color: category === 'Segurança' ? '#FF4444' : // Vermelho para Segurança
+               category === 'Qualidade' ? '#4444FF' : // Azul para Qualidade
+               category === 'Procedimentos e Regras' ? '#44AA44' : // Verde para Procedimentos
+               category === 'Treinamento' ? '#FFAA44' : // Laranja para Treinamento
+               category === 'Equipamentos' ? '#AA44AA' : // Roxo para Equipamentos
+               '#888888' // Cinza para Outros
+      };
+      
+      categoryMap.set(category, {
+        ...current,
+        count: current.count + 1
+      });
+    });
+    
+    return Array.from(categoryMap.entries()).map(([category, data]) => ({
+      category,
+      count: data.count,
+      color: data.color
+    }));
+  };
+
+  const data = processData(videos);
   
   // Renderiza rótulos personalizados no gráfico circular
   const renderCustomizedLabel = ({ 
@@ -74,6 +100,22 @@ export const VideoCategoryPieChart = ({
     }
     return null;
   };
+
+  if (videos.length === 0) {
+    return (
+      <Card className="h-full">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-64 w-full flex items-center justify-center text-gray-500">
+            Não há dados para exibir
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="h-full">

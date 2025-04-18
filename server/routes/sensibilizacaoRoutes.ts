@@ -30,9 +30,13 @@ const upload = multer({
 router.use(isAuthenticated);
 
 // Rotas para documentos de sensibilização
-router.get('/', hasRole(['admin_qa', 'admin_app']), getSensibilizacoes);
-router.get('/:id', hasRole(['admin_qa', 'admin_app']), getSensibilizacaoById);
-router.post('/', hasRole(['admin_qa']), upload.single('document'), createSensibilizacao);
+
+// Permitir que qualquer usuário autenticado visualize documentos (sem restrição de role)
+router.get('/', getSensibilizacoes);  
+router.get('/:id', getSensibilizacaoById);
+
+// Manter restrições para operações de modificação
+router.post('/', hasRole(['admin_qa', 'admin_app']), upload.single('document'), createSensibilizacao);
 router.put('/:id', hasRole(['admin_qa']), upload.single('document'), updateSensibilizacao);
 router.delete('/:id', hasRole(['admin_qa']), deleteSensibilizacao);
 

@@ -5,7 +5,6 @@ import * as THREE from 'three';
 import ErrorBoundary from './ErrorBoundary';
 import { useLocation } from 'react-router-dom';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'; // Importar o tipo para a ref
-import CustomOrbitControls from './CustomOrbitControls'; // Importar o novo componente
 
 // Loading spinner component
 const LoadingSpinner = () => (
@@ -106,20 +105,33 @@ const FactoryModel = ({
   onZoneClick,
   hoveredZone,
   setHoveredZone,
-  onLoadError
+  onLoadError,
+  onModelCenterCalculated
 }: { 
   onZoneClick: (zone: FactoryZone) => void,
   hoveredZone: FactoryZone | null,
   setHoveredZone: (zone: FactoryZone | null) => void,
-  onLoadError: (error: Error) => void
+  onLoadError: (error: Error) => void,
+  onModelCenterCalculated: (center: THREE.Vector3) => void
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<Error | null>(null);
   
-  // Carregar o modelo uma vez quando o componente montar
+  // Carregar o modelo
   const { scene, nodes } = useGLTF(FACTORY_MODEL_PATH);
   
+  // Calcular o centro do modelo quando a cena carregar
+  useEffect(() => {
+    if (scene) {
+      const box = new THREE.Box3().setFromObject(scene);
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+      onModelCenterCalculated(center); 
+      // console.log("Calculated model center:", center); // <-- Comentar este log
+    }
+  }, [scene, onModelCenterCalculated]); 
+
   useEffect(() => {
     if (!scene || !nodes) {
       const error = new Error('Erro ao carregar modelo: scene ou nodes não disponíveis');
@@ -156,14 +168,13 @@ const FactoryModel = ({
             nodes[meshName].material.emissiveIntensity = nodes[meshName].originalMaterial.emissiveIntensity || 0;
           }
         } else {
-           // Log se o nó não tiver material (apenas informativo)
-           console.warn(`Nó encontrado ${meshName} não possui material.`);
+           // console.warn(`Nó encontrado ${meshName} não possui material.`); // <-- Comentar este aviso
         }
       }
     });
 
     setIsLoading(false);
-  }, [scene, nodes, hoveredZone, onLoadError]);
+  }, [scene, nodes, hoveredZone, loadError, onLoadError]);
 
   if (loadError) {
     return <FallbackModel onZoneClick={onZoneClick} hoveredZone={hoveredZone} setHoveredZone={setHoveredZone} />;
@@ -249,66 +260,79 @@ const Factory3DModelManager = ({
   const [hoveredZone, setHoveredZone] = useState<FactoryZone | null>(null);
   const [modelError, setModelError] = useState<Error | null>(null);
   const location = useLocation();
+  const controlsRef = useRef<OrbitControlsImpl>(null!);
+  const [modelCenter, setModelCenter] = useState<THREE.Vector3 | null>(null);
 
   const handleLoadError = (error: Error) => {
     console.error('Erro ao carregar modelo da fábrica:', error);
     setModelError(error);
   };
 
+  const handleModelCenterCalculated = (center: THREE.Vector3) => {
+    setModelCenter(center);
+  };
+
   return (
-    <div className="aspect-video bg-gray-100 rounded-md">
-      <ErrorBoundary>
-        <Canvas
-          key={location.pathname} 
-          camera={{ position: [0, 180, 300], fov: 35 }}
-          style={{ width: '100%', height: '100%' }}
-        >
-          <Suspense fallback={<LoadingSpinner />}>
-            {/* Luzes básicas para iluminação */}
-            <ambientLight intensity={0.8} />
-            <directionalLight 
-              position={[5, 5, 5]} 
-              intensity={1} 
-              castShadow 
-              shadow-mapSize-width={1024}
-              shadow-mapSize-height={1024}
+    <ErrorBoundary fallback={
+      <div className="flex items-center justify-center h-full text-red-500 bg-gray-100">
+        Erro ao renderizar o modelo 3D.
+      </div>
+    }>
+      <Canvas 
+        shadows 
+        camera={{ 
+          position: [8, 8, 8], 
+          fov: 45, 
+          near: 0.1, 
+          far: 1000
+        }}
+        style={{ height: '600px', width: '100%', background: '#f0f0f0', borderRadius: '8px' }}
+        gl={{ preserveDrawingBuffer: true }} // Para screenshots se necessário
+        onCreated={({ gl }) => {
+          gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.outputEncoding = THREE.sRGBEncoding;
+        }}
+      >
+        <ambientLight intensity={0.8} />
+        <directionalLight 
+          position={[10, 10, 5]} 
+          intensity={1.5} 
+          castShadow 
+          shadow-mapSize-width={1024}
+          shadow-mapSize-height={1024}
+        />
+        <directionalLight 
+          position={[-10, -10, -5]} 
+          intensity={0.5} 
+        />
+
+        <OrbitControls 
+          ref={controlsRef} 
+          enableZoom={false}
+          enablePan={true} 
+          enableRotate={true}
+          zoomSpeed={0.8}
+          panSpeed={0.8}
+          rotateSpeed={0.5}
+          minDistance={300}
+          maxDistance={300}
+          minPolarAngle={Math.PI / 4}
+          maxPolarAngle={Math.PI / 4}
+          target={modelCenter ? [modelCenter.x, modelCenter.y - 30, modelCenter.z] : [0, 0, 0]}
+        />
+
+        <Suspense fallback={<LoadingSpinner />}>
+           <FactoryModel 
+              onZoneClick={onZoneClick}
+              hoveredZone={hoveredZone}
+              setHoveredZone={setHoveredZone}
+              onLoadError={handleLoadError}
+              onModelCenterCalculated={handleModelCenterCalculated}
             />
-            <hemisphereLight intensity={0.3} groundColor="#b9b9b9" />
-            
-            {/* Renderizar CustomOrbitControls em vez do OrbitControls original */}
-            {enableControls && (
-              <CustomOrbitControls
-                enableZoom={false}
-                enablePan={false}
-                enableRotate={true} 
-                minPolarAngle={Math.PI / 3} 
-                maxPolarAngle={Math.PI / 3} 
-                target={[0, 0, 0]} 
-                rotateSpeed={0.5} 
-              />
-            )}
-            
-            <group position={[0, -5, 0]} scale={1.2}>
-              {!modelError && (
-                <FactoryModel
-                  onZoneClick={onZoneClick as (zone: FactoryZone) => void}
-                  hoveredZone={hoveredZone}
-                  setHoveredZone={setHoveredZone}
-                  onLoadError={handleLoadError}
-                />
-              )}
-              {modelError && (
-                <FallbackModel 
-                  onZoneClick={onZoneClick as (zone: FactoryZone) => void}
-                  hoveredZone={hoveredZone}
-                  setHoveredZone={setHoveredZone}
-                />
-              )}
-            </group>
-          </Suspense>
-        </Canvas>
-      </ErrorBoundary>
-    </div>
+        </Suspense>
+        
+      </Canvas>
+    </ErrorBoundary>
   );
 };
 

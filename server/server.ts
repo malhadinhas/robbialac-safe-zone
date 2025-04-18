@@ -25,6 +25,7 @@ import logger from './utils/logger';
 import sensibilizacaoRoutes from './routes/sensibilizacaoRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import authRoutes from './routes/authRoutes';
+import { hashPassword } from './services/auth';
 
 /**
  * Verificação das variáveis de ambiente necessárias para o Cloudflare R2

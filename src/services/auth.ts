@@ -1,7 +1,8 @@
 import { User, UserRole } from "@/types";
 import { getUserByEmail, validateUser } from "./userService";
 
-// Usuários mockados - na implementação real, viriam do MongoDB
+// Remover usuários mockados
+/*
 const mockUsers = [
   {
     id: "1",
@@ -40,6 +41,7 @@ const mockUsers = [
     reportedIncidents: []
   }
 ];
+*/
 
 export async function loginUser(email: string, password: string): Promise<User | null> {
   // Simular atraso de rede

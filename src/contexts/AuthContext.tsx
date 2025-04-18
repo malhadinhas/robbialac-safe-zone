@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     logoutUser();
     setUser(null);
-    toast.info("Sessão encerrada");
+    toast("Sessão encerrada");
     navigate('/login');
   };
   

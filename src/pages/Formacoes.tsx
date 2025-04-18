@@ -11,7 +11,8 @@ import { NoScrollLayout } from '@/components/NoScrollLayout';
 import { useIsCompactView } from '@/hooks/use-mobile';
 import { getZoneStats, ZoneStats } from '@/services/zoneStatsService';
 import { Progress } from "@/components/ui/progress";
-import { uploadVideo } from '@/services/videoService';
+import { uploadVideo, getVideos } from '@/services/videoService';
+import { Video } from '@/types';
 
 const factoryZones = [
   { zone: 'Enchimento', color: '#3B82F6' },
@@ -44,6 +45,7 @@ export default function Formacoes() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState('');
+  const [categoryVideos, setCategoryVideos] = useState<Record<string, Video[]>>({});
   
   useEffect(() => {
     setIsAdmin(user?.role === 'admin_app');
@@ -63,6 +65,27 @@ export default function Formacoes() {
     };
 
     fetchZoneStats();
+  }, []);
+  
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const allVideos = await getVideos();
+        const videosByCategory = allVideos.reduce((acc, video) => {
+          if (!acc[video.category]) {
+            acc[video.category] = [];
+          }
+          acc[video.category].push(video);
+          return acc;
+        }, {} as Record<string, Video[]>);
+        
+        setCategoryVideos(videosByCategory);
+      } catch (error) {
+        toast.error("Erro ao carregar vídeos");
+      }
+    };
+
+    fetchVideos();
   }, []);
   
   const handleZoneClick = (zone: string) => {
@@ -205,24 +228,14 @@ export default function Formacoes() {
       description: "Vídeos sobre protocolos de segurança, EPIs e procedimentos de emergência."
     },
     { 
-      title: "Treinamento", 
-      displayTitle: "Treinamento",
-      description: "Vídeos de treinamento e capacitação para funcionários."
+      title: "Qualidade", 
+      displayTitle: "Qualidade",
+      description: "Vídeos sobre controle de qualidade, testes e garantia de qualidade."
     },
     { 
-      title: "Procedimentos", 
-      displayTitle: "Procedimentos",
+      title: "Procedimentos e Regras", 
+      displayTitle: "Procedimentos e Regras",
       description: "Vídeos sobre normas da empresa, processos e boas práticas."
-    },
-    {
-      title: "Equipamentos",
-      displayTitle: "Equipamentos", 
-      description: "Vídeos sobre uso e manutenção de equipamentos."
-    },
-    {
-      title: "Outros",
-      displayTitle: "Outros",
-      description: "Outros vídeos informativos e educacionais."
     }
   ];
   
@@ -300,13 +313,20 @@ export default function Formacoes() {
           category={category.title} 
           displayTitle={category.displayTitle}
           description={category.description}
+          videos={categoryVideos[category.title] || []}
+          count={(categoryVideos[category.title] || []).length}
+          color={
+            category.title === 'Segurança' ? '#FF4444' :
+            category.title === 'Qualidade' ? '#4444FF' :
+            '#44AA44' // Procedimentos e Regras
+          }
         />
       ))}
     </div>
   );
   
   const pageContent = isCompactView 
-    ? <NoScrollLayout sections={[mainSection, categoriesSection]} />
+    ? <NoScrollLayout sections={[mainSection]} />
     : (
         <>
           {mainSection}

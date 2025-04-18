@@ -1,6 +1,6 @@
 import api from '@/lib/api';
 import { Accident } from '@/types';
-import { toast } from 'react-hot-toast';
+import { toast } from "sonner";
 
 // Buscar todos os documentos de acidentes
 export const getAccidents = async (): Promise<Accident[]> => {
@@ -27,6 +27,13 @@ export const getAccidentById = async (id: string): Promise<Accident> => {
 // Criar um novo documento de acidente
 export const createAccident = async (formData: FormData): Promise<Accident> => {
   try {
+    console.log("FormData sendo enviado:", {
+      name: formData.get('name'),
+      country: formData.get('country'),
+      date: formData.get('date'),
+      file: formData.get('document') ? 'Arquivo PDF presente' : 'Sem arquivo'
+    });
+    
     const response = await api.post('/accidents', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -35,7 +42,12 @@ export const createAccident = async (formData: FormData): Promise<Accident> => {
     toast.success("Documento de acidente registado com sucesso!");
     return response.data;
   } catch (error) {
-    console.error("Erro ao criar documento de acidente:", error);
+    console.error("Erro detalhado ao criar documento de acidente:", error);
+    // Se o erro for uma resposta da API, mostrar detalhes
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Dados:", error.response.data);
+    }
     toast.error("Erro ao registar documento de acidente.");
     throw new Error('Falha ao criar documento de acidente');
   }
