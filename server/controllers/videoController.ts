@@ -6,6 +6,8 @@ import path from 'path';
 import { promises as fs } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { isValidObjectId } from 'mongoose';
+import { getCollection } from '../services/database';
+import { UploadLog } from '../types';
 
 const videoProcessor = new VideoProcessor();
 const TEMP_DIR = path.join(process.cwd(), 'temp');
@@ -80,6 +82,9 @@ function getErrorMessage(error: unknown): string {
 // Criar um novo vídeo
 export const createVideo = async (req: Request, res: Response) => {
   let videoId: string | null = null;
+  let originalFilePath: string | null = null;
+  let uploadedFileSize: number | null = null;
+  let uploadedMimeType: string | null = null;
   
   try {
     logger.info('Iniciando criação de vídeo', {
@@ -95,6 +100,10 @@ export const createVideo = async (req: Request, res: Response) => {
       logger.error('Nenhum arquivo enviado');
       return res.status(400).json({ message: 'Nenhum arquivo enviado' });
     }
+
+    originalFilePath = req.file.path;
+    uploadedFileSize = req.file.size;
+    uploadedMimeType = req.file.mimetype;
 
     // Validar campos obrigatórios
     const requiredFields = ['title', 'description', 'category', 'zone'];
@@ -171,14 +180,22 @@ export const createVideo = async (req: Request, res: Response) => {
         title: video.title
       });
 
+      // Retornar resposta imediata ANTES do processamento
+      res.status(202).json({
+        message: 'Vídeo recebido e em processamento',
+        videoId: video._id,
+        uniqueId: video.videoId,
+        status: 'processing'
+      });
+
       // Iniciar processamento em background
       process.nextTick(async () => {
         try {
           // Gerar thumbnail e obter a chave R2
-          const thumbnailR2Key = await videoProcessor.generateThumbnail(req.file.path, videoId.toString()); // Renomeado para clareza
+          const thumbnailR2Key = await videoProcessor.generateThumbnail(originalFilePath!, videoId!.toString());
           
           // Processar vídeo em diferentes qualidades e obter as chaves R2
-          const processedR2Keys = await videoProcessor.processVideo(req.file.path, videoId.toString()); // Renomeado para clareza
+          const processedR2Keys = await videoProcessor.processVideo(originalFilePath!, videoId!.toString());
 
           // ** LOG DETALHADO ANTES DO UPDATE **
           logger.info('Valores para atualizar no MongoDB', {
@@ -207,16 +224,16 @@ export const createVideo = async (req: Request, res: Response) => {
           }
 
           // Atualizar vídeo com as chaves R2 e status
-          const updateResult = await Video.findByIdAndUpdate(videoId, {
-            r2VideoKey: processedR2Keys.high, // Chave principal é a de alta qualidade
+          const updateResult = await Video.findByIdAndUpdate(videoId!, {
+            r2VideoKey: processedR2Keys.high,
             r2ThumbnailKey: thumbnailR2Key,
-            r2Qualities: { // Guardar as chaves R2 das qualidades
+            r2Qualities: { 
               high: processedR2Keys.high,
               medium: processedR2Keys.medium,
               low: processedR2Keys.low
             },
             status: 'ready'
-          }, { new: true }); // Adicionado { new: true } para retornar o documento atualizado
+          }, { new: true });
 
           // ** LOG DO RESULTADO DO UPDATE **
           logger.info('Resultado da operação findByIdAndUpdate', {
@@ -231,6 +248,27 @@ export const createVideo = async (req: Request, res: Response) => {
             });
           }
 
+          // <<< INÍCIO: Registar Upload Log >>>
+          if (updateResult && updateResult.status === 'ready' && uploadedFileSize) {
+            try {
+              const uploadLogsCollection = await getCollection<UploadLog>('uploadLogs');
+              const newUploadLog: Omit<UploadLog, '_id'> = {
+                userId: req.user?.id,
+                fileName: req.file?.originalname || 'desconhecido',
+                fileSize: uploadedFileSize,
+                mimeType: uploadedMimeType || 'desconhecido',
+                storageType: 'r2',
+                fileKey: updateResult.r2VideoKey,
+                timestamp: new Date()
+              };
+              await uploadLogsCollection.insertOne(newUploadLog as UploadLog);
+              logger.info('Evento de upload registado com sucesso', { videoId: videoId!.toString(), fileKey: newUploadLog.fileKey });
+            } catch (logError: any) {
+              logger.error('Falha ao registar evento de upload', { videoId: videoId!.toString(), error: logError.message });
+            }
+          }
+          // <<< FIM: Registar Upload Log >>>
+
           logger.info('Processamento do vídeo concluído e chaves R2 atualizadas', { 
             id: videoId,
             title: video.title,
@@ -241,6 +279,17 @@ export const createVideo = async (req: Request, res: Response) => {
               low: processedR2Keys.low
             }
           });
+
+          // Limpar arquivo temporário original APÓS sucesso
+          if (originalFilePath) {
+            try {
+              await fs.unlink(originalFilePath);
+              logger.info('Arquivo temporário original removido após sucesso', { path: originalFilePath });
+            } catch (cleanupError) {
+              logger.error('Erro ao remover arquivo temporário original após sucesso', { error: cleanupError });
+            }
+          }
+
         } catch (error) {
           logger.error('Erro no processamento do vídeo', { 
             error, 
@@ -254,16 +303,19 @@ export const createVideo = async (req: Request, res: Response) => {
               processingError: error instanceof Error ? error.message : 'Erro desconhecido'
             });
           }
+
+          // Limpar arquivo temporário original em caso de erro no processamento
+          if (originalFilePath) {
+            try {
+              await fs.unlink(originalFilePath);
+              logger.info('Arquivo temporário original removido após erro no processamento', { path: originalFilePath });
+            } catch (cleanupError) {
+              logger.error('Erro ao remover arquivo temporário original após erro no processamento', { error: cleanupError });
+            }
+          }
         }
       });
 
-      // Retornar resposta imediata
-      res.status(202).json({
-        message: 'Vídeo recebido e em processamento',
-        videoId: video._id,
-        uniqueId: uniqueVideoId,
-        status: 'processing'
-      });
     } catch (validationError) {
       logger.error('Erro na validação ou criação do vídeo', { validationError });
       
@@ -287,20 +339,15 @@ export const createVideo = async (req: Request, res: Response) => {
       });
     }
   } catch (error) {
-    logger.error('Erro ao criar vídeo', { error });
+    logger.error('Erro GERAL ao criar vídeo', { error: error.message, stack: error.stack });
     
-    // Limpar arquivos temporários em caso de erro
-    if (req.file) {
+    // Limpar arquivo temporário original em caso de erro inicial
+    if (originalFilePath) {
       try {
-        await fs.unlink(req.file.path);
-        logger.info('Arquivo temporário removido após erro', { 
-          path: req.file.path 
-        });
+        await fs.unlink(originalFilePath);
+        logger.info('Arquivo temporário original removido após erro inicial', { path: originalFilePath });
       } catch (cleanupError) {
-        logger.error('Erro ao remover arquivo temporário', { 
-          error: cleanupError,
-          path: req.file.path
-        });
+        logger.error('Erro ao remover arquivo temporário original após erro inicial', { error: cleanupError });
       }
     }
 

@@ -1,22 +1,38 @@
 {
+  // Configurações do compilador TypeScript especificamente para ambientes Node.js,
+  // como ficheiros de configuração (ex: vite.config.ts) ou scripts de build.
   "compilerOptions": {
+    // Define a versão do JavaScript alvo (ECMAScript 2022).
     "target": "ES2022",
+    // Bibliotecas padrão a incluir (focadas em funcionalidades ES mais recentes).
     "lib": ["ES2023"],
+    // Sistema de módulos a usar (padrão moderno para bundlers e Node.js).
     "module": "ESNext",
+    // Ignora a verificação de tipos em ficheiros de declaração (.d.ts).
     "skipLibCheck": true,
 
-    /* Bundler mode */
+    /* Configurações específicas para bundlers (usado pelo Vite) */
+    // Estratégia de resolução de módulos otimizada para bundlers.
     "moduleResolution": "bundler",
+    // Permite importar ficheiros .ts com extensão.
     "allowImportingTsExtensions": true,
+    // Garante que cada ficheiro pode ser transpilado separadamente.
     "isolatedModules": true,
+    // Força a deteção de módulos.
     "moduleDetection": "force",
+    // Não gera ficheiros JavaScript (o Node.js executa o .ts diretamente ou através de um transpilador como ts-node/tsx).
     "noEmit": true,
 
-    /* Linting */
+    /* Configurações de Linting e Verificação de Tipos */
+    // Ativa todas as verificações estritas (modo recomendado para maior segurança).
     "strict": true,
+    // Permite variáveis locais não utilizadas.
     "noUnusedLocals": false,
+    // Permite parâmetros de função não utilizados.
     "noUnusedParameters": false,
+    // Exige `break` ou `return` em todos os `case` de um `switch`.
     "noFallthroughCasesInSwitch": true
   },
+  // Especifica os ficheiros/pastas a incluir nesta configuração (apenas vite.config.ts neste caso).
   "include": ["vite.config.ts"]
 }

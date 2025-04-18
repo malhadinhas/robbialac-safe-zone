@@ -1,5 +1,9 @@
 import { Video } from "@/types";
-import axios, { AxiosError } from 'axios';
+// Remover importação direta do axios
+// import axios, { AxiosError } from 'axios';
+// Importar a instância configurada
+import api from '@/lib/api';
+import { AxiosError } from 'axios'; // Manter para tipagem de erro
 
 // Removi todas as referências a mockVideos
 
@@ -111,7 +115,7 @@ export const uploadVideo = async (
     progress.status = 'uploading';
     onProgress?.(progress);
 
-    const response = await axios.post(`${API_URL}/api/videos`, formData, {
+    const response = await api.post('/videos', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -185,7 +189,7 @@ export const getSecureR2Url = async (key: string): Promise<string> => {
     throw new Error('Chave R2 inválida ou não fornecida para URL segura');
   }
   try {
-    const response = await axios.get(`${API_URL}/api/secure-url`, {
+    const response = await api.get('/secure-url', {
       params: { key },
       timeout: 15000,
     });
@@ -214,7 +218,7 @@ export const getSecureR2Url = async (key: string): Promise<string> => {
 // Função para buscar vídeos (RETORNA CHAVES R2 AGORA)
 export const getVideos = async (options?: { category?: string; limit?: string }): Promise<Video[]> => {
   try {
-    const response = await axios.get<Video[]>(`${API_URL}/api/videos`);
+    const response = await api.get('/videos', { params: options });
     
     const videos = Array.isArray(response.data) ? response.data : [];
     
@@ -264,7 +268,7 @@ export const getVideos = async (options?: { category?: string; limit?: string })
 export const getVideoById = async (videoId: string): Promise<Video | null> => {
   if (!videoId) return null;
   try {
-    const response = await axios.get<Video>(`${API_URL}/api/videos/${videoId}`);
+    const response = await api.get('/videos/' + videoId);
     // Aqui também precisamos mapear para garantir o formato esperado pelo tipo Video
     const videoData = response.data;
     if (!videoData) return null;
@@ -295,7 +299,7 @@ export const getVideoById = async (videoId: string): Promise<Video | null> => {
 // Função para incrementar visualizações
 export const incrementVideoViews = async (videoId: string) => {
   try {
-    await axios.post(`${API_URL}/api/videos/${videoId}/views`);
+    await api.post('/videos/' + videoId + '/views');
   } catch (error) {
     throw error;
   }
@@ -304,9 +308,7 @@ export const incrementVideoViews = async (videoId: string) => {
 export async function getLastViewedVideosByCategory(category: string, limit: number = 5): Promise<Video[]> {
   try {
     const normalizedCategory = encodeURIComponent(category);
-    const response = await axios.get(
-      `${API_URL}/api/videos/category/${normalizedCategory}/most-viewed?limit=${limit}`
-    );
+    const response = await api.get('/videos/category/' + normalizedCategory + '/most-viewed?limit=' + limit);
     return response.data.map((video: Video) => ({
       ...video,
       uploadDate: new Date(video.uploadDate)
@@ -318,7 +320,7 @@ export async function getLastViewedVideosByCategory(category: string, limit: num
 
 export async function getNextVideoToWatch(category: string, viewedVideoIds: string[] = []): Promise<Video | null> {
   try {
-    const response = await axios.post(`${API_URL}/api/videos/category/${category}/next`, {
+    const response = await api.post('/videos/category/' + category + '/next', {
       viewedVideoIds
     });
     
@@ -371,28 +373,8 @@ export async function createVideo(video: Omit<Video, "id" | "uploadDate" | "view
     }
 
     // Se passou por todas as verificações, criar o vídeo
-    const response = await fetch('/api/videos', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        ...video,
-        title: video.title.trim(), // Garantir que não há espaços extras
-        url: video.url.trim()
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Erro ao criar vídeo');
-    }
-
-    const newVideo = await response.json();
-    return {
-      ...newVideo,
-      uploadDate: new Date(newVideo.uploadDate)
-    };
+    const response = await api.post('/videos', video);
+    return response.data;
   } catch (error) {
     throw error;
   }
@@ -412,5 +394,26 @@ export async function getVideoStreamUrl(videoId: string): Promise<string> {
     return signedUrl;
   } catch (error) {
     throw error; // Relançar para a página
+  }
+}
+
+// Note: Delete video might need specific handling if it doesn't return data or expects 204
+export async function deleteVideo(videoId: string): Promise<void> {
+  try {
+    // Usar 'api.delete'
+    await api.delete('/videos/' + videoId);
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Função para obter estatísticas
+export async function getVideoStats(): Promise<any> {
+  try {
+    // Usar 'api.get'
+    const response = await api.get('/videos/stats');
+    return response.data;
+  } catch (error) {
+    throw error;
   }
 }

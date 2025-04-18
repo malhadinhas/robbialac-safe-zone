@@ -12,7 +12,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   }
 }
 
-export async function validateUser(email: string, password: string): Promise<User | null> {
+export async function validateUser(email: string, password: string): Promise<{ user: User, token: string } | null> {
   try {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
@@ -21,9 +21,27 @@ export async function validateUser(email: string, password: string): Promise<Use
       },
       body: JSON.stringify({ email, password }),
     });
-    if (!response.ok) return null;
-    return response.json();
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        console.error("Erro na validação:", response.status, errorData);
+      } catch (e) {
+        console.error("Erro na validação e ao ler corpo do erro:", response.status);
+      }
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    if (data && data.user && data.token) {
+      return { user: data.user as User, token: data.token as string };
+    } else {
+      console.error("Resposta da API de login inesperada:", data);
+      return null;
+    }
+
   } catch (error) {
+    console.error("Erro de rede ou outro erro em validateUser:", error);
     throw error;
   }
 }

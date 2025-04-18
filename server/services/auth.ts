@@ -1,7 +1,9 @@
-import { Collection } from 'mongodb';
+import { Collection, ObjectId } from 'mongodb';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { getCollection } from './database';
+import logger from '../utils/logger';
+import { User, LoginEvent } from '../types';
 
 interface User {
   id: string;
@@ -21,24 +23,43 @@ const SALT_ROUNDS = 10;
 
 export async function validateCredentials(email: string, password: string): Promise<User | null> {
   try {
-    const collection: Collection<User> = await getCollection<User>('users');
-    const user = await collection.findOne({ email });
+    const usersCollection = await getCollection<User>('users');
+    const user = await usersCollection.findOne({ email });
 
     if (!user) {
+      logger.warn('Tentativa de login falhou: Email não encontrado', { email });
       return null;
     }
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
+      logger.warn('Tentativa de login falhou: Senha inválida', { email });
       return null;
+    }
+
+    // Login bem-sucedido, registar evento
+    try {
+      const loginEventsCollection = await getCollection<LoginEvent>('loginEvents');
+      const newLoginEvent: Omit<LoginEvent, '_id'> = {
+        userId: user.id,
+        userEmail: user.email,
+        timestamp: new Date(),
+        // ipAddress: req?.ip, // TODO: Passar req para obter IP
+        // userAgent: req?.headers['user-agent'] // TODO: Passar req para obter User Agent
+      };
+      await loginEventsCollection.insertOne(newLoginEvent as LoginEvent);
+      logger.info('Evento de login registado com sucesso', { userId: user.id, email: user.email });
+    } catch (logError: any) {
+      // Não impedir o login se o registo do evento falhar, apenas logar o erro
+      logger.error('Falha ao registar evento de login', { userId: user.id, email: user.email, error: logError.message });
     }
 
     // Não retornar o hash da senha
     const { password: _, ...userWithoutPassword } = user;
     return userWithoutPassword as User;
-  } catch (error) {
-    console.error('Erro ao validar credenciais:', error);
-    throw error;
+  } catch (error: any) {
+    logger.error('Erro durante validação de credenciais', { email, error: error.message });
+    throw error; // Re-lança o erro para ser tratado pela rota
   }
 }
 

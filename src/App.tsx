@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { DatabaseProvider } from "@/contexts/DatabaseContext";
 import { PrivateRoute, PublicOnlyRoute } from "@/components/PrivateRoute";
+import { AdminRoute } from "@/components/AdminRoute";
 import { useEffect } from "react";
 import { Acidentes } from '@/components/acidentes/Acidentes';
 import { Sensibilizacao } from '@/components/sensibilizacao/Sensibilizacao';
@@ -77,6 +78,11 @@ const App = () => {
                     <Route path="/acidentes/novo" element={<AcidenteForm />} />
                     <Route path="/acidentes/:id/editar" element={<AcidenteForm />} />
                     <Route path="/sensibilizacao" element={<Sensibilizacao />} />
+                  </Route>
+
+                  {/* Admin Routes */}
+                  <Route element={<AdminRoute />}>
+                    {/* <Route path="/definicoes/analytics" element={<AnalyticsPage />} /> */}
                   </Route>
                   
                   {/* Error Route */}

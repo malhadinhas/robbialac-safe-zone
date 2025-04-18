@@ -50,15 +50,25 @@ export async function loginUser(email: string, password: string): Promise<User |
     throw new Error('Apenas emails @robbialac.pt são permitidos');
   }
   
-  const user = await validateUser(email, password);
+  // Chamar validateUser que agora retorna { user, token } ou null
+  const validationResult = await validateUser(email, password);
   
-  if (!user) {
+  if (!validationResult) {
     return null;
   }
   
+  // Extrair user e token
+  const { user, token } = validationResult;
+  
+  // --- ARMAZENAR O TOKEN --- 
+  localStorage.setItem('token', token); 
+  console.log("[authService] Token stored in localStorage."); // Log para confirmar
+  // ------------------------
+
   // Salvar informações do usuário no localStorage
   localStorage.setItem('robbialac_user', JSON.stringify(user));
   
+  // Retornar apenas o usuário para o AuthContext
   return user;
 }
 

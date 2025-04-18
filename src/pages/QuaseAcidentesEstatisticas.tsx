@@ -42,15 +42,13 @@ export default function QuaseAcidentesEstatisticas() {
         getIncidentsByDepartment(year)
       ]);
 
-      console.log(`Incidentes recebidos para o ano ${year}:`, JSON.stringify(incidents));
-
       if (!Array.isArray(departments)) {
         throw new Error('Departamentos não é um array');
       }
       if (!config?.annualIncidentTargetPerEmployee) {
         throw new Error('Configuração inválida');
       }
-      const data: DepartmentData[] = calculateDepartmentData(departments, incidents);
+      const data: DepartmentData[] = calculateDepartmentData(departments, incidents, config);
       const total = data.reduce((sum, d) => sum + d.incidents, 0);
       const targetTotal = data.reduce((sum, d) => sum + d.target, 0);
       const percentage = targetTotal > 0 ? (total / targetTotal) * 100 : 0;
@@ -170,9 +168,9 @@ export default function QuaseAcidentesEstatisticas() {
   );
 }
 
-const calculateDepartmentData = (departments: DepartmentWithEmployees[], incidents: any[]): DepartmentData[] => {
-  if (!departments || !incidents) {
-    console.error('Dados de departamentos ou incidentes não disponíveis');
+const calculateDepartmentData = (departments: DepartmentWithEmployees[], incidents: any[], config: any): DepartmentData[] => {
+  if (!departments || !incidents || !config?.annualIncidentTargetPerEmployee) {
+    console.error('Dados de departamentos, incidentes ou configuração inválidos para cálculo');
     return [];
   }
 

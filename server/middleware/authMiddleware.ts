@@ -17,7 +17,7 @@ declare global {
 
 // Flag para desenvolvimento - FORÇANDO para true para facilitar o desenvolvimento
 // Em produção, substitua por: process.env.NODE_ENV === 'development'
-const BYPASS_AUTH = true; // Forçado para True durante desenvolvimento
+const BYPASS_AUTH = process.env.NODE_ENV === 'development';
 
 /**
  * Middleware para verificar se o usuário está autenticado

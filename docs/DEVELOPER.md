@@ -1,4 +1,3 @@
-
 # Documentação para Desenvolvedores - Aplicação Robbialac Security
 
 Esta documentação fornece instruções detalhadas para desenvolvedores sobre como configurar, desenvolver e implantar a aplicação Robbialac Security.
@@ -33,24 +32,30 @@ A aplicação Robbialac Security é uma plataforma web para gestão de seguranç
 ### Configuração Inicial
 
 1. Clone o repositório:
+
 ```bash
 git clone <seu-repositorio>
 cd robbialac-security
 ```
 
 2. Instale as dependências:
+
 ```bash
 npm install
 ```
 
 3. Configure as variáveis de ambiente:
+
    - Copie o arquivo `.env.example` para um novo arquivo `.env`:
+
    ```bash
    cp src/.env.example .env
    ```
+
    - Edite o arquivo `.env` com suas credenciais do MongoDB Atlas e Cloudflare R2
 
 4. Inicie o servidor de desenvolvimento:
+
 ```bash
 npm run dev
 ```
@@ -66,6 +71,7 @@ Para configurar o armazenamento de vídeos com Cloudflare R2:
 5. Configure um domínio personalizado para o acesso aos vídeos
 
 Na aplicação, adicione as credenciais em Definições > Armazenamento:
+
 - ID da Conta Cloudflare
 - Access Key ID
 - Secret Access Key
@@ -73,6 +79,7 @@ Na aplicação, adicione as credenciais em Definições > Armazenamento:
 - URL Pública do Bucket
 
 Ou diretamente no arquivo `.env`:
+
 ```
 VITE_CF_ACCOUNT_ID=seu_account_id
 VITE_CF_ACCESS_KEY_ID=sua_access_key_id
@@ -92,10 +99,12 @@ Para configurar a conexão com MongoDB Atlas:
 5. Obtenha a string de conexão
 
 Na aplicação, adicione as credenciais em Definições > Base de Dados:
+
 - URI de Conexão MongoDB
 - Nome do Banco de Dados
 
 Ou diretamente no arquivo `.env`:
+
 ```
 VITE_MONGODB_URI=mongodb+srv://seu_usuario:sua_senha@seu_cluster.mongodb.net/seu_banco
 VITE_MONGODB_DB_NAME=robbialac_security
@@ -165,11 +174,13 @@ A integração com WhatsApp Business permite reportar quase-acidentes diretament
 ## Gerenciamento de Usuários
 
 A aplicação inclui um sistema de gerenciamento de usuários com diferentes níveis de acesso:
+
 - **Admin**: Acesso completo à plataforma e gerenciamento de usuários
 - **Admin QA**: Gerenciamento de quase-acidentes e relatórios
 - **Usuário**: Acesso básico para visualizar conteúdos e reportar quase-acidentes
 
 Para adicionar novos usuários em ambiente de desenvolvimento:
+
 1. Acesse a página de Definições na seção de Usuários
 2. Use o formulário de criação de novos usuários
 3. Defina um email, senha e nível de acesso
@@ -198,11 +209,42 @@ robbialac-security/
 └── README.md               # Documentação geral do projeto
 ```
 
+## Estrutura da Pasta `public`
+
+A pasta `public` contém ficheiros estáticos que são servidos diretamente pelo servidor web. Estes ficheiros são copiados para a pasta `dist` durante o processo de build sem qualquer modificação.
+
+### Ficheiros Principais:
+
+#### Ficheiros PDF.js
+
+- `pdf.worker.js` - Worker script completo do PDF.js (1.3MB)
+- `pdf.worker.min.js` - Versão minificada do worker script (1.3MB)
+  Estes ficheiros são necessários para o funcionamento do visualizador de PDF na aplicação.
+
+#### Recursos Estáticos
+
+- `favicon.ico` - Ícone do site exibido na aba do navegador
+- `placeholder.svg` - Imagem padrão utilizada quando outras imagens não carregam
+- `robots.txt` - Configurações para motores de busca e crawlers
+
+#### Diretórios
+
+- `models/` - Modelos 3D ou outros recursos específicos da aplicação
+- `lovable-uploads/` - Diretório para armazenamento de ficheiros enviados pelos utilizadores
+
+### Notas Importantes:
+
+- Os ficheiros nesta pasta são acessíveis publicamente
+- Não devem ser colocados ficheiros sensíveis nesta pasta
+- O diretório `lovable-uploads` deve ter permissões adequadas configuradas
+- Os workers do PDF.js são necessários para visualização de documentos PDF na aplicação
+
 ## Implantação em Produção
 
 Para implantar em produção, recomenda-se:
 
 1. Construir a aplicação:
+
 ```bash
 npm run build
 ```
@@ -210,11 +252,13 @@ npm run build
 2. Hospedar os arquivos estáticos em um serviço como Vercel, Netlify ou servidor nginx
 
 3. Configurar o banco de dados MongoDB Atlas para produção:
+
    - Senhas fortes
    - Network Access restrito
    - Ativar TLS/SSL
 
 4. Configurar o Cloudflare R2 para produção:
+
    - Utilizar chaves de API restritas
    - Configurar domínio personalizado com SSL
    - Implementar controle de acesso adequado
@@ -234,3 +278,205 @@ Para questões relacionadas ao desenvolvimento desta aplicação:
 ---
 
 Última atualização: Abril 2025
+
+## Configurações do Projeto
+
+### Ficheiros de Configuração
+
+A pasta `config/` contém os principais ficheiros de configuração do projeto:
+
+#### `tsconfig.app.json`
+
+Configuração do TypeScript para a aplicação frontend:
+
+- Define ES2020 como versão alvo do JavaScript
+- Configurado para trabalhar com React e bundlers modernos
+- Inclui configurações específicas para o Vite
+- Define aliases de importação (ex: `@/*` para a pasta `src/`)
+- Temporariamente com modo estrito desativado para desenvolvimento mais ágil
+
+#### `tsconfig.node.json`
+
+Configuração do TypeScript para ambiente Node.js:
+
+- Focado em ES2022 e funcionalidades modernas
+- Usado principalmente para ficheiros de configuração (ex: vite.config.ts)
+- Modo estrito ativado para maior segurança de tipos
+- Configurado para trabalhar com bundlers modernos
+
+#### `postcss.config.js`
+
+Configuração do PostCSS para processamento de CSS:
+
+- Integração com Tailwind CSS
+- Autoprefixer para compatibilidade entre browsers
+- Suporte a plugins para transformação de CSS
+
+#### `eslint.config.js`
+
+Configuração do ESLint para análise estática de código:
+
+- Suporte a TypeScript e React
+- Regras específicas para Hooks do React
+- Configuração do Fast Refresh do Vite
+- Ignora a pasta `dist`
+- Regras personalizadas para melhor experiência de desenvolvimento
+
+#### Configuração do robots.txt
+
+O ficheiro `robots.txt` está configurado para permitir acesso a todos os crawlers principais:
+
+- Googlebot (Google)
+- Bingbot (Microsoft Bing)
+- Twitterbot (Twitter)
+- facebookexternalhit (Facebook)
+- Todos os outros crawlers (User-agent: \*)
+
+Esta configuração permite a indexação completa do site por motores de busca e redes sociais.
+
+## Scripts de Configuração e Automação
+
+A pasta `scripts` contém scripts essenciais para a configuração e manutenção da aplicação:
+
+### Scripts Principais
+
+#### `setup-pdf.js`
+
+Script para configuração do visualizador de PDF:
+
+- Copia o worker do PDF.js das dependências para a pasta `public`
+- Garante que o visualizador de PDF funcione corretamente
+- Executado durante a instalação inicial da aplicação
+
+#### `configure-r2-cors.js`
+
+Script para configuração do CORS no Cloudflare R2:
+
+- Configura as políticas CORS para o bucket R2
+- Define origens permitidas para acesso aos recursos
+- Configura headers e métodos HTTP permitidos
+- Requer variáveis de ambiente no `.env`:
+  - `R2_ENDPOINT`
+  - `R2_ACCESS_KEY_ID`
+  - `R2_SECRET_ACCESS_KEY`
+  - `R2_BUCKET_NAME`
+  - `CORS_ORIGIN` (opcional, padrão: http://localhost:5173)
+
+#### `setup.sh`
+
+Script de configuração inicial:
+
+- Instala dependências essenciais (MongoDB, bcrypt)
+- Executa a criação de utilizadores iniciais
+- Deve ser executado após a clonagem inicial do repositório
+
+### Ficheiros de Configuração
+
+- `package.json` - Dependências e scripts específicos para automação
+- `package-lock.json` - Versões exatas das dependências
+- `node_modules/` - Módulos Node.js instalados localmente
+
+### Notas Importantes:
+
+- Os scripts devem ser executados na ordem correta durante a instalação
+- Necessário configurar variáveis de ambiente antes de executar `configure-r2-cors.js`
+- O script `setup.sh` requer permissões de execução (`chmod +x setup.sh`)
+- Manter as dependências atualizadas para segurança
+
+## Servidor Backend (pasta `server`)
+
+A pasta `server` contém toda a lógica do backend da aplicação, implementada em TypeScript com Node.js e Express.
+
+### Arquivos Principais
+
+#### `server.ts`
+
+Arquivo principal do servidor Express:
+
+- Configuração de middlewares de segurança (helmet, cors)
+- Gestão de variáveis de ambiente
+- Configuração de rotas da API
+- Gestão de uploads e arquivos temporários
+- Limite de payload configurado para 10GB
+- Integração com Cloudflare R2 para armazenamento
+- Rotas principais:
+  - `/api/accidents` - Gestão de acidentes
+  - `/api/incidents` - Gestão de incidentes
+  - `/api/videos` - Gestão de vídeos
+  - `/api/departments` - Gestão de departamentos
+  - `/api/medals` - Sistema de gamificação
+  - `/api/stats` - Estatísticas
+  - `/api/activities` - Registro de atividades
+  - `/api/sensibilizacao` - Gestão de sensibilização
+
+#### `app.ts`
+
+Configuração da aplicação Express:
+
+- Conexão com MongoDB
+- Middleware de logging
+- Rota de teste para verificação do banco de dados
+- Tratamento de erros global
+
+### Estrutura de Diretórios
+
+- `routes/` - Definição das rotas da API
+- `controllers/` - Lógica de negócios
+- `models/` - Modelos do MongoDB
+- `services/` - Serviços e integrações
+- `scripts/` - Scripts utilitários
+- `types/` - Definições de tipos TypeScript
+- `config/` - Configurações do servidor
+- `middleware/` - Middlewares personalizados
+- `utils/` - Funções utilitárias
+- `src/` - Código fonte adicional
+
+### Configuração TypeScript
+
+O arquivo `tsconfig.json` define as configurações do TypeScript:
+
+- Target: ES2022
+- Module: CommonJS
+- Strict mode ativado
+- Suporte a resolução de módulos
+- Output em ./dist
+- Aliases de importação configurados
+
+### Variáveis de Ambiente (.env)
+
+Configurações necessárias no arquivo `.env`:
+
+- `R2_ENDPOINT` - Endpoint do Cloudflare R2
+- `R2_ACCESS_KEY_ID` - Chave de acesso R2
+- `R2_SECRET_ACCESS_KEY` - Chave secreta R2
+- `R2_BUCKET_NAME` - Nome do bucket R2
+- `PORT` - Porta do servidor (padrão: 3000)
+- Outras configurações específicas da aplicação
+
+### Segurança
+
+- CORS configurado para origens específicas
+- Helmet para headers de segurança
+- Limite de payload configurável
+- Tratamento de erros centralizado
+- Validação de variáveis de ambiente
+
+### Armazenamento
+
+- Gestão de arquivos temporários em `/temp`
+- Integração com Cloudflare R2 para armazenamento permanente
+- Diretório específico para desenvolvimento em `/storage/temp`
+
+### Banco de Dados
+
+- Conexão MongoDB configurada via mongoose
+- Verificação de status do banco
+- Logging de operações do banco
+- Validação de configuração do banco de dados
+
+### Notas de Desenvolvimento
+
+- Em modo desenvolvimento, arquivos temporários são servidos via `/temp`
+- Logging detalhado de requisições
+- Rota de teste `/api/test` para diagnóstico
+- Tratamento de erros com stack traces em desenvolvimento

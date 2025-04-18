@@ -1,6 +1,8 @@
-import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
 import './index.css';
+import './i18n'; // Importa a configuração do i18next
 import ErrorBoundary from './components/ErrorBoundary.tsx';
 import { initializeDatabase, getDatabaseConnectionStatus } from './config/database';
 
@@ -28,7 +30,7 @@ async function startApp() {
       // The DatabaseContext will handle this error and display it to the user
     }
     
-    createRoot(rootElement).render(
+    ReactDOM.createRoot(rootElement).render(
       <ErrorBoundary>
         <App />
       </ErrorBoundary>

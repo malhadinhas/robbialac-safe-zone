@@ -70,6 +70,11 @@ export function Layout({ children }: LayoutProps) {
   const expandedMenuWidth = "14rem";
   const collapsedMenuWidth = "3.5rem";
 
+  // Obter a primeira letra do nome ou '?' se não disponível
+  const userInitial = user?.name ? user.name.substring(0, 1).toUpperCase() : '?';
+  const userName = user?.name || 'Utilizador'; // Nome a exibir ou 'Utilizador'
+  const userEmail = user?.email || ''; // Email a exibir ou vazio
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {isCompactView && (
@@ -155,12 +160,12 @@ export function Layout({ children }: LayoutProps) {
               : "flex-col space-y-2 items-center"
           )}>
             <div className="bg-white text-robbialac rounded-full w-8 h-8 flex items-center justify-center font-bold shrink-0 text-sm">
-              {user?.name.substring(0, 1)}
+              {userInitial}
             </div>
             {(isCompactView || menuOpen) && (
               <div className="overflow-hidden text-center">
-                <p className="font-medium text-xs sm:text-sm whitespace-normal">{user?.name}</p>
-                <p className="text-xs text-white/70 whitespace-normal break-words">{user?.email}</p>
+                <p className="font-medium text-xs sm:text-sm whitespace-normal">{userName}</p>
+                <p className="text-xs text-white/70 whitespace-normal break-words">{userEmail}</p>
               </div>
             )}
           </div>

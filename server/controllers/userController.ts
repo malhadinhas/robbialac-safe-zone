@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { getCollection } from '../services/database';
 import { User } from '../types';
+import { hashPassword } from '../services/auth';
+import logger from '../utils/logger';
 
 export async function getUsers(req: Request, res: Response) {
   try {
@@ -49,17 +51,29 @@ export async function getUserByEmail(req: Request, res: Response) {
 
 export async function createUser(req: Request, res: Response) {
   try {
-    const userData = req.body;
+    const { email, password, ...restData } = req.body;
+
+    if (!email || !password) {
+      logger.warn('Tentativa de criar utilizador sem email ou password');
+      return res.status(400).json({ error: 'Email e password são obrigatórios' });
+    }
+
     const collection = await getCollection<User>('users');
     
     // Verificar se o email já existe
-    const existingUser = await collection.findOne({ email: userData.email });
+    const existingUser = await collection.findOne({ email });
     if (existingUser) {
+      logger.warn('Tentativa de criar utilizador com email já existente', { email });
       return res.status(400).json({ error: 'Email já cadastrado' });
     }
+
+    // Fazer hash da password
+    const hashedPassword = await hashPassword(password);
     
     const newUser: User = {
-      ...userData,
+      email,
+      password: hashedPassword,
+      ...restData,
       id: crypto.randomUUID(),
       points: 100,
       level: 1,
@@ -69,10 +83,15 @@ export async function createUser(req: Request, res: Response) {
     };
     
     await collection.insertOne(newUser);
-    res.status(201).json(newUser);
-  } catch (error) {
-    console.error('Erro ao criar usuário:', error);
-    res.status(500).json({ error: 'Erro ao criar usuário' });
+    logger.info('Novo utilizador criado com sucesso', { email });
+    
+    // Retornar utilizador sem a password
+    const { password: _, ...userToReturn } = newUser;
+    res.status(201).json(userToReturn);
+
+  } catch (error: any) {
+    logger.error('Erro ao criar utilizador', { error: error.message, stack: error.stack });
+    res.status(500).json({ error: 'Erro ao criar utilizador' });
   }
 }
 

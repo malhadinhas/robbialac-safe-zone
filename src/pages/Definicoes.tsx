@@ -26,10 +26,16 @@ import { toast } from "sonner";
 import MedalManagement from "@/components/medal-management/MedalManagement";
 import DepartmentEmployeeEditor from '@/components/analytics/DepartmentEmployeeEditor';
 import IncidentTargetEditor from '@/components/analytics/IncidentTargetEditor';
+import { useAuth } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
+import { BarChartHorizontal } from "lucide-react";
+import AnalyticsPage from "./Settings/AnalyticsPage";
+import { useTranslation } from 'react-i18next';
 
 export default function Definicoes() {
-  const [language, setLanguage] = useState("pt");
+  const { t, i18n } = useTranslation();
   const [saved, setSaved] = useState(false);
+  const { user } = useAuth();
   
   // Cloudflare R2 config
   const [r2AccountId, setR2AccountId] = useState("");
@@ -58,6 +64,7 @@ export default function Definicoes() {
 
   const handleSave = () => {
     setSaved(true);
+    toast.success(t('saveSuccess'));
     setTimeout(() => {
       setSaved(false);
     }, 2000);
@@ -106,54 +113,66 @@ export default function Definicoes() {
     }
   };
 
+  // Verifica se o usuário é admin_app
+  const isAdminApp = user?.role === 'admin_app';
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
+
   return (
     <Layout>
       <div className="container py-6 space-y-6">
-        <h1 className="text-2xl font-bold">Definições</h1>
+        <h1 className="text-2xl font-bold">{t('settings')}</h1>
         
         <Tabs defaultValue="interface" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="interface">Interface</TabsTrigger>
-            <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
-            <TabsTrigger value="storage">Armazenamento</TabsTrigger>
-            <TabsTrigger value="database">Base de Dados</TabsTrigger>
-            <TabsTrigger value="medals">Medalhas</TabsTrigger>
-            <TabsTrigger value="incidents">Quase Acidentes</TabsTrigger>
+          <TabsList className={`grid w-full ${isAdminApp ? 'grid-cols-7' : 'grid-cols-6'}`}>
+            <TabsTrigger value="interface">{t('interface')}</TabsTrigger>
+            <TabsTrigger value="whatsapp">{t('whatsapp')}</TabsTrigger>
+            <TabsTrigger value="storage">{t('storage')}</TabsTrigger>
+            <TabsTrigger value="database">{t('database')}</TabsTrigger>
+            <TabsTrigger value="medals">{t('medals')}</TabsTrigger>
+            <TabsTrigger value="incidents">{t('near_misses')}</TabsTrigger>
+            {isAdminApp && (
+              <TabsTrigger value="analytics">
+                <BarChartHorizontal className="mr-2 h-4 w-4" />{t('analytics')}
+              </TabsTrigger>
+            )}
           </TabsList>
           
           <TabsContent value="interface">
             <div className="grid gap-6 md:grid-cols-1">
               <Card>
                 <CardHeader>
-                  <CardTitle>Interface</CardTitle>
+                  <CardTitle>{t('interface')}</CardTitle>
                   <CardDescription>
-                    Personalize o comportamento da aplicação
+                    {t('customize_app')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="language">Idioma</Label>
+                    <Label htmlFor="language">{t('language')}</Label>
                     <Select 
-                      defaultValue={language} 
-                      onValueChange={setLanguage}
+                      value={i18n.language} 
+                      onValueChange={changeLanguage} 
                     >
                       <SelectTrigger id="language">
-                        <SelectValue placeholder="Selecione o idioma" />
+                        <SelectValue placeholder={t('select_language')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pt">Português</SelectItem>
-                        <SelectItem value="en">Inglês</SelectItem>
-                        <SelectItem value="es">Espanhol</SelectItem>
+                        <SelectItem value="pt">{t('portuguese')}</SelectItem>
+                        <SelectItem value="en">{t('english')}</SelectItem>
+                        <SelectItem value="fr">{t('french')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="email-notifications">Email para notificações</Label>
+                    <Label htmlFor="email-notifications">{t('notifications_email')}</Label>
                     <Input 
                       id="email-notifications" 
                       type="email" 
-                      placeholder="seu-email@example.com" 
+                      placeholder={t('email_placeholder')} 
                     />
                   </div>
                   
@@ -164,9 +183,9 @@ export default function Definicoes() {
                     {saved ? (
                       <>
                         <Check className="mr-2 h-4 w-4" />
-                        Salvo
+                        {t('saved')}
                       </>
-                    ) : "Salvar alterações"}
+                    ) : t('save_changes')}
                   </Button>
                 </CardContent>
               </Card>
@@ -327,6 +346,12 @@ export default function Definicoes() {
               </Card>
             </div>
           </TabsContent>
+
+          {isAdminApp && (
+            <TabsContent value="analytics">
+              <AnalyticsPage />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </Layout>

@@ -1,30 +1,50 @@
 {
+  // Configurações do compilador TypeScript para a aplicação frontend (geralmente React/Vite).
   "compilerOptions": {
+    // Define a versão do JavaScript alvo (ECMAScript 2020).
     "target": "ES2020",
+    // Usa a sintaxe padrão ECMAScript para campos de classe.
     "useDefineForClassFields": true,
+    // Bibliotecas padrão a incluir (ES2020, APIs do DOM).
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    // Sistema de módulos a usar (padrão moderno para bundlers).
     "module": "ESNext",
+    // Ignora a verificação de tipos em ficheiros de declaração (.d.ts).
     "skipLibCheck": true,
 
-    /* Bundler mode */
+    /* Configurações específicas para bundlers como Vite/Webpack */
+    // Estratégia de resolução de módulos otimizada para bundlers.
     "moduleResolution": "bundler",
+    // Permite importar ficheiros .ts com extensão (necessário para moduleResolution bundler).
     "allowImportingTsExtensions": true,
+    // Garante que cada ficheiro pode ser transpilado separadamente.
     "isolatedModules": true,
+    // Força a deteção de módulos mesmo em ficheiros sem imports/exports explícitos.
     "moduleDetection": "force",
+    // Não gera ficheiros JavaScript (o bundler, como Vite, encarrega-se disso).
     "noEmit": true,
+    // Configura a transpilação de JSX para React (nova sintaxe sem importar React).
     "jsx": "react-jsx",
 
-    /* Linting */
+    /* Configurações de Linting e Verificação de Tipos */
+    // Desativa temporariamente todas as verificações estritas (strict mode) - pode ser ativado para maior segurança de tipos.
     "strict": false,
+    // Permite variáveis locais não utilizadas (desativado temporariamente).
     "noUnusedLocals": false,
+    // Permite parâmetros de função não utilizados (desativado temporariamente).
     "noUnusedParameters": false,
+    // Permite o tipo 'any' implícito (desativado temporariamente, menos seguro).
     "noImplicitAny": false,
+    // Permite 'fallthrough' em declarações switch (desativado temporariamente).
     "noFallthroughCasesInSwitch": false,
 
+    // Define o diretório base para resolução de caminhos relativos (a raiz do projeto).
     "baseUrl": "..",
+    // Define aliases para caminhos de importação (ex: @/ pode ser usado para referir src/).
     "paths": {
       "@/*": ["src/*"]
     }
   },
+  // Especifica os ficheiros/pastas a incluir na compilação (apenas a pasta src).
   "include": ["../src"]
 }

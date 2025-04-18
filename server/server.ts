@@ -1,3 +1,8 @@
+/**
+ * Servidor principal da aplicação Robbialac Safe Zone
+ * Este arquivo configura e inicializa o servidor Express com todas as suas dependências
+ */
+
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -18,22 +23,29 @@ import { ensureStorageDirectories } from './config/storage';
 import { checkStorage } from './scripts/checkStorage';
 import logger from './utils/logger';
 import sensibilizacaoRoutes from './routes/sensibilizacaoRoutes';
+import analyticsRoutes from './routes/analyticsRoutes';
+import authRoutes from './routes/authRoutes';
 
-// Verificar variáveis de ambiente críticas
+/**
+ * Verificação das variáveis de ambiente necessárias para o Cloudflare R2
+ * Estas variáveis são críticas para o funcionamento do armazenamento de arquivos
+ */
 logger.info('Verificando variáveis de ambiente...');
 const requiredEnvVars = [
-  'R2_ENDPOINT',
-  'R2_ACCESS_KEY_ID',
-  'R2_SECRET_ACCESS_KEY',
-  'R2_BUCKET_NAME'
+  'R2_ENDPOINT',      // Endpoint do serviço R2
+  'R2_ACCESS_KEY_ID', // Chave de acesso
+  'R2_SECRET_ACCESS_KEY', // Chave secreta
+  'R2_BUCKET_NAME'    // Nome do bucket
 ];
 
+// Verifica se alguma variável está faltando
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 if (missingVars.length > 0) {
   logger.error('Variáveis de ambiente ausentes:', { missingVars });
   throw new Error(`Variáveis de ambiente ausentes: ${missingVars.join(', ')}`);
 }
 
+// Log de confirmação das variáveis carregadas
 logger.info('Variáveis de ambiente carregadas:', {
   hasEndpoint: !!process.env.R2_ENDPOINT,
   hasAccessKey: !!process.env.R2_ACCESS_KEY_ID,
@@ -44,27 +56,36 @@ logger.info('Variáveis de ambiente carregadas:', {
 const app = express();
 const port = 3000;
 
+/**
+ * Configuração de diretórios e middlewares
+ */
 // Diretório para arquivos temporários
 const TEMP_DIR = path.join(process.cwd(), 'temp');
 
 // Configurações de segurança
-app.use(helmet());
+app.use(helmet()); // Proteção contra vulnerabilidades comuns
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Range'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  credentials: true
+  origin: ['http://localhost:5173', 'http://localhost:3000'], // Origens permitidas
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],      // Métodos HTTP permitidos
+  allowedHeaders: ['Content-Type', 'Authorization', 'Range'], // Headers permitidos
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],      // Headers expostos
+  credentials: true                                          // Permite credenciais
 }));
 
-// Aumentar limite de payload para 10GB
+/**
+ * Configuração de limites de upload
+ * Aumentado para 10GB para suportar uploads de vídeos grandes
+ */
 app.use(express.json({ limit: '10gb' }));
 app.use(express.urlencoded({ limit: '10gb', extended: true }));
 
 // Servir arquivos estáticos do diretório temp
 app.use('/videos', express.static(TEMP_DIR));
 
-// Em desenvolvimento, servir arquivos temporários
+/**
+ * Configuração específica para ambiente de desenvolvimento
+ * Permite acesso a arquivos temporários para debug
+ */
 if (process.env.NODE_ENV === 'development') {
   const TEMP_STORAGE_DIR = path.join(process.cwd(), 'storage', 'temp');
   app.use('/temp', express.static(TEMP_STORAGE_DIR));
@@ -76,34 +97,46 @@ checkStorage().catch(error => {
   throw new Error(`Erro na verificação de armazenamento: ${error.message}`);
 });
 
-// Middleware para tratar erros
+/**
+ * Middleware global de tratamento de erros
+ * Captura e formata todos os erros não tratados
+ */
 app.use((err: any, req: any, res: any, next: any) => {
   res.status(500).json({ error: err.message });
 });
 
-// Rotas da API
-app.use('/api/accidents', accidentRoutes);
-app.use('/api/incidents', incidentRoutes);
-app.use('/api/videos', videoRoutes);
-app.use('/api/secure-url', secureUrlRoutes);
-app.use('/api/departments', departmentRoutes);
-app.use('/api/medals', medalRoutes);
-app.use('/api/zones', zoneRoutes);
-app.use('/api/stats', statsRoutes);
-app.use('/api/activities', activityRoutes);
-app.use('/api/system', systemRoutes);
-app.use('/api/sensibilizacao', sensibilizacaoRoutes);
+/**
+ * Configuração das rotas da API
+ * Cada rota é modularizada em seu próprio arquivo
+ */
+app.use('/api/auth', authRoutes);
+app.use('/api/accidents', accidentRoutes);     // Gestão de acidentes
+app.use('/api/incidents', incidentRoutes);     // Gestão de incidentes
+app.use('/api/videos', videoRoutes);           // Gestão de vídeos
+app.use('/api/secure-url', secureUrlRoutes);   // URLs seguras
+app.use('/api/departments', departmentRoutes); // Gestão de departamentos
+app.use('/api/medals', medalRoutes);           // Sistema de gamificação
+app.use('/api/zones', zoneRoutes);            // Gestão de zonas
+app.use('/api/stats', statsRoutes);           // Estatísticas
+app.use('/api/activities', activityRoutes);   // Registro de atividades
+app.use('/api/system', systemRoutes);         // Configurações do sistema
+app.use('/api/sensibilizacao', sensibilizacaoRoutes); // Gestão de sensibilização
+app.use('/api/analytics', analyticsRoutes); // Adiciona as rotas de analytics
 
-// Rota para verificar status do banco
+/**
+ * Rota de diagnóstico para verificar status do banco de dados
+ */
 app.get('/api/database/status', (req, res) => {
   const status = getDatabaseStatus();
   res.json(status);
 });
 
-// Inicializa o servidor
+/**
+ * Inicialização do servidor
+ * Conecta ao banco de dados antes de iniciar o servidor
+ */
 connectToDatabase().then(() => {
   app.listen(port, () => {
-    // Mantido apenas o log essencial de inicialização do servidor
     console.info(`Servidor rodando em http://localhost:${port}`);
   });
 }).catch(error => {
