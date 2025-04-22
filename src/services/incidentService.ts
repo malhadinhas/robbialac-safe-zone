@@ -1,5 +1,11 @@
 import { Incident } from "@/types";
 import api from '@/lib/api';
+import { API_BASE_URL } from '@/config';
+
+interface DepartmentIncidents {
+  department: string;
+  count: number;
+}
 
 export async function getIncidents(status?: 'active' | 'archived'): Promise<Incident[]> {
   try {
@@ -135,24 +141,24 @@ export async function getIncidentStatsByDepartment(): Promise<{ department: stri
   }
 }
 
-interface IncidentsByDepartment {
-  [departmentId: string]: number;
-}
-
-export async function getIncidentsByDepartment(year?: number): Promise<{ department: string; count: number }[]> {
+export const getIncidentsByDepartment = async (year?: number): Promise<DepartmentIncidents[]> => {
   try {
-    // Constrói a URL com o parâmetro de ano, se fornecido
-    const url = year ? `/incidents/by-department?year=${year}` : '/incidents/by-department';
-    const response = await api.get(url);
-    // Removido o log daqui, pois estava no sítio errado
-    // console.warn('[incidentService] Resposta BRUTA de /incidents/by-department:', response.data);
-    return response.data;
+    const url = new URL(`${API_BASE_URL}/api/incidents/by-department`);
+    if (year) {
+      url.searchParams.append('year', year.toString());
+    }
+    
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      throw new Error('Falha ao buscar incidentes por departamento');
+    }
+    
+    return await response.json();
   } catch (error) {
-    // Logar o erro e retornar array vazio para não quebrar o frontend
-    console.error("Erro ao buscar incidentes por departamento:", error);
-    return []; 
+    console.error('Erro ao buscar incidentes por departamento:', error);
+    throw error;
   }
-}
+};
 
 export async function deleteIncident(id: string): Promise<void> {
   try {

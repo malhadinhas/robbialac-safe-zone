@@ -251,7 +251,7 @@ export async function updateIncident(req: Request, res: Response) {
     }
 
     const result = await collection.updateOne(
-      { _id: new ObjectId(incidentId) },
+      { _id: new ObjectId(incidentId) }, 
       { $set: fieldsToUpdate }
     );
     // --- FIM da Mudança ---
@@ -282,8 +282,8 @@ export async function deleteIncident(req: Request, res: Response) {
       return res.status(400).json({ error: 'ID de incidente inválido' });
     }
     const collection = await getCollection<Incident>('incidents');
-    const result = await collection.deleteOne({ _id: new ObjectId(incidentId) });
-
+    const result = await collection.deleteOne({ _id: new ObjectId(incidentId) }); 
+    
     if (result.deletedCount === 0) {
       return res.status(404).json({ error: 'Incidente não encontrado para exclusão' });
     }
@@ -298,27 +298,49 @@ export async function deleteIncident(req: Request, res: Response) {
 
 // Get Incidents by Department
 export async function getIncidentsByDepartment(req: Request, res: Response) {
-    const { departmentName } = req.params; 
     const year = req.query.year ? parseInt(req.query.year as string) : undefined;
+  
+  try {
+    const collection = await getCollection<Incident>('incidents');
+        const departmentsCollection = await getCollection<Department>('departments');
 
-    try {
-        const collection = await getCollection<Incident>('incidents');
-
-        let query: any = { department: departmentName };
-
+        // Construir a condição de data se o ano for especificado
+        let dateCondition = {};
         if (year) {
-            const startDate = new Date(year, 0, 1); // Start of the year
-            const endDate = new Date(year + 1, 0, 1); // Start of the next year
-            query.date = { $gte: startDate, $lt: endDate };
+            const startDate = new Date(year, 0, 1); // Início do ano
+            const endDate = new Date(year + 1, 0, 1); // Início do próximo ano
+            dateCondition = { date: { $gte: startDate, $lt: endDate } };
         }
 
-        const incidents = await collection.find(query).sort({ date: -1 }).toArray();
+        // Buscar todos os departamentos primeiro
+        const departments = await departmentsCollection.find({}).toArray();
 
-        res.json(incidents);
+        // Buscar e contar incidentes para cada departamento
+        const departmentStats = await Promise.all(
+            departments.map(async (dept) => {
+                const query = {
+                    department: dept.label,
+                    ...dateCondition
+                };
+                
+                const count = await collection.countDocuments(query);
+                
+                return {
+                    department: dept.label,
+                    count: count
+                };
+            })
+        );
+
+        // Ordenar por contagem decrescente
+        departmentStats.sort((a, b) => b.count - a.count);
+
+        logger.info(`Estatísticas de incidentes por departamento calculadas com sucesso. Ano: ${year || 'todos'}`);
+        res.json(departmentStats);
     } catch (error) {
-        logger.error(`Erro ao buscar incidentes para o departamento ${departmentName}:`, error);
+        logger.error('Erro ao buscar estatísticas de incidentes por departamento:', error);
         res.status(500).json({ 
-            error: 'Erro ao buscar incidentes por departamento',
+            error: 'Erro ao buscar estatísticas de incidentes por departamento',
             details: error instanceof Error ? error.message : 'Erro desconhecido'
         });
     }

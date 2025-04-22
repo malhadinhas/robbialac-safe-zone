@@ -302,7 +302,7 @@ const Factory3DModelManager = ({
       }>
         <Canvas
           camera={{ 
-            position: [0, 250, 250],
+            position: [-250, 250, 250],
             fov: 50,
             near: 0.1,
             far: 1000
@@ -338,20 +338,26 @@ const Factory3DModelManager = ({
               minDistance={250}
               maxDistance={250}
               target={modelCenter}
-              minPolarAngle={55 * (Math.PI / 180)}
-              maxPolarAngle={55 * (Math.PI / 180)}
+              minPolarAngle={Math.PI / 2.5}
+              maxPolarAngle={Math.PI / 2.5}
               minAzimuthAngle={-Infinity}
               maxAzimuthAngle={Infinity}
+              rotateSpeed={0.5}
+              mouseButtons={{
+                LEFT: THREE.MOUSE.ROTATE,
+                MIDDLE: THREE.MOUSE.DOLLY,
+                RIGHT: THREE.MOUSE.PAN
+              }}
             />
           ) : (
             <PresentationControls
               global={true}
               cursor={true}
               snap={false}
-              speed={1}
+              speed={0.5}
               zoom={!isCompactView}
               rotation={[0, 0, 0]}
-              polar={[55 * (Math.PI / 180), 55 * (Math.PI / 180)]}
+              polar={[Math.PI / 2.5, Math.PI / 2.5]}
               azimuth={[-Infinity, Infinity]}
             />
           )}

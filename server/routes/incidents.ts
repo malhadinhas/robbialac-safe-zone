@@ -19,7 +19,7 @@ router.get('/recent', isAuthenticated, getRecentIncidents);
 router.get('/', isAuthenticated, getIncidents);
 
 // GET /api/incidents/by-department - Listar por departamento (com filtro de ano opcional)
-router.get('/by-department/:departmentName', isAuthenticated, getIncidentsByDepartment);
+router.get('/by-department', getIncidentsByDepartment);
 
 // POST /api/incidents - Criar novo incidente (requer autenticação)
 router.post('/', isAuthenticated, createIncident);

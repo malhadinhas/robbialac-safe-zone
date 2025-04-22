@@ -4,37 +4,72 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, AlertTriangle, BookOpen } from "lucide-react";
 import { PieChart, Pie, Legend, Tooltip, Cell, ResponsiveContainer } from "recharts";
 import RecentActivityCard from '@/components/RecentActivityCard';
-import { User } from "@/types";
+import { User, Video, Incident } from "@/types";
 import { useNavigate } from "react-router-dom";
 
 interface MobileDashboardProps {
   user: User | null;
-  currentLevel: number;
-  progressToNextLevel: number;
-  totalViews: number;
-  totalIncidents: number;
-  recentVideos: any[];
-  recentIncidents: any[];
+  videos: Video[];
+  incidents: Incident[];
+  loading: boolean;
+  error: string | null;
   statsByCategory: any[];
   statsBySeverity: any[];
   statsByRisk: any[];
-  renderCustomPieChartLabel: any;
+  statsByQAQuality: any[];
+  statsByFrequency: any[];
+  totalViews: number;
+  totalIncidents: number;
+  totalVideos: number;
+  totalMedalsAcquired: number;
+  progressToNextLevel: number;
+  currentLevel: number;
+  pointsToNextLevel: number;
 }
 
 export default function MobileDashboard({
   user,
-  currentLevel,
-  progressToNextLevel,
-  totalViews,
-  totalIncidents,
-  recentVideos,
-  recentIncidents,
+  videos,
+  incidents,
+  loading,
+  error,
   statsByCategory,
   statsBySeverity,
   statsByRisk,
-  renderCustomPieChartLabel
+  statsByQAQuality,
+  statsByFrequency,
+  totalViews,
+  totalIncidents,
+  totalVideos,
+  totalMedalsAcquired,
+  progressToNextLevel,
+  currentLevel,
+  pointsToNextLevel,
 }: MobileDashboardProps) {
   const navigate = useNavigate();
+  const recentVideos = videos?.slice(0, 3) || [];
+  const recentIncidents = incidents?.slice(0, 3) || [];
+
+  // Função para renderizar labels personalizados no gráfico de pizza
+  const renderCustomPieChartLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
+    const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+  
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor="middle" 
+        dominantBaseline="central"
+        fontSize={10}
+        fontWeight="bold"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
 
   return (
     <div className="flex flex-col h-full space-y-2 p-2 overflow-y-auto">
@@ -142,6 +177,9 @@ export default function MobileDashboard({
 
       {/* Atividade Recente em Tabs */}
       <Card className="flex-1 w-full border shadow-sm">
+        <CardHeader className="p-2 pb-0">
+          <CardTitle className="text-sm font-medium">Atividade Recente</CardTitle>
+        </CardHeader>
         <CardContent className="p-2">
           <Tabs defaultValue="videos" className="w-full h-full">
             <TabsList className="w-full mb-2 h-7">

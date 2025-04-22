@@ -7,6 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Video {
   id: string;
@@ -24,10 +25,11 @@ interface Incident {
   severity: string;
   status: string;
   createdAt: string;
+  date?: string;
 }
 
 interface ActivityCardProps {
-  title: string;
+  title?: string;
   videos?: Video[];
   incidents?: Incident[];
   className?: string;
@@ -83,13 +85,15 @@ const VideoThumbnail = ({ video }: { video: Video }) => {
 };
 
 function RecentActivityCard({ 
-  title,
+  title = "Atividade Recente",
   videos = [], 
   incidents = [], 
   className = "",
   hideHeader = false 
 }: ActivityCardProps) {
-  const [activeTab, setActiveTab] = useState<"videos" | "quaseAcidentes">("videos");
+  const [activeTab, setActiveTab] = useState<"videos" | "quaseAcidentes">(
+    videos.length > 0 ? "videos" : "quaseAcidentes"
+  );
   const navigate = useNavigate();
 
   const handleVideoClick = (videoId: string) => {
@@ -101,9 +105,18 @@ function RecentActivityCard({
   };
 
   // Formatar data no formato brasileiro
-  const formatDate = (date: Date) => {
+  const formatDate = (date?: Date | string) => {
     if (!date) return '';
-    return new Date(date).toLocaleDateString('pt-BR');
+    
+    try {
+      const parsedDate = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(parsedDate.getTime())) return '';
+      
+      return parsedDate.toLocaleDateString('pt-BR');
+    } catch (e) {
+      console.error('Erro ao formatar data:', e);
+      return '';
+    }
   };
 
   const getSeverityColor = (severity: string) => {
@@ -132,97 +145,88 @@ function RecentActivityCard({
     <Card className={`h-full ${className}`}>
       {!hideHeader && (
         <CardHeader className="pb-2">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <CardTitle className="text-lg mb-2 sm:mb-0">Atividade Recente</CardTitle>
-            <div className="flex w-full sm:w-auto gap-2">
-              <Button 
-                variant={activeTab === "videos" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setActiveTab("videos")}
-                className={`flex-1 sm:flex-none justify-center ${activeTab === "videos" ? "bg-robbialac hover:bg-robbialac-dark" : ""}`}
-              >
-                <Film className="w-4 h-4 sm:mr-1" />
-                <span className="hidden sm:inline">Vídeos</span>
-              </Button>
-              <Button 
-                variant={activeTab === "quaseAcidentes" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setActiveTab("quaseAcidentes")}
-                className={`flex-1 sm:flex-none justify-center ${activeTab === "quaseAcidentes" ? "bg-robbialac hover:bg-robbialac-dark" : ""}`}
-              >
-                <AlertTriangle className="w-4 h-4 sm:mr-1" />
-                <span className="hidden sm:inline">Quase Acidentes</span>
-              </Button>
-            </div>
-          </div>
+          <CardTitle className="text-lg">{title}</CardTitle>
         </CardHeader>
       )}
       
-      <CardContent className="p-2 sm:p-4 h-[calc(100%-4rem)]">
-        {activeTab === "videos" ? (
-          <div className="h-full flex flex-col justify-center">
+      <CardContent className="p-2 sm:p-3">
+        <Tabs defaultValue={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+          <TabsList className="w-full mb-2 h-8">
+            <TabsTrigger value="videos" className="text-xs">Vídeos</TabsTrigger>
+            <TabsTrigger value="quaseAcidentes" className="text-xs">Quase Acidentes</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="videos" className="mt-0">
             {videos.length > 0 ? (
-              <div 
-                key={videos[0].id} 
-                className="group flex items-center p-2 hover:bg-gray-50 cursor-pointer transition-colors rounded-md border border-transparent hover:border-gray-200"
-                onClick={() => handleVideoClick(videos[0].id)}
-              >
-                <div className="flex-shrink-0 w-16 h-12 bg-gray-100 rounded overflow-hidden mr-3 relative">
-                  <VideoThumbnail video={videos[0]} />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Film className="w-4 h-4 text-white" />
+              <div className="space-y-2">
+                {videos.map(video => (
+                  <div 
+                    key={video.id} 
+                    className="group flex items-center p-2 hover:bg-gray-50 cursor-pointer transition-colors rounded-md border border-transparent hover:border-gray-200"
+                    onClick={() => handleVideoClick(video.id)}
+                  >
+                    <div className="flex-shrink-0 w-14 h-10 bg-gray-100 rounded overflow-hidden mr-2 relative">
+                      <VideoThumbnail video={video} />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Film className="w-4 h-4 text-white" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate text-xs">{video.title}</p>
+                      <div className="flex items-center gap-2 text-[10px] text-gray-500 mt-1">
+                        <span className="flex items-center">
+                          <Eye className="w-3 h-3 mr-1" />
+                          {video.views || 0}
+                        </span>
+                        <span className="flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate text-sm">{videos[0].title}</p>
-                  <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                    <span className="flex items-center">
-                      <Eye className="w-3 h-3 mr-1" />
-                      {videos[0].views || 0}
-                    </span>
-                    <span className="flex items-center">
-                      <Clock className="w-3 h-3 mr-1" />
-                      {Math.floor(videos[0].duration / 60)}:{(videos[0].duration % 60).toString().padStart(2, '0')}
-                    </span>
-                  </div>
-                </div>
+                ))}
               </div>
             ) : (
-              <div className="text-center py-4 text-gray-500 text-sm">
+              <div className="text-center py-4 text-gray-500 text-xs">
                 Nenhum vídeo recente
               </div>
             )}
-          </div>
-        ) : (
-          <div className="h-full flex flex-col justify-center">
+          </TabsContent>
+          
+          <TabsContent value="quaseAcidentes" className="mt-0">
             {incidents.length > 0 ? (
-              <div
-                key={incidents[0].id}
-                onClick={() => handleIncidentClick(incidents[0].id)}
-                className={`group flex items-center p-2 cursor-pointer transition-all rounded-md border-l-4 hover:translate-x-1 ${getSeverityColor(incidents[0].severity)}`}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-medium text-gray-900 truncate text-sm">
-                      {incidents[0].title}
-                    </p>
-                    <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(incidents[0].status)}`}>
-                      {incidents[0].status}
-                    </span>
+              <div className="space-y-2">
+                {incidents.map(incident => (
+                  <div
+                    key={incident.id}
+                    onClick={() => handleIncidentClick(incident.id)}
+                    className={`group flex items-center p-2 cursor-pointer transition-all rounded-md border-l-4 hover:translate-x-1 ${getSeverityColor(incident.severity)}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium text-gray-900 truncate text-xs">
+                          {incident.title}
+                        </p>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${getStatusColor(incident.status)}`}>
+                          {incident.status}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-500">
+                        <Calendar className="w-3 h-3" />
+                        {formatDate(incident.date || incident.createdAt)}
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-                    <Calendar className="w-3 h-3" />
-                    {formatDate(incidents[0].date)}
-                  </div>
-                </div>
+                ))}
               </div>
             ) : (
-              <div className="text-center py-4 text-gray-500 text-sm">
+              <div className="text-center py-4 text-gray-500 text-xs">
                 Nenhum quase acidente recente
               </div>
             )}
-          </div>
-        )}
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );

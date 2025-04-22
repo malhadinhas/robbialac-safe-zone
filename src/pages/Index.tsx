@@ -28,6 +28,7 @@ import VideoCategoryPieChart from '@/components/stats/VideoCategoryPieChart';
 import RecentActivityCard from '@/components/RecentActivityCard';
 import MobileDashboard from "@/components/dashboard/MobileDashboard";
 import { CategoryVideosCard } from "@/components/dashboard/CategoryVideosCard";
+import { FeedCard } from "@/components/dashboard/FeedCard";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
@@ -243,38 +244,39 @@ export default function Dashboard() {
           pointsToNextLevel={pointsToNextLevel}
         />
       ) : (
-        <div className="h-full p-4 space-y-4">
+        <div className="h-full p-4 space-y-4 overflow-y-auto">
           <h1 className="text-2xl font-semibold">Dashboard</h1>
           <p className="text-gray-500">Bem-vindo de volta, {user?.name}!</p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="h-full">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Coluna 1: Cards de progresso do usuário */}
+            <div className="md:col-span-1 grid grid-cols-1 gap-4">
+              <Card className="h-auto">
                 <CardHeader className="pb-2 space-y-0">
                   <CardTitle className="text-sm font-medium">Seu Progresso</CardTitle>
-                </CardHeader>
+              </CardHeader>
                 <CardContent className="pb-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Nível {currentLevel}</span>
                       <span className="text-sm font-medium">Nível {currentLevel + 1}</span>
-                    </div>
+                </div>
                     <Progress value={progressToNextLevel} className="h-2" />
                     <p className="text-xs text-gray-500 text-center">
-                      {pointsToNextLevel} pontos para o próximo nível
+                  {pointsToNextLevel} pontos para o próximo nível
                     </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="h-full">
+                </div>
+              </CardContent>
+            </Card>
+            
+              <Card className="h-auto">
                 <CardHeader className="pb-2 space-y-0">
                   <CardTitle className="text-sm font-medium">Pontuação Total</CardTitle>
-                </CardHeader>
+              </CardHeader>
                 <CardContent className="pb-4">
                   <div className="text-center">
                     <p className="text-3xl font-bold mb-1">{user?.points || 0}</p>
-                    <div className="flex items-center justify-center">
+                <div className="flex items-center justify-center">
                       <p className="text-xs text-gray-500">Pontos acumulados</p>
                       <Button
                         variant="link"
@@ -286,19 +288,24 @@ export default function Dashboard() {
                       </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+              </CardContent>
+            </Card>
+          </div>
+    
+            {/* Coluna 2: Card de Atividade Recente */}
+            <div className="md:col-span-1">
+              <RecentActivityCard 
+                title="Atividade Recente"
+                videos={recentVideos.slice(0, 1)}
+                incidents={recentIncidents.slice(0, 1)}
+                className="h-full"
+              />
             </div>
 
-            <RecentActivityCard 
-              title="Vídeos Recentes"
-              videos={recentVideos.slice(0, 1)}
-            />
-
-            <RecentActivityCard 
-              title="Quase Acidentes Recentes"
-              incidents={recentIncidents.slice(0, 1)}
-            />
+            {/* Coluna 3-4: Feed */}
+            <div className="md:col-span-2">
+              <FeedCard />
+            </div>
           </div>
 
           <CategoryVideosCard videos={videos} />
@@ -311,30 +318,30 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={statsByCategory}
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statsByCategory}
                         dataKey="count"
                         nameKey="category"
-                        cx="50%"
-                        cy="50%"
+                      cx="50%"
+                      cy="50%"
                         outerRadius={80}
                         label={renderCustomPieChartLabel}
-                        labelLine={false}
-                      >
-                        {statsByCategory.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
+                      labelLine={false}
+                    >
+                      {statsByCategory.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
                       <Legend />
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
-
+            
             <Card>
               <CardHeader>
                 <CardTitle>Estatísticas de Quase Acidentes</CardTitle>
@@ -350,73 +357,73 @@ export default function Dashboard() {
                   </TabsList>
                   <TabsContent value="severity">
                     <div className="h-[250px] w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={statsBySeverity}>
-                          <XAxis dataKey="severity" />
-                          <YAxis />
-                          <Tooltip />
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={statsBySeverity}>
+                      <XAxis dataKey="severity" />
+                      <YAxis />
+                      <Tooltip />
                           <Bar dataKey="count">
-                            {statsBySeverity.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Bar>
-                        </BarChart>
+                        {statsBySeverity.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
                       </ResponsiveContainer>
                     </div>
                   </TabsContent>
                   <TabsContent value="risk">
                     <div className="h-[250px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={statsByRisk}>
-                          <XAxis dataKey="risk" />
-                          <YAxis />
-                          <Tooltip />
+                    <BarChart data={statsByRisk}>
+                      <XAxis dataKey="risk" />
+                      <YAxis />
+                      <Tooltip />
                           <Bar dataKey="count">
-                            {statsByRisk.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Bar>
-                        </BarChart>
+                        {statsByRisk.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
                       </ResponsiveContainer>
                     </div>
                   </TabsContent>
                   <TabsContent value="frequency">
                     <div className="h-[250px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={statsByFrequency}>
-                          <XAxis dataKey="frequency" />
-                          <YAxis />
-                          <Tooltip />
+                    <BarChart data={statsByFrequency}>
+                      <XAxis dataKey="frequency" />
+                      <YAxis />
+                      <Tooltip />
                           <Bar dataKey="count">
-                            {statsByFrequency.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Bar>
-                        </BarChart>
+                        {statsByFrequency.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
                       </ResponsiveContainer>
                     </div>
                   </TabsContent>
                   <TabsContent value="quality">
                     <div className="h-[250px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={statsByQAQuality}>
-                          <XAxis dataKey="quality" />
-                          <YAxis />
-                          <Tooltip />
+                    <BarChart data={statsByQAQuality}>
+                      <XAxis dataKey="quality" />
+                      <YAxis />
+                      <Tooltip />
                           <Bar dataKey="count">
-                            {statsByQAQuality.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
+                        {statsByQAQuality.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
                     </div>
                   </TabsContent>
                 </Tabs>
               </CardContent>
             </Card>
           </div>
-        </div>
+          </div>
       )}
     </Layout>
   );

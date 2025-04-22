@@ -7,7 +7,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Factory3DModelManager, { FactoryZone } from "@/components/Factory3DModelManager";
 import VideosCategoryCard from '@/components/VideosCategoryCard';
-import { NoScrollLayout } from '@/components/NoScrollLayout';
 import { useIsCompactView } from '@/hooks/use-mobile';
 import { getZoneStats, ZoneStats } from '@/services/zoneStatsService';
 import { Progress } from "@/components/ui/progress";
@@ -241,102 +240,8 @@ export default function Formacoes() {
     }
   ];
   
-  const mainSection = (
-    <>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Formações</h1>
-        <p className="text-gray-600">Selecione uma área da fábrica para ver os vídeos disponíveis</p>
-      </div>
-      
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex space-x-2">
-          {isAdmin && (
-            <Button onClick={showImportModal} className="bg-robbialac hover:bg-robbialac-dark">
-              Importar Vídeo
-            </Button>
-          )}
-        </div>
-
-        <div className="flex space-x-2">
-          <Button onClick={handleToggleView} variant="outline">
-            {useSimpleView ? "Ver Modelo 3D" : "Ver Lista Simples"}
-          </Button>
-        </div>
-      </div>
-      
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Mapa da Fábrica</CardTitle>
-          <CardDescription>Selecione uma área para ver os vídeos relacionados</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {useSimpleView ? (
-            <>
-              <div className="flex flex-col items-center p-2 sm:p-4">
-                <h2 className="text-sm mb-2 text-gray-600">Selecione uma das áreas abaixo:</h2>
-                <div className="w-full max-w-md space-y-2">
-                  <button
-                    onClick={() => handleZoneClick('Enchimento')}
-                    className="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
-                  >
-                    Área de Enchimento
-                  </button>
-                  <button
-                    onClick={() => handleZoneClick('Fabrico')}
-                    className="w-full py-2 px-4 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-sm"
-                  >
-                    Área de Fabrico
-                  </button>
-                  <button
-                    onClick={() => handleZoneClick('Robbialac')}
-                    className="w-full py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm"
-                  >
-                    Área de Robbialac
-                  </button>
-                  <button
-                    onClick={() => handleZoneClick('MateriaPrima')}
-                    className="w-full py-2 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors text-sm"
-                  >
-                    Área de MateriaPrima
-                  </button>
-                  <button
-                    onClick={() => handleZoneClick('Expedicao')}
-                    className="w-full py-2 px-4 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors text-sm"
-                  >
-                    Área de Expedicao
-                  </button>
-                  <button
-                    onClick={() => handleZoneClick('TrafegoInferior')}
-                    className="w-full py-2 px-4 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition-colors text-sm"
-                  >
-                    Área de TrafegoInferior
-                  </button>
-                  <button
-                    onClick={() => handleZoneClick('TrafegoSuperior')}
-                    className="w-full py-2 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg transition-colors text-sm"
-                  >
-                    Área de TrafegoSuperior
-                  </button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <Factory3DModelManager 
-                onZoneClick={handleZoneClick} 
-              />
-              <p className="text-sm text-gray-500 mt-2 text-center">
-                Interaja com o modelo 3D para explorar as diferentes áreas da fábrica
-              </p>
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </>
-  );
-  
   const categoriesSection = (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
       {videoCategories.map((category) => (
         <VideosCategoryCard 
           key={category.title}
@@ -355,128 +260,102 @@ export default function Formacoes() {
     </div>
   );
   
-  const pageContent = isCompactView 
-    ? <NoScrollLayout sections={[mainSection]} />
-    : (
-        <>
-          {mainSection}
-          {categoriesSection}
-        </>
-      );
-  
   return (
     <Layout>
-      <div className="h-screen w-full overflow-hidden">
-        {/* Header (20% do espaço) */}
-        <div className="h-[20%] p-2 flex flex-col justify-center">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-            <div>
-              <h1 className="text-lg sm:text-3xl font-bold text-gray-800 line-clamp-1">Formações</h1>
-              <p className="text-xs sm:text-base text-gray-600 line-clamp-2">Selecione uma área da fábrica para ver os vídeos disponíveis</p>
-            </div>
-            <div className="flex gap-1 mt-1 sm:mt-0">
+      <div className={`h-full ${isCompactView ? 'flex flex-col' : 'p-2 overflow-y-auto'}`}>
+        <div className={`${isCompactView ? 'flex-none px-2 pt-1' : ''}`}>
+          <div className="flex items-center justify-between mb-1">
+            <h1 className={`${isCompactView ? 'text-lg' : 'text-3xl'} font-bold text-gray-800`}>Formações</h1>
+            <div className="flex space-x-1">
               {isAdmin && (
-                <Button 
-                  onClick={showImportModal}
-                  className="h-8 text-xs px-2"
-                >
+                <Button onClick={showImportModal} className="bg-robbialac hover:bg-robbialac-dark text-xs h-6 px-2">
                   Importar Vídeo
                 </Button>
               )}
-              <Button 
-                variant="outline" 
-                onClick={handleToggleView}
-                className="h-8 text-xs px-2"
-              >
-                {useSimpleView ? "Ver Modelo 3D" : "Ver Lista Simples"}
+              <Button onClick={handleToggleView} variant="outline" className="text-xs h-6 px-2">
+                {useSimpleView ? "Ver Modelo 3D" : "Ver Lista"}
               </Button>
             </div>
           </div>
-
-          <div className="mt-2">
-            <h2 className="text-base font-semibold line-clamp-1">Mapa da Fábrica</h2>
-            <p className="text-xs text-gray-600 line-clamp-1">Selecione uma área para ver os vídeos relacionados</p>
-          </div>
+          <p className={`${isCompactView ? 'text-xs' : 'text-sm'} text-gray-600 mb-2`}>
+            Selecione uma área da fábrica para ver os vídeos disponíveis
+          </p>
         </div>
 
-        {/* Container do modelo 3D ou Lista Simples (70% do espaço) */}
-        <div className="h-[70%] px-2">
-          {useSimpleView ? (
-            // Lista Simples (copiada da definição de mainSection)
-            <div className="h-full w-full flex flex-col items-center justify-center p-2 sm:p-4 bg-gray-100 rounded-lg overflow-y-auto">
-              <h2 className="text-sm mb-2 text-gray-600">Selecione uma das áreas abaixo:</h2>
-              <div className="w-full max-w-md space-y-2">
-                <button
-                  onClick={() => handleZoneClick('Enchimento')}
-                  className="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
-                >
-                  Área de Enchimento
-                </button>
-                <button
-                  onClick={() => handleZoneClick('Fabrico')}
-                  className="w-full py-2 px-4 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-sm"
-                >
-                  Área de Fabrico
-                </button>
-                <button
-                  onClick={() => handleZoneClick('Robbialac')}
-                  className="w-full py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm"
-                >
-                  Área de Robbialac
-                </button>
-                <button
-                  onClick={() => handleZoneClick('MateriaPrima')}
-                  className="w-full py-2 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors text-sm"
-                >
-                  Área de MateriaPrima
-                </button>
-                <button
-                  onClick={() => handleZoneClick('Expedicao')}
-                  className="w-full py-2 px-4 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors text-sm"
-                >
-                  Área de Expedicao
-                </button>
-                <button
-                  onClick={() => handleZoneClick('TrafegoInferior')}
-                  className="w-full py-2 px-4 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition-colors text-sm"
-                >
-                  Área de TrafegoInferior
-                </button>
-                <button
-                  onClick={() => handleZoneClick('TrafegoSuperior')}
-                  className="w-full py-2 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg transition-colors text-sm"
-                >
-                  Área de TrafegoSuperior
-                </button>
-              </div>
-            </div>
-          ) : (
-            // Modelo 3D
-            <ErrorBoundary fallback={<div className="h-full w-full flex items-center justify-center bg-gray-100 rounded-lg">
-              <p className="text-sm text-gray-600">Erro ao carregar o modelo 3D. Tente recarregar a página.</p>
-            </div>}>
-              <div className="h-full w-full bg-gray-100 rounded-lg overflow-hidden">
-                <Suspense fallback={
-                  <div className="h-full w-full flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-robbialac"></div>
+        <div className={`${isCompactView ? 'flex-1 min-h-0 px-2' : ''}`}>
+          <Card className={`${isCompactView ? 'h-full flex flex-col' : ''} border border-gray-200 shadow-lg`}>
+            <CardHeader className="border-b bg-gray-50 py-1 flex-none">
+              <CardTitle className={`${isCompactView ? 'text-sm' : 'text-lg'}`}>Mapa da Fábrica</CardTitle>
+              <CardDescription className="text-xs">Selecione uma área para ver os vídeos relacionados</CardDescription>
+            </CardHeader>
+            <CardContent className={`p-0 ${isCompactView ? 'flex-1 min-h-0' : ''}`}>
+              {useSimpleView ? (
+                <div className="flex flex-col items-center p-1.5">
+                  <h2 className="text-xs mb-1 text-gray-600">Selecione uma das áreas abaixo:</h2>
+                  <div className="w-full max-w-md space-y-1">
+                    <button
+                      onClick={() => handleZoneClick('Enchimento')}
+                      className="w-full py-1.5 px-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-xs"
+                    >
+                      Área de Enchimento
+                    </button>
+                    <button
+                      onClick={() => handleZoneClick('Fabrico')}
+                      className="w-full py-1.5 px-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-xs"
+                    >
+                      Área de Fabrico
+                    </button>
+                    <button
+                      onClick={() => handleZoneClick('Robbialac')}
+                      className="w-full py-1.5 px-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-xs"
+                    >
+                      Área de Robbialac
+                    </button>
+                    <button
+                      onClick={() => handleZoneClick('MateriaPrima')}
+                      className="w-full py-1.5 px-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors text-xs"
+                    >
+                      Área de MateriaPrima
+                    </button>
+                    <button
+                      onClick={() => handleZoneClick('Expedicao')}
+                      className="w-full py-1.5 px-3 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors text-xs"
+                    >
+                      Área de Expedicao
+                    </button>
+                    <button
+                      onClick={() => handleZoneClick('TrafegoInferior')}
+                      className="w-full py-1.5 px-3 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition-colors text-xs"
+                    >
+                      Área de TrafegoInferior
+                    </button>
+                    <button
+                      onClick={() => handleZoneClick('TrafegoSuperior')}
+                      className="w-full py-1.5 px-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg transition-colors text-xs"
+                    >
+                      Área de TrafegoSuperior
+                    </button>
                   </div>
-                }>
-                  <Factory3DModelManager
-                    onZoneClick={handleZoneClick}
-                    useSimpleView={useSimpleView}
-                    enableControls={enableControls}
-                    zoneStats={zoneStats}
-                    isLoading={isLoading}
-                    className="h-full w-full"
-                  />
-                </Suspense>
-              </div>
-            </ErrorBoundary>
-          )}
+                </div>
+              ) : (
+                <div className={`${isCompactView ? 'h-full flex flex-col' : 'h-[700px]'}`}>
+                  <div className="flex-1 min-h-0">
+                    <Factory3DModelManager 
+                      onZoneClick={handleZoneClick} 
+                      className="h-full"
+                      enableControls={true}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 py-0.5 px-2 text-center border-t bg-gray-50 flex-none">
+                    Interaja com o modelo 3D para explorar as diferentes áreas da fábrica
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Espaço restante (10%) */}
-        <div className="h-[10%]"></div>
+        {!isCompactView && categoriesSection}
       </div>
       
       {isModalOpen && (

@@ -344,11 +344,11 @@ export default function Pontuacao() {
       </Layout>
     );
   }
-
+  
   return (
     <Layout>
       <div className="h-full overflow-y-auto p-4 sm:p-6">
-        {pageContent}
+      {pageContent}
       </div>
     </Layout>
   );

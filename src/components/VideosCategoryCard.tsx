@@ -4,7 +4,6 @@ import { Video } from "@/types";
 import { Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { getSecureR2Url } from '@/services/videoService';
-import VideoThumbnail from '@/components/VideoThumbnail';
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface VideosCategoryCardProps {
@@ -58,7 +57,8 @@ function VideosCategoryCard({ category, displayTitle, description, videos, count
 
   return (
     <Card 
-      className="relative overflow-hidden transition-all duration-300 hover:shadow-lg"
+      className="relative overflow-hidden transition-all duration-300 hover:shadow-lg cursor-pointer"
+      onMouseEnter={() => videos.length > 0 && handleMouseEnter(videos[0])}
       onMouseLeave={handleMouseLeave}
     >
       <CardHeader className="relative z-10">
@@ -67,56 +67,49 @@ function VideosCategoryCard({ category, displayTitle, description, videos, count
           <span>{displayTitle}</span>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="text-sm text-muted-foreground mb-4">
-          {description}
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-medium" style={{ color }}>
-            {count} {count === 1 ? 'vídeo' : 'vídeos'}
-          </div>
-          {videos.length > 0 && (
-            <div className="flex items-center gap-2">
-              <Play className="w-4 h-4" />
-              <span className="text-sm">Passe o mouse para ver</span>
-            </div>
-          )}
-        </div>
-        {hoveredVideo && (
-          <div className="absolute inset-0 bg-background/95 flex items-center justify-center p-4">
+      <CardContent className="relative min-h-[120px]">
+        {hoveredVideo ? (
+          <div className="absolute inset-0 bg-background">
             {isLoadingVideo ? (
-              <Skeleton className="w-full h-[200px]" />
+              <div className="w-full h-full flex items-center justify-center">
+                <Skeleton className="w-full h-[100px]" />
+              </div>
             ) : videoUrl ? (
-              <video
-                src={videoUrl}
-                className="w-full max-h-[200px] object-contain"
-                autoPlay
-                muted
-                loop
-                playsInline
-                onError={() => toast.error('Erro ao reproduzir vídeo')}
-              />
+              <div className="p-2">
+                <video
+                  src={videoUrl}
+                  className="w-full h-[100px] object-contain bg-black/5 rounded-md"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  onError={() => toast.error('Erro ao reproduzir vídeo')}
+                />
+                <div className="mt-2">
+                  <h3 className="font-medium text-sm">{hoveredVideo.title}</h3>
+                </div>
+              </div>
             ) : null}
           </div>
+        ) : (
+          <>
+            <div className="text-sm text-muted-foreground mb-4">
+              {description}
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium" style={{ color }}>
+                {count} {count === 1 ? 'vídeo' : 'vídeos'}
+              </div>
+              {videos.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Play className="w-4 h-4" />
+                  <span className="text-sm">Passe o mouse para ver</span>
+                </div>
+              )}
+            </div>
+          </>
         )}
       </CardContent>
-      {videos.length > 0 && (
-        <div className="absolute inset-0 grid grid-cols-2 gap-1 opacity-0 hover:opacity-100">
-          {videos.slice(0, 4).map((video) => (
-            <div
-              key={video.id}
-              className="relative aspect-video cursor-pointer"
-              onMouseEnter={() => handleMouseEnter(video)}
-            >
-              <VideoThumbnail
-                thumbnailR2Key={video.r2ThumbnailKey}
-                altText={video.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
-        </div>
-      )}
     </Card>
   );
 }
