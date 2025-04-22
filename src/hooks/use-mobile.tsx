@@ -1,33 +1,23 @@
-
 import * as React from "react"
 
-// Define breakpoints consistently
-export const MOBILE_BREAKPOINT = 768
+// Breakpoints
+export const MOBILE_BREAKPOINT = 640
 export const TABLET_BREAKPOINT = 1024
 export const DESKTOP_BREAKPOINT = 1280
 
-// Orientação
-export type Orientation = "portrait" | "landscape"
-
 /**
- * Hook that returns whether the current viewport is mobile size
+ * Hook que retorna se a viewport atual é tamanho mobile
  */
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean>(false)
 
   React.useEffect(() => {
-    // Initial check
     const checkMobile = () => {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
     }
     
-    // Check on mount with timeout to ensure DOM is fully loaded
     checkMobile()
-    
-    // Add event listener for resize
     window.addEventListener("resize", checkMobile)
-    
-    // Cleanup
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
@@ -35,7 +25,7 @@ export function useIsMobile() {
 }
 
 /**
- * Hook that returns whether the current viewport is tablet size
+ * Hook que retorna se a viewport atual é tamanho tablet
  */
 export function useIsTablet() {
   const [isTablet, setIsTablet] = React.useState<boolean>(false)
@@ -46,13 +36,8 @@ export function useIsTablet() {
       setIsTablet(width >= MOBILE_BREAKPOINT && width < TABLET_BREAKPOINT)
     }
     
-    // Check on mount
     checkTablet()
-    
-    // Add event listener for resize
     window.addEventListener("resize", checkTablet)
-    
-    // Cleanup
     return () => window.removeEventListener("resize", checkTablet)
   }, [])
 
@@ -60,7 +45,7 @@ export function useIsTablet() {
 }
 
 /**
- * Hook that returns the current device size category
+ * Hook que retorna a categoria atual do dispositivo
  */
 export function useDeviceSize() {
   const [size, setSize] = React.useState<"mobile" | "tablet" | "desktop" | null>(null)
@@ -77,13 +62,8 @@ export function useDeviceSize() {
       }
     }
     
-    // Check on mount
     checkSize()
-    
-    // Add event listener for resize
     window.addEventListener("resize", checkSize)
-    
-    // Cleanup
     return () => window.removeEventListener("resize", checkSize)
   }, [])
 
@@ -91,152 +71,69 @@ export function useDeviceSize() {
 }
 
 /**
- * Hook that returns screen width for more precise responsive designs
+ * Hook que retorna se a visualização atual deve ser compacta (mobile ou tablet)
  */
-export function useScreenWidth() {
-  const [width, setWidth] = React.useState<number | null>(null)
-  
+export function useIsCompactView() {
+  const [isCompact, setIsCompact] = React.useState<boolean>(false)
+
   React.useEffect(() => {
-    const updateWidth = () => {
-      setWidth(window.innerWidth)
+    const checkCompact = () => {
+      setIsCompact(window.innerWidth < TABLET_BREAKPOINT)
     }
     
-    // Set initial width
-    updateWidth()
-    
-    // Add event listener
-    window.addEventListener('resize', updateWidth)
-    
-    // Cleanup
-    return () => window.removeEventListener('resize', updateWidth)
+    checkCompact()
+    window.addEventListener("resize", checkCompact)
+    return () => window.removeEventListener("resize", checkCompact)
   }, [])
-  
-  return width
+
+  return isCompact
 }
 
 /**
- * Hook that returns screen height for more precise responsive designs
+ * Hook que retorna se o menu deve ser colapsado (apenas mobile)
  */
-export function useScreenHeight() {
-  const [height, setHeight] = React.useState<number | null>(null)
-  
-  React.useEffect(() => {
-    const updateHeight = () => {
-      setHeight(window.innerHeight)
-    }
-    
-    // Set initial height
-    updateHeight()
-    
-    // Add event listener
-    window.addEventListener('resize', updateHeight)
-    
-    // Cleanup
-    return () => window.removeEventListener('resize', updateHeight)
-  }, [])
-  
-  return height
+export function useShouldCollapseMenu() {
+  const isMobile = useIsMobile()
+  return isMobile
 }
 
 /**
- * Hook to detect screen orientation
+ * Hook que retorna a orientação atual do dispositivo
  */
 export function useOrientation() {
-  const [orientation, setOrientation] = React.useState<Orientation>("portrait")
-  
+  const [orientation, setOrientation] = React.useState<"portrait" | "landscape">("portrait")
+
   React.useEffect(() => {
-    const updateOrientation = () => {
-      // Usando matchMedia para uma detecção mais precisa da orientação
-      const isLandscape = window.matchMedia("(orientation: landscape)").matches
-      setOrientation(isLandscape ? "landscape" : "portrait")
+    const checkOrientation = () => {
+      setOrientation(window.innerHeight > window.innerWidth ? "portrait" : "landscape")
     }
     
-    // Set initial orientation
-    updateOrientation()
-    
-    // Add event listeners for both resize and orientation change
-    window.addEventListener('resize', updateOrientation)
-    
-    // Specific orientation change event for mobile devices
-    window.addEventListener('orientationchange', updateOrientation)
-    
-    // Screen orientation API if available
-    if (screen.orientation) {
-      screen.orientation.addEventListener('change', updateOrientation)
-    }
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', updateOrientation)
-      window.removeEventListener('orientationchange', updateOrientation)
-      if (screen.orientation) {
-        screen.orientation.removeEventListener('change', updateOrientation)
-      }
-    }
+    checkOrientation()
+    window.addEventListener("resize", checkOrientation)
+    return () => window.removeEventListener("resize", checkOrientation)
   }, [])
-  
+
   return orientation
 }
 
 /**
- * Hook to check if current viewport requires collapsed sidebar layout
- * Returns true for mobile and tablet views
- */
-export function useIsCompactView() {
-  const [isCompactView, setIsCompactView] = React.useState<boolean>(false)
-  
-  React.useEffect(() => {
-    const checkCompactView = () => {
-      setIsCompactView(window.innerWidth < TABLET_BREAKPOINT)
-    }
-    
-    // Check on mount
-    checkCompactView()
-    
-    // Add event listener for resize
-    window.addEventListener("resize", checkCompactView)
-    
-    // Cleanup
-    return () => window.removeEventListener("resize", checkCompactView)
-  }, [])
-  
-  return isCompactView
-}
-
-/**
- * Hook to check if the sidebar should be collapsed by default
- * Returns true for tablet and mobile views (always collapsed by default)
- */
-export function useShouldCollapseMenu() {
-  const isMobile = useIsMobile()
-  const isTablet = useIsTablet()
-  
-  return isTablet || isMobile
-}
-
-/**
- * Get viewport height for precise container sizing
+ * Hook que retorna a altura da viewport
  */
 export function useViewportHeight() {
   const [height, setHeight] = React.useState<number | null>(null)
   
   React.useEffect(() => {
     const updateHeight = () => {
-      // Use visualViewport when available for more accurate mobile height
-      const viewportHeight = window.visualViewport?.height || window.innerHeight;
+      const viewportHeight = window.visualViewport?.height || window.innerHeight
       setHeight(viewportHeight)
     }
     
-    // Set initial height
     updateHeight()
-    
-    // Add event listeners
     window.addEventListener('resize', updateHeight)
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', updateHeight)
     }
     
-    // Cleanup
     return () => {
       window.removeEventListener('resize', updateHeight)
       if (window.visualViewport) {
@@ -249,68 +146,28 @@ export function useViewportHeight() {
 }
 
 /**
- * Hook para obter dimensões responsivas baseadas em percentagens
- * Útil para criar layouts fluidos que se adaptam a qualquer tamanho de tela
- */
-export function useResponsiveDimension(percentage: number) {
-  const screenWidth = useScreenWidth() || 0
-  const screenHeight = useScreenHeight() || 0
-  
-  const width = React.useMemo(() => screenWidth * (percentage / 100), [screenWidth, percentage])
-  const height = React.useMemo(() => screenHeight * (percentage / 100), [screenHeight, percentage])
-  
-  return { width, height }
-}
-
-/**
  * Hook que fornece valores de espaçamento adaptativos baseados no tamanho do dispositivo
  */
 export function useAdaptiveSpacing() {
-  const deviceSize = useDeviceSize()
+  const isMobile = useIsMobile()
+  const isTablet = useIsTablet()
   
-  // Proporciona espaçamentos que se adaptam ao tamanho da tela
-  const spacing = React.useMemo(() => {
-    switch (deviceSize) {
-      case "mobile":
-        return {
-          xs: '0.5rem',  // 8px
-          sm: '0.75rem', // 12px
-          md: '1rem',    // 16px
-          lg: '1.5rem',  // 24px
-          xl: '2rem',    // 32px
-        }
-      case "tablet":
-        return {
-          xs: '0.75rem',  // 12px
-          sm: '1rem',     // 16px
-          md: '1.5rem',   // 24px
-          lg: '2rem',     // 32px
-          xl: '2.5rem',   // 40px
-        }
-      case "desktop":
-      default:
-        return {
-          xs: '1rem',     // 16px
-          sm: '1.25rem',  // 20px
-          md: '1.75rem',  // 28px
-          lg: '2.25rem',  // 36px
-          xl: '3rem',     // 48px
-        }
-    }
-  }, [deviceSize])
-  
-  return spacing
+  return {
+    xs: isMobile ? '0.5rem' : '0.75rem',
+    sm: isMobile ? '0.75rem' : isTablet ? '1rem' : '1.25rem',
+    md: isMobile ? '1rem' : isTablet ? '1.5rem' : '2rem',
+    lg: isMobile ? '1.5rem' : isTablet ? '2rem' : '3rem',
+    xl: isMobile ? '2rem' : isTablet ? '3rem' : '4rem'
+  }
 }
 
 /**
- * Hook que verifica se o comportamento deve ser otimizado para toque
- * Útil para adaptação de interação entre desktop (mouse) e dispositivos touch
+ * Hook que verifica se o dispositivo suporta interação por toque
  */
 export function useIsTouchDevice() {
   const [isTouch, setIsTouch] = React.useState<boolean>(false)
   
   React.useEffect(() => {
-    // Verifica se o dispositivo suporta eventos de toque
     const checkTouch = () => {
       setIsTouch(
         'ontouchstart' in window ||
@@ -321,51 +178,9 @@ export function useIsTouchDevice() {
     }
     
     checkTouch()
-    
   }, [])
   
   return isTouch
-}
-
-/**
- * Hook para detectar se o teclado virtual está visível em dispositivos móveis
- * Útil para ajustar layouts quando o teclado está visível
- */
-export function useVirtualKeyboard() {
-  const [isKeyboardVisible, setIsKeyboardVisible] = React.useState<boolean>(false)
-  const [keyboardHeight, setKeyboardHeight] = React.useState<number>(0)
-  
-  React.useEffect(() => {
-    let initialHeight = window.innerHeight
-    
-    const detectKeyboard = () => {
-      // Se a altura atual for significativamente menor que a altura inicial,
-      // provavelmente o teclado está visível
-      const currentHeight = window.innerHeight
-      const heightDifference = initialHeight - currentHeight
-      
-      // Considera o teclado visível se a diferença for maior que 20% da altura
-      const threshold = initialHeight * 0.2
-      
-      if (heightDifference > threshold) {
-        setIsKeyboardVisible(true)
-        setKeyboardHeight(heightDifference)
-      } else {
-        setIsKeyboardVisible(false)
-        setKeyboardHeight(0)
-        // Resetar a altura inicial quando o teclado é fechado
-        initialHeight = currentHeight
-      }
-    }
-    
-    window.addEventListener('resize', detectKeyboard)
-    
-    return () => {
-      window.removeEventListener('resize', detectKeyboard)
-    }
-  }, [])
-  
-  return { isKeyboardVisible, keyboardHeight }
 }
 
 /**

@@ -12,6 +12,7 @@ import {
   useOrientation,
   useAdaptiveSpacing,
   useViewportHeight,
+  useShouldCollapseMenu,
   TABLET_BREAKPOINT
 } from "@/hooks/use-mobile";
 
@@ -24,16 +25,16 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
-  const isCompactView = useIsCompactView();
+  const shouldCollapseMenu = useShouldCollapseMenu();
   const orientation = useOrientation();
   const adaptiveSpacing = useAdaptiveSpacing();
   const viewportHeight = useViewportHeight();
   
-  const [menuOpen, setMenuOpen] = useState(!isCompactView);
+  const [menuOpen, setMenuOpen] = useState(!shouldCollapseMenu);
   
   useEffect(() => {
-    setMenuOpen(!isCompactView);
-  }, [isCompactView]);
+    setMenuOpen(!shouldCollapseMenu);
+  }, [shouldCollapseMenu]);
   
   const toggleMenu = () => setMenuOpen(!menuOpen);
   
@@ -56,12 +57,12 @@ export function Layout({ children }: LayoutProps) {
   };
   
   useEffect(() => {
-    if (isCompactView && menuOpen) {
+    if (shouldCollapseMenu && menuOpen) {
       if (orientation === "landscape") {
         setMenuOpen(false);
       }
     }
-  }, [orientation, isCompactView, menuOpen]);
+  }, [orientation, shouldCollapseMenu, menuOpen]);
 
   const mainHeight = viewportHeight 
     ? `${viewportHeight}px` 
@@ -77,7 +78,7 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="h-screen w-full overflow-hidden flex flex-col md:flex-row">
-      {isCompactView && (
+      {shouldCollapseMenu && (
         <header 
           className="bg-robbialac text-white p-3 flex items-center justify-between z-30 flex-shrink-0"
           style={{ paddingLeft: adaptiveSpacing.md, paddingRight: adaptiveSpacing.md }}
@@ -103,7 +104,7 @@ export function Layout({ children }: LayoutProps) {
       <aside 
         className={cn(
           "bg-[#1E90FF] text-white transition-all duration-300 ease-in-out",
-          isCompactView
+          isMobile
             ? cn("fixed inset-0 z-50 transform", 
                 menuOpen ? "translate-x-0" : "-translate-x-full",
                 orientation === "landscape" ? "w-3/5 sm:w-1/2 md:w-2/5" : "w-full",
@@ -114,12 +115,12 @@ export function Layout({ children }: LayoutProps) {
                 "transition-[width]")
         )}
         style={{ 
-          width: isCompactView ? undefined : menuOpen ? expandedMenuWidth : collapsedMenuWidth,
-          height: isCompactView ? '100%' : '100vh'
+          width: isMobile ? undefined : menuOpen ? expandedMenuWidth : collapsedMenuWidth,
+          height: isMobile ? '100%' : '100vh'
         }}
       >
         {/* Botão de fechar para mobile */}
-        {isCompactView && menuOpen && (
+        {isMobile && menuOpen && (
           <Button
             variant="ghost"
             size="icon"
@@ -132,7 +133,7 @@ export function Layout({ children }: LayoutProps) {
         )}
 
         {/* Conteúdo da Sidebar (Logotipo, User Info, Menu Items) */}
-        {!isCompactView && (
+        {!isMobile && (
           <div className="p-3">
             <div className={cn(
               "flex items-center", 
@@ -154,35 +155,37 @@ export function Layout({ children }: LayoutProps) {
               <Separator className="bg-white/20" />
             </div>
             
-            <div className="flex justify-center">
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="h-7 w-7 text-white hover:bg-white/10"
-                onClick={toggleMenu}
-              >
-                {menuOpen ? <X size={16} /> : <Menu size={16} />}
-                <span className="sr-only">Toggle Menu</span>
-              </Button>
-            </div>
+            {!isTablet && (
+              <div className="flex justify-center">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-7 w-7 text-white hover:bg-white/10"
+                  onClick={toggleMenu}
+                >
+                  {menuOpen ? <X size={16} /> : <Menu size={16} />}
+                  <span className="sr-only">Toggle Menu</span>
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
         {/* User Info */}
         <div className={cn(
           "border-b border-white/20",
-          isCompactView ? "pt-4 pb-3 px-3" : menuOpen ? "p-3" : "p-2 flex justify-center"
+          isMobile ? "pt-4 pb-3 px-3" : menuOpen ? "p-3" : "p-2 flex justify-center"
         )}>
           <div className={cn(
             "flex", 
-            isCompactView || menuOpen 
+            isMobile || menuOpen 
               ? "flex-col items-center space-y-2"
               : "flex-col space-y-2 items-center"
           )}>
             <div className="bg-white text-robbialac rounded-full w-8 h-8 flex items-center justify-center font-bold shrink-0 text-sm">
               {userInitial}
             </div>
-            {(isCompactView || menuOpen) && (
+            {(isMobile || menuOpen) && (
               <div className="overflow-hidden text-center">
                 <p className="font-medium text-xs sm:text-sm whitespace-normal">{userName}</p>
                 <p className="text-xs text-white/70 whitespace-normal break-words">{userEmail}</p>
@@ -193,30 +196,30 @@ export function Layout({ children }: LayoutProps) {
         
         {/* Navigation Menu */}
         <nav className={cn(
-          "flex flex-col flex-1 overflow-y-auto", // Adiciona scroll se necessário
-          isCompactView ? "p-2" : menuOpen ? "p-2" : "items-center p-1"
+          "flex flex-col flex-1 overflow-y-auto",
+          isMobile ? "p-2" : menuOpen ? "p-2" : "items-center p-1"
         )}>
           <ul className={cn(
-            isCompactView || menuOpen ? "space-y-1 w-full" : "space-y-3 w-full flex flex-col items-center"
+            isMobile || menuOpen ? "space-y-1 w-full" : "space-y-3 w-full flex flex-col items-center"
           )}>
             {menuItems.map((item) => (
               <li key={item.path} className="w-full">
                 <Link
                   to={item.path}
-                  onClick={() => isCompactView && setMenuOpen(false)}
+                  onClick={() => isMobile && setMenuOpen(false)}
                   className={cn(
                     "flex items-center rounded-md transition-colors",
                     isActive(item.path)
                       ? "bg-white text-[#1E90FF] font-medium"
                       : "text-white hover:bg-white/10",
-                    isCompactView || menuOpen 
+                    isMobile || menuOpen 
                       ? "px-3 py-2 space-x-3" 
                       : "justify-center py-2 px-0 flex-col space-y-1"
                   )}
-                  title={!menuOpen && !isCompactView ? item.label : undefined}
+                  title={!menuOpen && !isMobile ? item.label : undefined}
                 >
-                  <item.icon size={isCompactView ? 18 : menuOpen ? 18 : 16} />
-                  {(isCompactView || menuOpen) ? (
+                  <item.icon size={isMobile ? 18 : menuOpen ? 18 : 16} />
+                  {(isMobile || menuOpen) ? (
                     <span className="text-xs sm:text-sm whitespace-normal">{item.label}</span>
                   ) : (
                     <span className="text-[10px] font-light hidden lg:block">{item.label}</span>
@@ -230,27 +233,27 @@ export function Layout({ children }: LayoutProps) {
         {/* Logout Button */}
         <div className={cn(
           "sticky bottom-0 bg-[#1E90FF] pb-safe", // Garante que não sobreponha a barra de navegação do iOS
-          isCompactView ? "p-4 border-t border-white/20" : menuOpen ? "p-4" : "p-2 flex justify-center"
+          isMobile ? "p-4 border-t border-white/20" : menuOpen ? "p-4" : "p-2 flex justify-center"
         )}>
           <Button 
             variant="ghost" 
             size="default"
             className={cn(
               "w-full text-white hover:bg-white/10",
-              isCompactView || menuOpen ? "justify-start" : "justify-center p-0 h-auto"
+              isMobile || menuOpen ? "justify-start" : "justify-center p-0 h-auto"
             )}
             onClick={logout}
-            title={!menuOpen && !isCompactView ? "Sair" : undefined}
+            title={!menuOpen && !isMobile ? "Sair" : undefined}
           >
-            <LogOut className={cn(isCompactView || menuOpen ? "mr-2" : "", "h-4 w-4")} />
-            {(isCompactView || menuOpen) && (
+            <LogOut className={cn(isMobile || menuOpen ? "mr-2" : "", "h-4 w-4")} />
+            {(isMobile || menuOpen) && (
               <span className="text-sm">Sair</span>
             )}
           </Button>
         </div>
       </aside>
       
-      {isCompactView && menuOpen && (
+      {shouldCollapseMenu && menuOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40"
           onClick={() => setMenuOpen(false)}
