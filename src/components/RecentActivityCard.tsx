@@ -1,73 +1,57 @@
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Eye, AlertTriangle, Film, Clock, Calendar } from "lucide-react";
+import { Play, Clock, Eye, AlertTriangle, Film, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { getSecureR2Url } from '@/services/videoService';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Video {
   id: string;
   title: string;
+  duration: number;
+  views: number;
   thumbnailR2Key?: string;
   r2ThumbnailKey?: string;
-  views: number;
-  duration: number;
-  category: string;
+  createdAt: string;
 }
 
 interface Incident {
   id: string;
   title: string;
-  severity: "Baixo" | "Médio" | "Alto";
-  status: "Reportado" | "Em Análise" | "Resolvido" | "Arquivado";
-  date: Date;
+  severity: string;
+  status: string;
+  createdAt: string;
 }
 
 interface ActivityCardProps {
-  videos: Video[];
+  title: string;
+  videos?: Video[];
   incidents?: Incident[];
   className?: string;
+  hideHeader?: boolean;
 }
 
-// Componente para exibir a miniatura do vídeo
 const VideoThumbnail = ({ video }: { video: Video }) => {
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const loadThumbnail = async () => {
-      setIsLoading(true);
-      setError(false);
-      setErrorMessage(null);
-      
       const thumbnailKey = video.thumbnailR2Key || video.r2ThumbnailKey;
-      
-      if (!thumbnailKey) {
-        setError(true);
-        setErrorMessage('Chave de miniatura não definida');
-        setIsLoading(false);
-        return;
-      }
-      
-      try {
-        const url = await getSecureR2Url(thumbnailKey);
-        
-        if (!url) {
+      if (thumbnailKey) {
+        try {
+          const url = await getSecureR2Url(thumbnailKey);
+          setThumbnailUrl(url);
+        } catch (error) {
+          console.error('Erro ao carregar thumbnail:', error);
           setError(true);
-          setErrorMessage('URL segura vazia');
+        } finally {
           setIsLoading(false);
-          return;
         }
-        
-        setThumbnailUrl(url);
-      } catch (err) {
-        setError(true);
-        setErrorMessage(err instanceof Error ? err.message : 'Erro desconhecido');
-      } finally {
-        setIsLoading(false);
       }
     };
     
@@ -75,18 +59,15 @@ const VideoThumbnail = ({ video }: { video: Video }) => {
   }, [video]);
 
   if (isLoading) {
-    return <Skeleton className="w-full h-full" />;
+    return (
+      <div className="w-full h-full bg-gray-100 animate-pulse" />
+    );
   }
 
   if (error || !thumbnailUrl) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-gray-200">
-        <Film className="w-5 h-5 text-gray-400" />
-        {errorMessage && (
-          <span className="text-xs text-gray-500 mt-1 px-1 truncate max-w-full">
-            Erro: {errorMessage.substring(0, 20)}
-          </span>
-        )}
+      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+        <Play className="w-6 h-6 text-gray-400" />
       </div>
     );
   }
@@ -97,15 +78,17 @@ const VideoThumbnail = ({ video }: { video: Video }) => {
       alt={video.title}
       className="w-full h-full object-cover"
       loading="lazy"
-      onError={(e) => {
-        setError(true);
-        setErrorMessage('Erro ao carregar imagem');
-      }}
     />
   );
 };
 
-export const RecentActivityCard = ({ videos, incidents = [], className = "" }: ActivityCardProps) => {
+function RecentActivityCard({ 
+  title,
+  videos = [], 
+  incidents = [], 
+  className = "",
+  hideHeader = false 
+}: ActivityCardProps) {
   const [activeTab, setActiveTab] = useState<"videos" | "quaseAcidentes">("videos");
   const navigate = useNavigate();
 
@@ -146,109 +129,96 @@ export const RecentActivityCard = ({ videos, incidents = [], className = "" }: A
   };
 
   return (
-    <Card className={`${className}`}>
-      <CardHeader className="pb-2">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <CardTitle className="text-lg">Atividade Recente</CardTitle>
-          <div className="flex w-full sm:w-auto space-x-1">
-            <Button 
-              variant={activeTab === "videos" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveTab("videos")}
-              className={`flex-1 sm:flex-none ${activeTab === "videos" ? "bg-robbialac hover:bg-robbialac-dark" : ""}`}
-            >
-              <Film className="w-4 h-4 mr-1" /> Vídeos
-            </Button>
-            <Button 
-              variant={activeTab === "quaseAcidentes" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveTab("quaseAcidentes")}
-              className={`flex-1 sm:flex-none ${activeTab === "quaseAcidentes" ? "bg-robbialac hover:bg-robbialac-dark" : ""}`}
-            >
-              <AlertTriangle className="w-4 h-4 mr-1" /> Quase Acidentes
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      
-      <CardContent>
-        {activeTab === "videos" ? (
-          <div className="space-y-3">
-            {videos.map((video) => (
-              <div 
-                key={video.id} 
-                className="flex items-center p-2 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                onClick={() => handleVideoClick(video.id)}
+    <Card className={`h-full ${className}`}>
+      {!hideHeader && (
+        <CardHeader className="pb-2">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <CardTitle className="text-lg mb-2 sm:mb-0">Atividade Recente</CardTitle>
+            <div className="flex w-full sm:w-auto gap-2">
+              <Button 
+                variant={activeTab === "videos" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveTab("videos")}
+                className={`flex-1 sm:flex-none justify-center ${activeTab === "videos" ? "bg-robbialac hover:bg-robbialac-dark" : ""}`}
               >
-                <div className="flex-shrink-0 w-16 h-12 bg-gray-200 rounded overflow-hidden mr-3 relative">
-                  <VideoThumbnail video={video} />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
+                <Film className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">Vídeos</span>
+              </Button>
+              <Button 
+                variant={activeTab === "quaseAcidentes" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveTab("quaseAcidentes")}
+                className={`flex-1 sm:flex-none justify-center ${activeTab === "quaseAcidentes" ? "bg-robbialac hover:bg-robbialac-dark" : ""}`}
+              >
+                <AlertTriangle className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">Quase Acidentes</span>
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+      )}
+      
+      <CardContent className="p-2 sm:p-4 h-[calc(100%-4rem)]">
+        {activeTab === "videos" ? (
+          <div className="h-full flex flex-col justify-center">
+            {videos.length > 0 ? (
+              <div 
+                key={videos[0].id} 
+                className="group flex items-center p-2 hover:bg-gray-50 cursor-pointer transition-colors rounded-md border border-transparent hover:border-gray-200"
+                onClick={() => handleVideoClick(videos[0].id)}
+              >
+                <div className="flex-shrink-0 w-16 h-12 bg-gray-100 rounded overflow-hidden mr-3 relative">
+                  <VideoThumbnail video={videos[0]} />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Film className="w-4 h-4 text-white" />
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate text-sm">{video.title}</p>
-                  <div className="flex flex-wrap gap-2 items-center text-xs text-gray-500">
+                  <p className="font-medium text-gray-900 truncate text-sm">{videos[0].title}</p>
+                  <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
                     <span className="flex items-center">
-                      <Eye className="w-3 h-3 mr-1" /> {video.views} visualizações
+                      <Eye className="w-3 h-3 mr-1" />
+                      {videos[0].views || 0}
                     </span>
                     <span className="flex items-center">
-                      <Clock className="w-3 h-3 mr-1" /> {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')} min
+                      <Clock className="w-3 h-3 mr-1" />
+                      {Math.floor(videos[0].duration / 60)}:{(videos[0].duration % 60).toString().padStart(2, '0')}
                     </span>
                   </div>
                 </div>
-                <div className="ml-2 flex-shrink-0">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    {video.category}
-                  </span>
-                </div>
               </div>
-            ))}
-            
-            {videos.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <p>Não existem vídeos visualizados recentemente.</p>
+            ) : (
+              <div className="text-center py-4 text-gray-500 text-sm">
+                Nenhum vídeo recente
               </div>
             )}
           </div>
         ) : (
-          <div className="space-y-3">
-            {incidents.length > 0 ? incidents.map((incident) => (
-              <div 
-                key={incident.id} 
-                className={`flex items-center p-3 border-l-4 rounded-lg hover:bg-opacity-90 cursor-pointer ${getSeverityColor(incident.severity)}`}
-                onClick={() => handleIncidentClick(incident.id)}
+          <div className="h-full flex flex-col justify-center">
+            {incidents.length > 0 ? (
+              <div
+                key={incidents[0].id}
+                onClick={() => handleIncidentClick(incidents[0].id)}
+                className={`group flex items-center p-2 cursor-pointer transition-all rounded-md border-l-4 hover:translate-x-1 ${getSeverityColor(incidents[0].severity)}`}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate">{incident.title}</p>
-                  <div className="flex flex-wrap gap-2 items-center text-xs text-gray-500">
-                    <span className="flex items-center">
-                      <AlertTriangle className={`w-3 h-3 mr-1 ${
-                        incident.severity === "Alto" 
-                          ? "text-red-500" 
-                          : incident.severity === "Médio"
-                          ? "text-orange-500"
-                          : "text-yellow-500"
-                      }`} /> 
-                      Gravidade: {incident.severity}
-                    </span>
-                    <span className="flex items-center">
-                      Estado: {incident.status}
-                    </span>
-                    <span className="flex items-center">
-                      <Calendar className="w-3 h-3 mr-1" /> {formatDate(incident.date)}
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-medium text-gray-900 truncate text-sm">
+                      {incidents[0].title}
+                    </p>
+                    <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(incidents[0].status)}`}>
+                      {incidents[0].status}
                     </span>
                   </div>
-                </div>
-                <div className="ml-2 flex-shrink-0">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(incident.status)}`}>
-                    {incident.status}
-                  </span>
+                  <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                    <Calendar className="w-3 h-3" />
+                    {formatDate(incidents[0].date)}
+                  </div>
                 </div>
               </div>
-            )) : (
-              <div className="text-center py-8 text-gray-500">
-                <p>Não existem quase acidentes reportados recentemente.</p>
+            ) : (
+              <div className="text-center py-4 text-gray-500 text-sm">
+                Nenhum quase acidente recente
               </div>
             )}
           </div>
@@ -256,6 +226,6 @@ export const RecentActivityCard = ({ videos, incidents = [], className = "" }: A
       </CardContent>
     </Card>
   );
-};
+}
 
 export default RecentActivityCard; 

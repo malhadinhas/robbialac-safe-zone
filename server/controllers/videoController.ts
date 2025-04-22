@@ -461,3 +461,46 @@ export const getLastViewedVideosByCategory = async (req: Request, res: Response)
     });
   }
 };
+
+// Função para buscar vídeos recentes
+export async function getRecentVideos(req: Request, res: Response) {
+    logger.info('Attempting to fetch recent videos...'); // Log inicial
+    try {
+        const limit = parseInt(req.query.limit as string) || 5;
+        logger.info(`Parsed limit: ${limit}`); // Log do limite
+
+        if (limit <= 0) {
+            logger.warn('Invalid limit requested for recent videos', { limit });
+            return res.status(400).json({ error: 'O limite deve ser um número positivo.' });
+        }
+
+        logger.info(`Querying database for ${limit} recent videos...`);
+        const recentVideos = await Video.find({ status: 'ready' }) // Buscar apenas vídeos prontos?
+            .sort({ createdAt: -1 }) // Ordena por data de criação, mais recente primeiro
+            .limit(limit)
+            .select('_id title createdAt') // Selecionar apenas campos necessários
+            .exec();
+        
+        logger.info(`Found ${recentVideos.length} recent videos.`);
+
+        // Não precisamos mapear aqui se select já fez o trabalho
+        // const formattedVideos = recentVideos.map(vid => ({
+        //   _id: vid._id,
+        //   title: vid.title,
+        //   createdAt: vid.createdAt.toISOString(),
+        // }));
+
+        res.json(recentVideos); // Retorna os vídeos diretamente
+
+    } catch (error) {
+        logger.error('Error fetching recent videos:', { 
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+            query: req.query
+        });
+        res.status(500).json({ 
+            error: 'Erro ao buscar vídeos recentes',
+            details: error instanceof Error ? error.message : 'Erro desconhecido' 
+        });
+    }
+}

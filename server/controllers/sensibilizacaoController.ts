@@ -6,6 +6,9 @@ import { getSignedUrl } from '../services/storage';
 import { deleteFromR2, deleteFile } from '../services/storage';
 import path from 'path';
 import fs from 'fs/promises';
+import Like from '../models/Like';
+import Comment from '../models/Comment';
+import mongoose from 'mongoose';
 
 export const createSensibilizacao = async (req: Request, res: Response) => {
   try {
@@ -66,79 +69,99 @@ export const createSensibilizacao = async (req: Request, res: Response) => {
 
 export const getSensibilizacoes = async (req: Request, res: Response) => {
   try {
-    logger.info('Iniciando busca de documentos de sensibilização');
+    const userId = req.user?.id ? new mongoose.Types.ObjectId(req.user.id) : null;
+    logger.info('Iniciando busca de documentos de sensibilização com agregação');
 
     const { country, startDate, endDate } = req.query;
-    const query: any = {};
+    const matchQuery: any = {};
 
     logger.info(`Filtros: country=${country}, startDate=${startDate}, endDate=${endDate}`);
 
-    if (country) query.country = country;
+    if (country) matchQuery.country = country;
     if (startDate && endDate) {
-      query.date = {
+      matchQuery.date = {
         $gte: new Date(startDate as string),
         $lte: new Date(endDate as string)
       };
     }
 
-    logger.info('Executando Sensibilizacao.find() com query:', query);
-    
-    try {
-      const sensibilizacoes = await Sensibilizacao.find(query).sort({ date: -1 });
-      logger.info(`Encontrados ${sensibilizacoes.length} documentos de sensibilização`);
-      
-      if (sensibilizacoes.length === 0) {
-        return res.json([]);
-      }
-
-      // Gerar URLs assinadas para os PDFs
-      const sensibilizacoesWithUrls = await Promise.all(sensibilizacoes.map(async (sensibilizacao) => {
-        try {
-          logger.info('Gerando URL assinada para documento', {
-            sensibilizacaoId: sensibilizacao._id,
-            pdfKey: sensibilizacao.pdfFile?.key
-          });
-
-          if (!sensibilizacao.pdfFile?.key) {
-            logger.warn('Documento sem chave PDF', { sensibilizacaoId: sensibilizacao._id });
-            return {
-              ...sensibilizacao.toObject(),
-              pdfUrl: null
-            };
-          }
-
-          const signedUrl = await getSignedUrl(sensibilizacao.pdfFile.key);
-          logger.info('URL assinada gerada com sucesso', {
-            sensibilizacaoId: sensibilizacao._id,
-            hasUrl: !!signedUrl
-          });
-
-          return {
-            ...sensibilizacao.toObject(),
-            pdfUrl: signedUrl
-          };
-        } catch (urlError) {
-          logger.error('Erro ao gerar URL para documento específico', {
-            sensibilizacaoId: sensibilizacao._id,
-            error: urlError
-          });
-          return {
-            ...sensibilizacao.toObject(),
-            pdfUrl: null
-          };
+    const aggregationPipeline: any[] = [
+      { $match: matchQuery },
+      { $sort: { date: -1 } },
+      {
+        $lookup: {
+          from: 'likes',
+          localField: '_id',
+          foreignField: 'itemId',
+          as: 'likesData'
         }
-      }));
+      },
+      {
+        $lookup: {
+          from: 'comments',
+          localField: '_id',
+          foreignField: 'itemId',
+          as: 'commentsData'
+        }
+      },
+      {
+        $addFields: {
+          likeCount: { $size: '$likesData' },
+          commentCount: { $size: '$commentsData' },
+          userHasLiked: userId ? { 
+              $in: [userId, '$likesData.userId'] 
+          } : false
+        }
+      },
+      {
+        $project: {
+          likesData: 0,
+          commentsData: 0
+        }
+      }
+    ];
+
+    logger.info('Executando agregação para Sensibilizacao...');
+    
+    const sensibilizacoes = await Sensibilizacao.aggregate(aggregationPipeline);
+    
+    logger.info(`Agregação concluída, ${sensibilizacoes.length} documentos processados`);
       
-      logger.info(`URLs geradas para ${sensibilizacoesWithUrls.length} documentos`);
-      res.json(sensibilizacoesWithUrls);
-    } catch (dbError: any) {
-      logger.error('Erro na consulta do MongoDB:', { 
-        error: dbError.message, 
-        stack: dbError.stack,
-        query 
-      });
-      throw dbError;
+    if (sensibilizacoes.length === 0) {
+      return res.json([]);
     }
+
+    const sensibilizacoesWithUrls = await Promise.all(sensibilizacoes.map(async (sensibilizacao) => {
+      try {
+        logger.info('Gerando URL assinada para documento', {
+          sensibilizacaoId: sensibilizacao._id,
+          pdfKey: sensibilizacao.pdfFile?.key
+        });
+
+        if (!sensibilizacao.pdfFile?.key) {
+          logger.warn('Documento sem chave PDF', { sensibilizacaoId: sensibilizacao._id });
+          return { ...sensibilizacao, pdfUrl: null };
+        }
+
+        const signedUrl = await getSignedUrl(sensibilizacao.pdfFile.key);
+        logger.info('URL assinada gerada com sucesso', {
+          sensibilizacaoId: sensibilizacao._id,
+          hasUrl: !!signedUrl
+        });
+
+        return { ...sensibilizacao, pdfUrl: signedUrl };
+      } catch (urlError) {
+        logger.error('Erro ao gerar URL para documento específico', {
+          sensibilizacaoId: sensibilizacao._id,
+          error: urlError
+        });
+        return { ...sensibilizacao, pdfUrl: null };
+      }
+    }));
+      
+    logger.info(`URLs geradas para ${sensibilizacoesWithUrls.length} documentos`);
+    res.json(sensibilizacoesWithUrls);
+    
   } catch (error: any) {
     logger.error('Erro no getSensibilizacoes:', { 
       error: error.message, 
@@ -153,24 +176,63 @@ export const getSensibilizacoes = async (req: Request, res: Response) => {
 
 export const getSensibilizacaoById = async (req: Request, res: Response) => {
   try {
-    const sensibilizacao = await Sensibilizacao.findById(req.params.id);
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+       logger.warn('ID inválido fornecido para getSensibilizacaoById', { id: req.params.id });
+       return res.status(400).json({ error: 'ID do documento inválido' });
+    }
+    const docId = new mongoose.Types.ObjectId(req.params.id);
+    const userId = req.user?.id ? new mongoose.Types.ObjectId(req.user.id) : null;
+    logger.info('Buscando documento por ID com agregação', { docId, userId });
 
-    if (!sensibilizacao) {
+    const aggregationPipeline: any[] = [
+      { $match: { _id: docId } },
+      {
+        $lookup: { from: 'likes', localField: '_id', foreignField: 'itemId', as: 'likesData' }
+      },
+      {
+        $lookup: { from: 'comments', localField: '_id', foreignField: 'itemId', as: 'commentsData' }
+      },
+      {
+        $addFields: {
+          likeCount: { $size: '$likesData' },
+          commentCount: { $size: '$commentsData' },
+          userHasLiked: userId ? { $in: [userId, '$likesData.userId'] } : false
+        }
+      },
+      {
+        $project: { likesData: 0, commentsData: 0 }
+      }
+    ];
+
+    const results = await Sensibilizacao.aggregate(aggregationPipeline);
+
+    if (!results || results.length === 0) {
+      logger.warn('Documento não encontrado após agregação', { docId });
       return res.status(404).json({ error: 'Documento de sensibilização não encontrado' });
     }
 
-    // Gerar URL assinada para o PDF
-    const signedUrl = await getSignedUrl(sensibilizacao.pdfFile.key);
-    const sensibilizacaoWithUrl = {
-      ...sensibilizacao.toObject(),
-      pdfUrl: signedUrl
-    };
+    const sensibilizacao = results[0];
+    logger.info('Documento encontrado com agregação', { docId, likeCount: sensibilizacao.likeCount, commentCount: sensibilizacao.commentCount });
 
-    res.json(sensibilizacaoWithUrl);
+    try {
+        if (!sensibilizacao.pdfFile?.key) {
+           logger.warn('Documento sem chave PDF', { sensibilizacaoId: sensibilizacao._id });
+           res.json({ ...sensibilizacao, pdfUrl: null });
+        } else {
+          const signedUrl = await getSignedUrl(sensibilizacao.pdfFile.key);
+           logger.info('URL assinada gerada com sucesso para ID específico', { sensibilizacaoId: sensibilizacao._id });
+           res.json({ ...sensibilizacao, pdfUrl: signedUrl });
+        }   
+      } catch (urlError: any) {
+         logger.error('Erro ao gerar URL para documento específico (by ID)', { sensibilizacaoId: sensibilizacao._id, error: urlError.message });
+         res.json({ ...sensibilizacao, pdfUrl: null });
+      }
+
   } catch (error: any) {
-    logger.error('Erro no getSensibilizacaoById:', { 
+    logger.error('Erro no getSensibilizacaoById com agregação:', { 
       error: error.message, 
-      id: req.params.id
+      id: req.params.id,
+      stack: error.stack
     });
     res.status(500).json({ 
       error: 'Erro ao buscar documento de sensibilização',

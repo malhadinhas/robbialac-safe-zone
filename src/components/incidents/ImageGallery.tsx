@@ -128,31 +128,31 @@ export default function ImageGallery({
             </div>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-2">
-            {(showOnlyFirstImage ? [images[0]] : images).map((image, index) => (
-              <div 
-                key={index} 
-                className="cursor-pointer"
+        <div className="flex flex-wrap gap-2">
+          {(showOnlyFirstImage ? [images[0]] : images).map((image, index) => (
+            <div 
+              key={index} 
+              className="cursor-pointer"
                 onClick={() => handleImageClick(image, index)}
-              >
-                <img 
-                  src={image} 
-                  alt={`Imagem ${index + 1}`} 
-                  className={`object-cover rounded-md border border-gray-200 ${
-                    showOnlyFirstImage ? 'w-16 h-16' : 'w-20 h-20'
-                  }`}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/src/assets/placeholder-image.png';
-                  }}
-                />
-              </div>
-            ))}
-            {showOnlyFirstImage && images.length > 1 && (
-              <div className="flex items-center justify-center w-8 h-16 text-sm text-gray-500 font-medium">
-                +{images.length - 1}
-              </div>
-            )}
-          </div>
+            >
+              <img 
+                src={image} 
+                alt={`Imagem ${index + 1}`} 
+                className={`object-cover rounded-md border border-gray-200 ${
+                  showOnlyFirstImage ? 'w-16 h-16' : 'w-20 h-20'
+                }`}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/src/assets/placeholder-image.png';
+                }}
+              />
+            </div>
+          ))}
+          {showOnlyFirstImage && images.length > 1 && (
+            <div className="flex items-center justify-center w-8 h-16 text-sm text-gray-500 font-medium">
+              +{images.length - 1}
+            </div>
+          )}
+        </div>
         )}
         
         {showControls && images.length > 1 && (
@@ -204,18 +204,18 @@ export default function ImageGallery({
               >
                 <ZoomIn className="h-5 w-5" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
+            <Button
+              variant="ghost"
+              size="icon"
                 className="bg-black bg-opacity-60 text-white rounded-full hover:bg-opacity-80"
-                onClick={() => setSelectedImage(null)}
-              >
+              onClick={() => setSelectedImage(null)}
+            >
                 <X className="h-5 w-5" />
-              </Button>
+            </Button>
             </div>
             
             <div className="flex items-center justify-center bg-black bg-opacity-90 min-h-[400px] p-4">
-              {selectedImage && (
+            {selectedImage && (
                 <img 
                   src={selectedImage} 
                   alt="Visualização ampliada" 
@@ -248,7 +248,7 @@ export default function ImageGallery({
                 </Button>
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1.5 rounded-full">
                   {currentImageIndex + 1} / {images.length}
-                </div>
+              </div>
               </>
             )}
           </div>

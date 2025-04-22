@@ -6,9 +6,10 @@ import {
   updateVideo,
   deleteVideo,
   incrementVideoViews,
-  getLastViewedVideosByCategory
+  getLastViewedVideosByCategory,
+  getRecentVideos
 } from '../controllers/videoController';
-import { isAuthenticated, isAdmin } from '../middleware/authMiddleware';
+import { isAuthenticated, isAdmin, hasRole } from '../middleware/authMiddleware';
 import { uploadVideo, validateUploadedVideo, handleUploadError } from '../middleware/uploadMiddleware';
 import fs from 'fs';
 import path from 'path';
@@ -31,33 +32,42 @@ for (const dir of dirs) {
   }
 }
 
-// Rotas públicas
-router.get('/', getVideos);
-router.get('/:id', getVideoById);
-router.get('/category/:category/most-viewed', getLastViewedVideosByCategory);
-router.post('/category/:category/next', getLastViewedVideosByCategory);
+// --- Rotas mais específicas PRIMEIRO ---
 
-// Rota de upload - nenhuma autenticação requerida para testes
-router.post('/', 
-  (req, res, next) => {
-    logger.info('Iniciando upload de vídeo', {
-      headers: req.headers,
-      contentType: req.headers['content-type']
-    });
-    next();
-  },
+// GET /api/videos/recent - Listar vídeos recentes
+router.get('/recent', isAuthenticated, getRecentVideos);
+
+// GET /api/videos/category/:category/most-viewed - Listar últimos visualizados por categoria
+router.get('/category/:category/most-viewed', isAuthenticated, getLastViewedVideosByCategory);
+
+// POST /api/videos/category/:category/next - Ação parece duplicada, remover ou verificar
+// router.post('/category/:category/next', isAuthenticated, getLastViewedVideosByCategory);
+
+// --- Rotas genéricas e outras ---
+
+// GET /api/videos - Listar todos os vídeos prontos
+router.get('/', getVideos);
+
+// GET /api/videos/:id - Obter vídeo específico (Rota genérica DEPOIS das específicas)
+router.get('/:id', isAuthenticated, getVideoById);
+
+// POST /api/videos - Criar novo vídeo (com upload via Middleware)
+router.post(
+  '/', 
+  isAuthenticated, 
   uploadVideo,
   validateUploadedVideo,
   createVideo
 );
 
-// Rotas que requerem autenticação (desabilitadas temporariamente)
-// router.use(isAuthenticated);
-router.post('/:id/views', incrementVideoViews);
+// PUT /api/videos/:id - Atualizar vídeo (requer admin ou qa)
+router.put('/:id', isAuthenticated, hasRole(['admin_app', 'admin_qa']), updateVideo);
 
-// Rotas que requerem privilégios de admin (desabilitadas temporariamente)
-// router.use(isAdmin);
-router.put('/:id', updateVideo);
-router.delete('/:id', deleteVideo);
+// DELETE /api/videos/:id - Apagar vídeo (requer admin)
+router.delete('/:id', isAuthenticated, isAdmin, deleteVideo);
+
+// POST /api/videos/:id/views - Incrementar visualizações
+// Verificar se esta rota ainda é necessária ou se a lógica foi movida
+// router.post('/:id/views', isAuthenticated, incrementVideoViews);
 
 export default router; 

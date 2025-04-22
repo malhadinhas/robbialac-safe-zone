@@ -3,6 +3,25 @@ import { getCollection } from '../services/database';
 import logger from '../utils/logger';
 import { ObjectId } from 'mongodb';
 import { checkActionBasedMedals } from './medalController';
+// Import models needed for getRecentDocuments
+import Accident, { IAccident } from '../models/Accident'; 
+import Sensibilizacao, { ISensibilizacao } from '../models/Sensibilizacao';
+// Importar tipo Incident e potentially ObjectId se necessário para query
+import { Incident } from '../types'; 
+// Importar modelos Like e Comment para usar no $lookup
+import Like from '../models/Like';
+import Comment from '../models/Comment';
+
+// Interface para o tipo de retorno unificado (ADICIONADO likeCount e commentCount)
+interface FeedItem {
+  _id: string;
+  type: 'qa' | 'document';
+  title: string; 
+  date: string; // ISO Date string
+  documentType?: 'Acidente' | 'Sensibilizacao'; 
+  likeCount?: number; // Contagem de Likes
+  commentCount?: number; // Contagem de Comentários
+}
 
 interface UserActivity {
   _id?: ObjectId;
@@ -225,4 +244,113 @@ export const getUserActivities = async (req: Request, res: Response) => {
       details: error instanceof Error ? error.message : 'Erro desconhecido'
     });
   }
-}; 
+};
+
+// --- Função para o Feed Unificado --- 
+export async function getFeed(req: Request, res: Response) {
+  logger.info('Attempting to fetch unified feed activity...');
+  try {
+    const limit = parseInt(req.query.limit as string) || 10; 
+    logger.info(`Parsed limit for feed: ${limit}`);
+
+    if (limit <= 0) {
+        logger.warn('Invalid limit requested for feed', { limit });
+        return res.status(400).json({ error: 'O limite deve ser um número positivo.' });
+    }
+
+    // --- 1. Buscar Itens Base (QAs, Acidentes, Sensibilizações) --- 
+    // Fetch QAs (Incidents)
+    const incidentsCollection = await getCollection<Incident>('incidents');
+    const recentQAs = await incidentsCollection.find({})
+        .sort({ date: -1 })
+        .limit(limit) // Buscar um pouco mais para ter margem após combinação
+        .project({ _id: 1, title: 1, date: 1 }) 
+        .toArray();
+
+    // Fetch Accidents
+    const recentAccidents = await Accident.find({}) 
+        .sort({ createdAt: -1 })
+        .limit(limit) 
+        .select('_id name createdAt') 
+        .lean()
+        .exec();
+
+    // Fetch Sensibilizacoes
+    const recentSensibilizacoes = await Sensibilizacao.find({}) 
+        .sort({ createdAt: -1 })
+        .limit(limit) 
+        .select('_id name createdAt') 
+        .lean()
+        .exec();
+
+    // --- 2. Formatar e Combinar Itens Base --- 
+    let combinedBaseItems = [
+      ...recentQAs.map(qa => ({
+        _id: qa._id, // Manter como ObjectId por enquanto
+        type: 'qa' as const,
+        title: qa.title,
+        date: qa.date, // Manter como Date
+      })),
+      ...recentAccidents.map(doc => ({
+        _id: doc._id,
+        type: 'document' as const,
+        title: doc.name,
+        date: doc.createdAt,
+        documentType: 'Acidente' as const
+      })),
+      ...recentSensibilizacoes.map(doc => ({
+        _id: doc._id,
+        type: 'document' as const,
+        title: doc.name,
+        date: doc.createdAt,
+        documentType: 'Sensibilizacao' as const
+      }))
+    ];
+
+    // --- 3. Ordenar e Limitar Itens Base --- 
+    combinedBaseItems.sort((a, b) => b.date.getTime() - a.date.getTime());
+    const topItems = combinedBaseItems.slice(0, limit);
+    const itemIds = topItems.map(item => item._id); // Array de ObjectIds
+
+    // --- 4. Buscar Contagens de Likes e Comments para os Itens Selecionados --- 
+    const likeCounts = await Like.aggregate([
+        { $match: { itemId: { $in: itemIds } } }, // Filtrar pelos IDs dos itens do feed
+        { $group: { _id: '$itemId', count: { $sum: 1 } } }
+    ]);
+
+    const commentCounts = await Comment.aggregate([
+        { $match: { itemId: { $in: itemIds } } },
+        { $group: { _id: '$itemId', count: { $sum: 1 } } }
+    ]);
+
+    // Mapear contagens para fácil acesso (ObjectId como string)
+    const likesMap = new Map(likeCounts.map(item => [item._id.toString(), item.count]));
+    const commentsMap = new Map(commentCounts.map(item => [item._id.toString(), item.count]));
+
+    // --- 5. Formatar Resposta Final --- 
+    const finalFeed: FeedItem[] = topItems.map(item => ({
+      _id: item._id.toString(),
+      type: item.type,
+      title: item.title,
+      date: item.date.toISOString(),
+      documentType: item.documentType,
+      likeCount: likesMap.get(item._id.toString()) || 0,
+      commentCount: commentsMap.get(item._id.toString()) || 0
+    }));
+    
+    logger.info(`Returning ${finalFeed.length} items for the feed with interaction counts.`);
+    res.json(finalFeed);
+
+  } catch (error) {
+    logger.error('Error fetching unified feed:', { 
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        query: req.query
+    });
+    res.status(500).json({ 
+        error: 'Erro ao buscar feed de novidades',
+        details: error instanceof Error ? error.message : 'Erro desconhecido' 
+    });
+  }
+}
+// --- Fim da Função --- 

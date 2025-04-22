@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   BarChart, 
   Bar, 
@@ -29,6 +29,17 @@ interface Props {
 }
 
 export default function DepartmentIncidentsChart({ data }: Props) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     // Remover: console.log('Dados recebidos no gráfico:', data);
   }, [data]);
@@ -106,29 +117,52 @@ export default function DepartmentIncidentsChart({ data }: Props) {
   }
 
   return (
-    <div className="w-full h-[600px]">
+    <div className="w-full h-[600px] sm:h-[400px]">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={chartData}
-          margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
-          barSize={40}
+          margin={isMobile ? 
+            { top: 20, right: 10, left: 10, bottom: 60 } : 
+            { top: 20, right: 30, left: 20, bottom: 60 }
+          }
+          barSize={isMobile ? 20 : 40}
         >
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis 
             dataKey="name" 
             angle={-45}
             textAnchor="end"
-            height={70}
-            tickMargin={25}
+            height={60}
+            tickMargin={20}
             interval={0}
+            tick={{ fontSize: isMobile ? 10 : 12 }}
           >
-            <Label value="Departamentos" offset={-60} position="insideBottom" />
+            <Label 
+              value="Departamentos" 
+              offset={-70} 
+              position="insideBottom"
+              style={{ fontSize: isMobile ? 12 : 14 }}
+            />
           </XAxis>
-          <YAxis domain={[0, maxYDomain]}>
-            <Label value="Quantidade de Quase Acidentes" angle={-90} position="insideLeft" offset={0} />
+          <YAxis 
+            domain={[0, maxYDomain]}
+            tick={{ fontSize: isMobile ? 10 : 12 }}
+            tickMargin={2}
+          >
+            <Label 
+              value="Quantidade de Quase Acidentes" 
+              angle={-90} 
+              position="insideLeft" 
+              offset={-15}
+              style={{ fontSize: isMobile ? 10 : 12 }}
+            />
           </YAxis>
           <Tooltip content={<CustomTooltip />} />
-          <Legend verticalAlign="top" height={36} />
+          <Legend 
+            verticalAlign="top" 
+            height={36}
+            wrapperStyle={{ fontSize: isMobile ? 10 : 12 }}
+          />
           <Bar 
             dataKey="incidentes" 
             name="Quase Acidentes Reportados" 

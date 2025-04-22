@@ -26,6 +26,9 @@ import { getIncidents } from "@/services/incidentService";
 import { Video, Incident } from "@/types";
 import VideoCategoryPieChart from '@/components/stats/VideoCategoryPieChart';
 import RecentActivityCard from '@/components/RecentActivityCard';
+import MobileDashboard from "@/components/dashboard/MobileDashboard";
+import { CategoryVideosCard } from "@/components/dashboard/CategoryVideosCard";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -40,6 +43,8 @@ export default function Dashboard() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   // Carregar dados da API
   useEffect(() => {
@@ -194,105 +199,6 @@ export default function Dashboard() {
     );
   };
 
-  // Define dashboard sections for mobile/tablet view
-  const dashboardSections = [
-    // Section 1: Overview
-    <>
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-gray-600">Bem-vindo de volta, {user?.name}!</p>
-      </div>
-      
-      <div className="grid grid-cols-1 gap-4 mb-4">
-        <Card className="bg-white shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium">Seu Progresso</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-gray-500">Nível {currentLevel}</span>
-              <span className="text-gray-500">Nível {currentLevel + 1}</span>
-            </div>
-            <Progress value={progressToNextLevel} className="mb-2" />
-            <div className="text-sm text-gray-500 text-center">
-              {pointsToNextLevel} pontos para o próximo nível
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-white shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium">Pontuação Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-center">
-              <div className="text-4xl font-bold text-robbialac">{user?.points || 0}</div>
-              <TrendingUp className="ml-2 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </>,
-    
-    // Section 2: Videos
-    <>
-      <div className="grid grid-cols-1 gap-4 mb-4">
-        <Card className="bg-white shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium">Vídeos Recentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <RecentActivityCard videos={recentVideos || []} incidents={[]} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </>,
-    
-    // Section 3: Incidents
-    <>
-      <div className="grid grid-cols-1 gap-4 mb-4">
-        <Card className="bg-white shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium">Quase Acidentes Recentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <RecentActivityCard videos={[]} incidents={recentIncidents || []} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </>,
-    
-    // Section 4: Statistics
-    <>
-      <div className="grid grid-cols-1 gap-4 mb-4">
-        <Card className="bg-white shadow">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium">Estatísticas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <VideoCategoryPieChart videos={videos || []} />
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={statsBySeverity}>
-                    <XAxis dataKey="severity" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </>
-  ];
-
   if (loading) {
     return (
       <Layout>
@@ -314,58 +220,204 @@ export default function Dashboard() {
     );
   }
 
-  const pageContent = isCompactView ? (
-    <div className="p-4">
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-4">
-          <TabsTrigger value="overview" className="flex flex-col items-center gap-1">
-            <User className="h-4 w-4" />
-            <span className="text-xs">Visão Geral</span>
-          </TabsTrigger>
-          <TabsTrigger value="videos" className="flex flex-col items-center gap-1">
-            <VideoIcon className="h-4 w-4" />
-            <span className="text-xs">Vídeos</span>
-          </TabsTrigger>
-          <TabsTrigger value="incidents" className="flex flex-col items-center gap-1">
-            <AlertCircle className="h-4 w-4" />
-            <span className="text-xs">Quase Acidentes</span>
-          </TabsTrigger>
-          <TabsTrigger value="stats" className="flex flex-col items-center gap-1">
-            <TrendingUp className="h-4 w-4" />
-            <span className="text-xs">Estatísticas</span>
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="overview">
-          {dashboardSections[0]}
-        </TabsContent>
-        
-        <TabsContent value="videos">
-          {dashboardSections[1]}
-        </TabsContent>
-        
-        <TabsContent value="incidents">
-          {dashboardSections[2]}
-        </TabsContent>
-        
-        <TabsContent value="stats">
-          {dashboardSections[3]}
-        </TabsContent>
-      </Tabs>
-    </div>
-  ) : (
-    <div className="p-4">
-      {dashboardSections.map((section, index) => (
-        <div key={index} className="mb-8">
-          {section}
-        </div>
-      ))}
-    </div>
-  );
-
   return (
     <Layout>
-      {pageContent}
+      {isCompactView ? (
+        <MobileDashboard
+          user={user}
+          videos={videos}
+          incidents={incidents}
+          loading={loading}
+          error={error}
+          statsByCategory={statsByCategory}
+          statsBySeverity={statsBySeverity}
+          statsByRisk={statsByRisk}
+          statsByQAQuality={statsByQAQuality}
+          statsByFrequency={statsByFrequency}
+          totalViews={totalViews}
+          totalIncidents={totalIncidents}
+          totalVideos={totalVideos}
+          totalMedalsAcquired={totalMedalsAcquired}
+          progressToNextLevel={progressToNextLevel}
+          currentLevel={currentLevel}
+          pointsToNextLevel={pointsToNextLevel}
+        />
+      ) : (
+        <div className="h-full p-4 space-y-4">
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <p className="text-gray-500">Bem-vindo de volta, {user?.name}!</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="h-full">
+                <CardHeader className="pb-2 space-y-0">
+                  <CardTitle className="text-sm font-medium">Seu Progresso</CardTitle>
+                </CardHeader>
+                <CardContent className="pb-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Nível {currentLevel}</span>
+                      <span className="text-sm font-medium">Nível {currentLevel + 1}</span>
+                    </div>
+                    <Progress value={progressToNextLevel} className="h-2" />
+                    <p className="text-xs text-gray-500 text-center">
+                      {pointsToNextLevel} pontos para o próximo nível
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="h-full">
+                <CardHeader className="pb-2 space-y-0">
+                  <CardTitle className="text-sm font-medium">Pontuação Total</CardTitle>
+                </CardHeader>
+                <CardContent className="pb-4">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold mb-1">{user?.points || 0}</p>
+                    <div className="flex items-center justify-center">
+                      <p className="text-xs text-gray-500">Pontos acumulados</p>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="p-0 h-auto text-xs text-robbialac ml-1"
+                        onClick={() => navigate('/ranking')}
+                      >
+                        Ver Ranking
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <RecentActivityCard 
+              title="Vídeos Recentes"
+              videos={recentVideos.slice(0, 1)}
+            />
+
+            <RecentActivityCard 
+              title="Quase Acidentes Recentes"
+              incidents={recentIncidents.slice(0, 1)}
+            />
+          </div>
+
+          <CategoryVideosCard videos={videos} />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Estatísticas por Categoria</CardTitle>
+                <CardDescription>Distribuição de vídeos visualizados por categoria</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={statsByCategory}
+                        dataKey="count"
+                        nameKey="category"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        label={renderCustomPieChartLabel}
+                        labelLine={false}
+                      >
+                        {statsByCategory.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Legend />
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Estatísticas de Quase Acidentes</CardTitle>
+                <CardDescription>Análise por gravidade, risco e frequência</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs value={qAChartTab} onValueChange={(value: any) => setQAChartTab(value)}>
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="severity">Gravidade</TabsTrigger>
+                    <TabsTrigger value="risk">Risco</TabsTrigger>
+                    <TabsTrigger value="frequency">Frequência</TabsTrigger>
+                    <TabsTrigger value="quality">Qualidade</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="severity">
+                    <div className="h-[250px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={statsBySeverity}>
+                          <XAxis dataKey="severity" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="count">
+                            {statsBySeverity.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="risk">
+                    <div className="h-[250px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={statsByRisk}>
+                          <XAxis dataKey="risk" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="count">
+                            {statsByRisk.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="frequency">
+                    <div className="h-[250px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={statsByFrequency}>
+                          <XAxis dataKey="frequency" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="count">
+                            {statsByFrequency.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="quality">
+                    <div className="h-[250px] w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={statsByQAQuality}>
+                          <XAxis dataKey="quality" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="count">
+                            {statsByQAQuality.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

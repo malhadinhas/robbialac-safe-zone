@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
@@ -11,9 +11,10 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 interface PDFViewerProps {
   url: string;
   className?: string;
+  containerWidth?: number;
 }
 
-export const PDFViewer: React.FC<PDFViewerProps> = ({ url, className = '' }) => {
+export const PDFViewer: React.FC<PDFViewerProps> = ({ url, className = '', containerWidth }) => {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +58,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, className = '' }) => 
       )}
       
       {!error && (
-         <div className="flex-grow w-full overflow-auto flex justify-center items-start p-4">
+         <div className="flex-grow w-full overflow-auto flex justify-center items-start">
            <Document
              file={url}
              onLoadSuccess={onDocumentLoadSuccess}
@@ -67,17 +68,18 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({ url, className = '' }) => 
                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-robbialac"></div>
                </div>
              }
+             className="max-w-full"
            >
              <Page 
-                key={`page_${pageNumber}`} // Add key to force re-render on page change
+                key={`page_${pageNumber}`}
                 pageNumber={pageNumber} 
-                renderTextLayer={true} // Enable text selection
-                renderAnnotationLayer={true} // Enable annotations
-                className="shadow-lg" // Add some shadow to the page
+                renderTextLayer={true}
+                renderAnnotationLayer={true}
+                className="shadow-lg max-w-full"
                 onLoadSuccess={onPageLoadSuccess}
-                scale={1} // Explicitly set scale
+                width={containerWidth ? containerWidth : undefined}
                 loading={
-                   <div className="flex items-center justify-center h-60"> {/* Placeholder height while page loads */}
+                   <div className="flex items-center justify-center h-60">
                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-robbialac"></div>
                    </div>
                 }

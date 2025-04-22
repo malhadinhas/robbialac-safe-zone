@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import ErrorBoundary from './ErrorBoundary';
 import { useLocation } from 'react-router-dom';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'; // Importar o tipo para a ref
+import { useIsCompactView } from '@/hooks/use-mobile';
 
 // Loading spinner component
 const LoadingSpinner = () => (
@@ -252,87 +253,111 @@ const FactoryModel = ({
 // Component for the entire factory model with interactive zones
 const Factory3DModelManager = ({ 
   onZoneClick, 
-  enableControls = false
+  useSimpleView = false,
+  enableControls = false,
+  zoneStats = [],
+  isLoading = false,
+  className = ''
 }: { 
   onZoneClick: (zone: string) => void,
-  enableControls?: boolean
+  useSimpleView?: boolean,
+  enableControls?: boolean,
+  zoneStats?: any[],
+  isLoading?: boolean,
+  className?: string
 }) => {
   const [hoveredZone, setHoveredZone] = useState<FactoryZone | null>(null);
-  const [modelError, setModelError] = useState<Error | null>(null);
-  const location = useLocation();
-  const controlsRef = useRef<OrbitControlsImpl>(null!);
-  const [modelCenter, setModelCenter] = useState<THREE.Vector3 | null>(null);
+  const [modelCenter, setModelCenter] = useState<THREE.Vector3>(new THREE.Vector3());
+  const [hasError, setHasError] = useState(false);
+  const controlsRef = useRef<OrbitControlsImpl>(null);
+  const isCompactView = useIsCompactView();
 
   const handleLoadError = (error: Error) => {
-    console.error('Erro ao carregar modelo da fábrica:', error);
-    setModelError(error);
+    console.error('Erro ao carregar modelo:', error);
+    setHasError(true);
   };
 
   const handleModelCenterCalculated = (center: THREE.Vector3) => {
     setModelCenter(center);
   };
 
-  return (
-    <ErrorBoundary fallback={
-      <div className="flex items-center justify-center h-full text-red-500 bg-gray-100">
-        Erro ao renderizar o modelo 3D.
+  if (hasError || useSimpleView) {
+    return (
+      <div className={`w-full h-full ${className}`}>
+        <FallbackModel 
+          onZoneClick={onZoneClick} 
+          hoveredZone={hoveredZone} 
+          setHoveredZone={setHoveredZone} 
+        />
       </div>
-    }>
-      <Canvas 
-        shadows 
-        camera={{ 
-          position: [8, 8, 8], 
-          fov: 45, 
-          near: 0.1, 
-          far: 1000
-        }}
-        style={{ height: '600px', width: '100%', background: '#f0f0f0', borderRadius: '8px' }}
-        gl={{ preserveDrawingBuffer: true }} // Para screenshots se necessário
-        onCreated={({ gl }) => {
-          gl.toneMapping = THREE.ACESFilmicToneMapping;
-          gl.outputEncoding = THREE.sRGBEncoding;
-        }}
-      >
-        <ambientLight intensity={0.8} />
-        <directionalLight 
-          position={[10, 10, 5]} 
-          intensity={1.5} 
-          castShadow 
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
-        />
-        <directionalLight 
-          position={[-10, -10, -5]} 
-          intensity={0.5} 
-        />
+    );
+  }
 
-        <OrbitControls 
-          ref={controlsRef} 
-          enableZoom={false}
-          enablePan={true} 
-          enableRotate={true}
-          zoomSpeed={0.8}
-          panSpeed={0.8}
-          rotateSpeed={0.5}
-          minDistance={300}
-          maxDistance={300}
-          minPolarAngle={Math.PI / 4}
-          maxPolarAngle={Math.PI / 4}
-          target={modelCenter ? [modelCenter.x, modelCenter.y - 30, modelCenter.z] : [0, 0, 0]}
-        />
-
-        <Suspense fallback={<LoadingSpinner />}>
-           <FactoryModel 
+  return (
+    <div className={`w-full h-full ${className}`}>
+      <ErrorBoundary fallback={
+        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+          <p className="text-sm text-gray-600">Erro ao renderizar o modelo 3D</p>
+        </div>
+      }>
+        <Canvas
+          camera={{ 
+            position: [0, 250, 250],
+            fov: 50,
+            near: 0.1,
+            far: 1000
+          }}
+          gl={{ 
+            antialias: true,
+            alpha: true,
+            preserveDrawingBuffer: true,
+            powerPreference: "high-performance"
+          }}
+          style={{ background: 'transparent' }}
+        >
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[10, 10, 5]} intensity={1} />
+          <directionalLight position={[-10, -10, -5]} intensity={0.5} />
+          
+          <Suspense fallback={<LoadingSpinner />}>
+            <FactoryModel
               onZoneClick={onZoneClick}
               hoveredZone={hoveredZone}
               setHoveredZone={setHoveredZone}
               onLoadError={handleLoadError}
               onModelCenterCalculated={handleModelCenterCalculated}
             />
-        </Suspense>
-        
-      </Canvas>
-    </ErrorBoundary>
+          </Suspense>
+
+          {enableControls ? (
+            <OrbitControls
+              ref={controlsRef}
+              enablePan={true}
+              enableZoom={!isCompactView}
+              enableRotate={true}
+              minDistance={250}
+              maxDistance={250}
+              target={modelCenter}
+              minPolarAngle={55 * (Math.PI / 180)}
+              maxPolarAngle={55 * (Math.PI / 180)}
+              minAzimuthAngle={-Infinity}
+              maxAzimuthAngle={Infinity}
+            />
+          ) : (
+            <PresentationControls
+              global={true}
+              cursor={true}
+              snap={false}
+              speed={1}
+              zoom={!isCompactView}
+              rotation={[0, 0, 0]}
+              polar={[55 * (Math.PI / 180), 55 * (Math.PI / 180)]}
+              azimuth={[-Infinity, Infinity]}
+            />
+          )}
+        </Canvas>
+      </ErrorBoundary>
+    </div>
   );
 };
 

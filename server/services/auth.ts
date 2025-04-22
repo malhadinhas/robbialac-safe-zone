@@ -81,21 +81,24 @@ export async function validateCredentials(email: string, password: string): Prom
   }
 }
 
-export function generateToken(user: Omit<User, 'password'>): string {
+export function generateToken(user: Omit<User, 'password'> & { _id: ObjectId; name?: string }): string {
+  // Convertendo ObjectId para string para incluir no token
+  const userIdString = user._id.toString(); 
   return jwt.sign(
     {
-      id: user.id,
+      id: userIdString, // <<< CORRIGIDO: Usar o _id convertido para string
       email: user.email,
-      role: user.role
+      role: user.role,
+      name: user.name || 'Utilizador Desconhecido' // <<< ADICIONADO: Incluir nome do user
     },
     JWT_SECRET,
     { expiresIn: '24h' }
   );
 }
 
-export async function verifyToken(token: string): Promise<{ id: string; email: string; role: string } | null> {
+export async function verifyToken(token: string): Promise<{ id: string; email: string; role: string; name?: string } | null> {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; role: string };
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; role: string; name?: string };
     return decoded;
   } catch (error) {
     return null;

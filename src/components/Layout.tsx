@@ -76,10 +76,10 @@ export function Layout({ children }: LayoutProps) {
   const userEmail = user?.email || ''; // Email a exibir ou vazio
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div className="h-screen w-full overflow-hidden flex flex-col md:flex-row">
       {isCompactView && (
         <header 
-          className="bg-robbialac text-white p-3 flex items-center justify-between fixed top-0 left-0 right-0 z-30"
+          className="bg-robbialac text-white p-3 flex items-center justify-between z-30 flex-shrink-0"
           style={{ paddingLeft: adaptiveSpacing.md, paddingRight: adaptiveSpacing.md }}
         >
           <Button 
@@ -92,16 +92,10 @@ export function Layout({ children }: LayoutProps) {
             <span className="sr-only">Abrir menu</span>
           </Button>
 
-          <div className="flex items-center space-x-2">
-            <img 
-              src="/lovable-uploads/a3de5e63-ebb5-4968-b16b-6769bce13858.png" 
-              alt="RobbiSeg Logo" 
-              className="w-8 h-8 rounded-full bg-white shrink-0" 
-            />
+          <div className="flex-1 flex items-center justify-center">
             <span className="font-bold text-lg">RobbiSeg</span>
           </div>
           
-          {/* Placeholder para manter o centro */}
           <div className="w-10"></div> 
         </header>
       )}
@@ -113,14 +107,15 @@ export function Layout({ children }: LayoutProps) {
             ? cn("fixed inset-0 z-50 transform", 
                 menuOpen ? "translate-x-0" : "-translate-x-full",
                 orientation === "landscape" ? "w-3/5 sm:w-1/2 md:w-2/5" : "w-full",
-                "pt-16") // Adiciona padding-top para não sobrepor o header
-            : cn(`min-h-screen sticky top-0 shrink-0`,
+                "pt-16") 
+            : cn("h-screen sticky top-0 shrink-0",
                 menuOpen ? `w-[${expandedMenuWidth}]` : `w-[${collapsedMenuWidth}]`,
                 menuOpen ? "block" : "hidden lg:block", 
                 "transition-[width]")
         )}
         style={{ 
-          width: isCompactView ? undefined : menuOpen ? expandedMenuWidth : collapsedMenuWidth 
+          width: isCompactView ? undefined : menuOpen ? expandedMenuWidth : collapsedMenuWidth,
+          height: isCompactView ? '100%' : '100vh'
         }}
       >
         {/* Botão de fechar para mobile */}
@@ -262,19 +257,7 @@ export function Layout({ children }: LayoutProps) {
         />
       )}
       
-      <main 
-        style={{ 
-          minHeight: mainHeight,
-          paddingTop: isCompactView ? "calc(60px + 1rem)" : "1rem",
-          paddingLeft: "1.5rem",
-          paddingRight: "1.5rem",
-          paddingBottom: "1rem"
-        }}
-        className={cn(
-          "flex-1 transition-all w-full overflow-x-hidden",
-          orientation === "landscape" && isCompactView && "pb-safe"
-        )}
-      >
+      <main className="flex-1 h-screen overflow-hidden">
         {children}
       </main>
     </div>

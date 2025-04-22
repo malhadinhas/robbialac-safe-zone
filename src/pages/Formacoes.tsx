@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { getZoneStats, ZoneStats } from '@/services/zoneStatsService';
 import { Progress } from "@/components/ui/progress";
 import { uploadVideo, getVideos } from '@/services/videoService';
 import { Video } from '@/types';
+import { ErrorBoundary } from 'react-error-boundary';
 
 const factoryZones = [
   { zone: 'Enchimento', color: '#3B82F6' },
@@ -31,7 +32,7 @@ export default function Formacoes() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [useSimpleView, setUseSimpleView] = useState(false);
-  const [enableControls, setEnableControls] = useState(false);
+  const [enableControls, setEnableControls] = useState(true);
   const isCompactView = useIsCompactView();
   const [zoneStats, setZoneStats] = useState<ZoneStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -218,7 +219,8 @@ export default function Formacoes() {
   };
 
   const handleToggleControls = () => {
-    setEnableControls(!enableControls);
+    // Esta função pode ser removida se não houver mais botão para ela
+    // setEnableControls(!enableControls);
   };
 
   const videoCategories = [
@@ -270,23 +272,51 @@ export default function Formacoes() {
         <CardContent>
           {useSimpleView ? (
             <>
-              <div className="aspect-video bg-gray-100 rounded-md flex flex-col items-center justify-center p-8">
-                <div className="text-gray-500 mb-8 text-center">
-                  <p className="mb-4">Visualização simplificada por botões.</p>
-                  <p>Selecione uma das áreas abaixo:</p>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl w-full">
-                  {factoryZones.map((zone) => (
-                    <Button
-                      key={zone.zone}
-                      onClick={() => handleZoneClick(zone.zone)}
-                      className="h-24 text-lg"
-                      style={{ backgroundColor: zone.color }}
-                    >
-                      Área de {zone.zone}
-                    </Button>
-                  ))}
+              <div className="flex flex-col items-center p-2 sm:p-4">
+                <h2 className="text-sm mb-2 text-gray-600">Selecione uma das áreas abaixo:</h2>
+                <div className="w-full max-w-md space-y-2">
+                  <button
+                    onClick={() => handleZoneClick('Enchimento')}
+                    className="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+                  >
+                    Área de Enchimento
+                  </button>
+                  <button
+                    onClick={() => handleZoneClick('Fabrico')}
+                    className="w-full py-2 px-4 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-sm"
+                  >
+                    Área de Fabrico
+                  </button>
+                  <button
+                    onClick={() => handleZoneClick('Robbialac')}
+                    className="w-full py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm"
+                  >
+                    Área de Robbialac
+                  </button>
+                  <button
+                    onClick={() => handleZoneClick('MateriaPrima')}
+                    className="w-full py-2 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors text-sm"
+                  >
+                    Área de MateriaPrima
+                  </button>
+                  <button
+                    onClick={() => handleZoneClick('Expedicao')}
+                    className="w-full py-2 px-4 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors text-sm"
+                  >
+                    Área de Expedicao
+                  </button>
+                  <button
+                    onClick={() => handleZoneClick('TrafegoInferior')}
+                    className="w-full py-2 px-4 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition-colors text-sm"
+                  >
+                    Área de TrafegoInferior
+                  </button>
+                  <button
+                    onClick={() => handleZoneClick('TrafegoSuperior')}
+                    className="w-full py-2 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg transition-colors text-sm"
+                  >
+                    Área de TrafegoSuperior
+                  </button>
                 </div>
               </div>
             </>
@@ -336,7 +366,118 @@ export default function Formacoes() {
   
   return (
     <Layout>
-      {pageContent}
+      <div className="h-screen w-full overflow-hidden">
+        {/* Header (20% do espaço) */}
+        <div className="h-[20%] p-2 flex flex-col justify-center">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+            <div>
+              <h1 className="text-lg sm:text-3xl font-bold text-gray-800 line-clamp-1">Formações</h1>
+              <p className="text-xs sm:text-base text-gray-600 line-clamp-2">Selecione uma área da fábrica para ver os vídeos disponíveis</p>
+            </div>
+            <div className="flex gap-1 mt-1 sm:mt-0">
+              {isAdmin && (
+                <Button 
+                  onClick={showImportModal}
+                  className="h-8 text-xs px-2"
+                >
+                  Importar Vídeo
+                </Button>
+              )}
+              <Button 
+                variant="outline" 
+                onClick={handleToggleView}
+                className="h-8 text-xs px-2"
+              >
+                {useSimpleView ? "Ver Modelo 3D" : "Ver Lista Simples"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-2">
+            <h2 className="text-base font-semibold line-clamp-1">Mapa da Fábrica</h2>
+            <p className="text-xs text-gray-600 line-clamp-1">Selecione uma área para ver os vídeos relacionados</p>
+          </div>
+        </div>
+
+        {/* Container do modelo 3D ou Lista Simples (70% do espaço) */}
+        <div className="h-[70%] px-2">
+          {useSimpleView ? (
+            // Lista Simples (copiada da definição de mainSection)
+            <div className="h-full w-full flex flex-col items-center justify-center p-2 sm:p-4 bg-gray-100 rounded-lg overflow-y-auto">
+              <h2 className="text-sm mb-2 text-gray-600">Selecione uma das áreas abaixo:</h2>
+              <div className="w-full max-w-md space-y-2">
+                <button
+                  onClick={() => handleZoneClick('Enchimento')}
+                  className="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm"
+                >
+                  Área de Enchimento
+                </button>
+                <button
+                  onClick={() => handleZoneClick('Fabrico')}
+                  className="w-full py-2 px-4 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-sm"
+                >
+                  Área de Fabrico
+                </button>
+                <button
+                  onClick={() => handleZoneClick('Robbialac')}
+                  className="w-full py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm"
+                >
+                  Área de Robbialac
+                </button>
+                <button
+                  onClick={() => handleZoneClick('MateriaPrima')}
+                  className="w-full py-2 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors text-sm"
+                >
+                  Área de MateriaPrima
+                </button>
+                <button
+                  onClick={() => handleZoneClick('Expedicao')}
+                  className="w-full py-2 px-4 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors text-sm"
+                >
+                  Área de Expedicao
+                </button>
+                <button
+                  onClick={() => handleZoneClick('TrafegoInferior')}
+                  className="w-full py-2 px-4 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition-colors text-sm"
+                >
+                  Área de TrafegoInferior
+                </button>
+                <button
+                  onClick={() => handleZoneClick('TrafegoSuperior')}
+                  className="w-full py-2 px-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg transition-colors text-sm"
+                >
+                  Área de TrafegoSuperior
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Modelo 3D
+            <ErrorBoundary fallback={<div className="h-full w-full flex items-center justify-center bg-gray-100 rounded-lg">
+              <p className="text-sm text-gray-600">Erro ao carregar o modelo 3D. Tente recarregar a página.</p>
+            </div>}>
+              <div className="h-full w-full bg-gray-100 rounded-lg overflow-hidden">
+                <Suspense fallback={
+                  <div className="h-full w-full flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-robbialac"></div>
+                  </div>
+                }>
+                  <Factory3DModelManager
+                    onZoneClick={handleZoneClick}
+                    useSimpleView={useSimpleView}
+                    enableControls={enableControls}
+                    zoneStats={zoneStats}
+                    isLoading={isLoading}
+                    className="h-full w-full"
+                  />
+                </Suspense>
+              </div>
+            </ErrorBoundary>
+          )}
+        </div>
+
+        {/* Espaço restante (10%) */}
+        <div className="h-[10%]"></div>
+      </div>
       
       {isModalOpen && (
         <>

@@ -3,6 +3,7 @@ import { getCollection } from '../services/database';
 import { Incident, Department } from '../types';
 import logger from '../utils/logger';
 import { ObjectId } from 'mongodb';
+import crypto from 'crypto'; // Import crypto for UUID generation if needed elsewhere
 
 export async function getIncidents(req: Request, res: Response) {
   try {
@@ -121,22 +122,22 @@ export async function createIncident(req: Request, res: Response) {
         const existingDepartment = await departmentsCollection.findOne({ 
           $or: [ 
             { label: departmentName }, 
-            { value: departmentName.toLowerCase().replace(/\\s+/g, '_') } 
+            { value: departmentName.toLowerCase().replace(/\s+/g, '_') } 
           ]
         });
 
         if (!existingDepartment) {
-          logger.info(`Departamento \"${departmentName}\" não encontrado. Criando novo departamento.`);
+          logger.info(`Departamento "${departmentName}" não encontrado. Criando novo departamento.`);
           const newDepartment: Omit<Department, '_id'> = {
             label: departmentName,
-            value: departmentName.toLowerCase().replace(/\\s+/g, '_'), 
+            value: departmentName.toLowerCase().replace(/\s+/g, '_'), 
             employeeCount: 0 
           };
           try {
             await departmentsCollection.insertOne(newDepartment as Department);
-            logger.info(`Departamento \"${departmentName}\" criado com sucesso.`);
+            logger.info(`Departamento "${departmentName}" criado com sucesso.`);
           } catch (deptError) {
-            logger.error(`Falha ao criar automaticamente o departamento \"${departmentName}\":`, deptError);
+            logger.error(`Falha ao criar automaticamente o departamento "${departmentName}":`, deptError);
             // Continuar mesmo se a criação do departamento falhar
           }
         }
@@ -249,33 +250,26 @@ export async function updateIncident(req: Request, res: Response) {
        return res.status(400).json({ error: 'Nenhum campo fornecido para atualização' });
     }
 
-    // Atualiza apenas os campos fornecidos usando $set
     const result = await collection.updateOne(
-      { _id: new ObjectId(incidentId) }, 
+      { _id: new ObjectId(incidentId) },
       { $set: fieldsToUpdate }
     );
-    // --- FIM da MUDANÇA para updateOne --- 
+    // --- FIM da Mudança ---
 
     if (result.matchedCount === 0) {
-      logger.warn(`Tentativa de atualizar incidente inexistente: ${incidentId}`);
+        logger.warn(`Incidente ${incidentId} não encontrado para atualização`);
       return res.status(404).json({ error: 'Incidente não encontrado' });
     }
     
-    if (result.modifiedCount === 0 && result.matchedCount === 1) {
-       logger.info(`Incidente ${incidentId} não modificado (valores iguais aos existentes)`);
-       // Pode retornar 200 OK ou 304 Not Modified
-       return res.status(200).json({ message: 'Incidente não modificado (valores iguais aos existentes)' });
-    }
-
-    logger.info(`Incidente ${incidentId} atualizado com sucesso`);
-    // Buscar e retornar o incidente atualizado
     const updatedIncident = await collection.findOne({ _id: new ObjectId(incidentId) });
-    res.status(200).json(updatedIncident);
+
+    logger.info(`Incidente ${incidentId} atualizado com sucesso`, { changes: updateData });
+    res.json(updatedIncident);
 
   } catch (error) {
-    logger.error(`Erro ao atualizar incidente: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    logger.error(`Erro ao atualizar incidente ${req.params.incidentId}:`, error);
     res.status(500).json({ 
-      error: 'Erro ao atualizar incidente',
+      error: 'Erro interno ao atualizar incidente',
       details: error instanceof Error ? error.message : 'Erro desconhecido'
     });
   }
@@ -288,69 +282,84 @@ export async function deleteIncident(req: Request, res: Response) {
       return res.status(400).json({ error: 'ID de incidente inválido' });
     }
     const collection = await getCollection<Incident>('incidents');
-    
-    // Usar _id para apagar
-    const result = await collection.deleteOne({ _id: new ObjectId(incidentId) }); 
-    
+    const result = await collection.deleteOne({ _id: new ObjectId(incidentId) });
+
     if (result.deletedCount === 0) {
-      return res.status(404).json({ error: 'Incidente não encontrado' });
+      return res.status(404).json({ error: 'Incidente não encontrado para exclusão' });
     }
-    
-    res.json({ message: 'Incidente excluído com sucesso' });
+    logger.info(`Incidente ${incidentId} excluído com sucesso`);
+    res.status(204).send(); // No content on successful deletion
   } catch (error) {
-    console.error('Erro ao excluir incidente:', error);
+    logger.error('Erro ao excluir incidente:', error);
     res.status(500).json({ error: 'Erro ao excluir incidente' });
   }
 }
 
-// Buscar incidentes por departamento, com filtro opcional por ano
+
+// Get Incidents by Department
 export async function getIncidentsByDepartment(req: Request, res: Response) {
-  // Log removido na etapa anterior
-  
+    const { departmentName } = req.params; 
+    const year = req.query.year ? parseInt(req.query.year as string) : undefined;
+
+    try {
+        const collection = await getCollection<Incident>('incidents');
+
+        let query: any = { department: departmentName };
+
+        if (year) {
+            const startDate = new Date(year, 0, 1); // Start of the year
+            const endDate = new Date(year + 1, 0, 1); // Start of the next year
+            query.date = { $gte: startDate, $lt: endDate };
+        }
+
+        const incidents = await collection.find(query).sort({ date: -1 }).toArray();
+
+        res.json(incidents);
+    } catch (error) {
+        logger.error(`Erro ao buscar incidentes para o departamento ${departmentName}:`, error);
+        res.status(500).json({ 
+            error: 'Erro ao buscar incidentes por departamento',
+            details: error instanceof Error ? error.message : 'Erro desconhecido'
+        });
+    }
+}
+
+
+// --- Nova Função --- 
+export async function getRecentIncidents(req: Request, res: Response) {
   try {
-    const collection = await getCollection<Incident>('incidents');
-    const year = req.query.year ? parseInt(req.query.year as string, 10) : new Date().getFullYear();
-
-    logger.info(`Buscando incidentes por departamento para o ano: ${year}`);
-
-    if (isNaN(year)) {
-      return res.status(400).json({ message: 'Ano inválido fornecido.' });
+    const limit = parseInt(req.query.limit as string) || 5;
+    if (limit <= 0) {
+        return res.status(400).json({ error: 'O limite deve ser um número positivo.' });
     }
 
-    const startDate = new Date(year, 0, 1); // Primeiro dia do ano
-    const endDate = new Date(year + 1, 0, 1); // Primeiro dia do ano seguinte
-
-    // Modificar pipeline para filtrar por data
-    const aggregationPipeline: any[] = [
-      {
-        $match: {
-          date: {
-            $gte: startDate,
-            $lt: endDate
-          }
-        }
-      },
-      {
-        $group: {
-          _id: "$department",
-          count: { $sum: 1 }
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          department: "$_id",
-          count: 1
-        }
-      }
-    ];
-
-    const incidents = await collection.aggregate(aggregationPipeline).toArray();
+    const collection = await getCollection<Incident>('incidents');
     
-    logger.info(`Incidentes por departamento recuperados com sucesso para ${year}`, { count: incidents.length });
-    res.json(incidents);
+    // Considerar apenas incidentes não arquivados? Se sim, descomentar a linha abaixo:
+    // const query = { status: { $ne: 'Arquivado' } }; 
+    const query = {}; // Por agora, pega todos
+
+    const recentIncidents = await collection.find(query)
+      .sort({ date: -1 }) // Ordena pela data do incidente, mais recente primeiro
+      .limit(limit)
+      .toArray();
+
+    // Mapear para retornar apenas os campos necessários pelo frontend (opcional, mas boa prática)
+    const formattedIncidents = recentIncidents.map(inc => ({
+      _id: inc._id,
+      title: inc.title,
+      date: inc.date.toISOString(), // Enviar como string ISO
+    }));
+
+    logger.info(`Buscando ${limit} incidentes recentes.`);
+    res.json(formattedIncidents);
+
   } catch (error) {
-    console.error('Erro ao buscar incidentes por departamento', { error });
-    res.status(500).json({ message: 'Erro ao buscar incidentes por departamento' });
+    logger.error('Erro ao buscar incidentes recentes:', error);
+    res.status(500).json({ 
+      error: 'Erro ao buscar incidentes recentes',
+      details: error instanceof Error ? error.message : 'Erro desconhecido' 
+    });
   }
 }
+// --- Fim da Nova Função ---

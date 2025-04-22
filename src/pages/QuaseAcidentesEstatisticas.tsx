@@ -76,84 +76,72 @@ export default function QuaseAcidentesEstatisticas() {
     <Layout>
       <NoScrollLayout>
         <div className="h-full">
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold">Estatísticas de Quase Acidentes</h1>
-            <p className="text-gray-500 text-sm">
-              Análise e metas de quase acidentes por departamento
+          <div className="mb-1 sm:mb-6">
+            <h1 className="text-base sm:text-2xl font-semibold">Estatísticas</h1>
+            <p className="text-gray-500 text-[8px] sm:text-sm">
+              Análise e metas por departamento
             </p>
           </div>
 
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Reportado</CardTitle>
+          <div className="space-y-1 sm:space-y-4">
+            <div className="grid grid-cols-4 sm:grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-4">
+              <Card className="p-0.5 sm:p-4">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 sm:pb-2">
+                  <CardTitle className="text-[8px] sm:text-sm font-medium">Tot</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-robbialac">{totalIncidents}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {isLoading ? "Carregando..." : ""}
-                  </p>
+                <CardContent className="p-0 sm:p-2">
+                  <div className="text-sm sm:text-2xl font-bold text-robbialac leading-none">{totalIncidents}</div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Meta Total</CardTitle>
+              <Card className="p-0.5 sm:p-4">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 sm:pb-2">
+                  <CardTitle className="text-[8px] sm:text-sm font-medium">Meta</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-robbialac">{totalTarget}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {isLoading ? "Carregando..." : ""}
-                  </p>
+                <CardContent className="p-0 sm:p-2">
+                  <div className="text-sm sm:text-2xl font-bold text-robbialac leading-none">{totalTarget}</div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">% da Meta</CardTitle>
+              <Card className="p-0.5 sm:p-4">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 sm:pb-2">
+                  <CardTitle className="text-[8px] sm:text-sm font-medium">%</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-robbialac">{targetPercentage}%</div>
-                  <p className="text-xs text-muted-foreground">
-                    {isLoading ? "Carregando..." : ""}
-                  </p>
+                <CardContent className="p-0 sm:p-2">
+                  <div className="text-sm sm:text-2xl font-bold text-robbialac leading-none">{targetPercentage}%</div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Dias Restantes</CardTitle>
+              <Card className="p-0.5 sm:p-4">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 sm:pb-2">
+                  <CardTitle className="text-[8px] sm:text-sm font-medium">Dias</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-robbialac">{daysRemaining}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {isLoading ? "Carregando..." : ""}
-                  </p>
+                <CardContent className="p-0 sm:p-2">
+                  <div className="text-sm sm:text-2xl font-bold text-robbialac leading-none">{daysRemaining}</div>
                 </CardContent>
               </Card>
             </div>
 
             <Card className="flex-1">
-              <CardHeader>
-                <CardTitle>Quase Acidentes por Departamento</CardTitle>
-                <CardDescription>
-                  Comparação entre quase acidentes reportados e a meta por departamento
+              <CardHeader className="p-1 sm:p-4">
+                <CardTitle className="text-xs sm:text-lg">Quase Acidentes</CardTitle>
+                <CardDescription className="text-[8px] sm:text-sm">
+                  Reportados vs Meta
                 </CardDescription>
               </CardHeader>
-              <CardContent className="min-h-[400px]">
+              <CardContent className="min-h-[150px] sm:min-h-[300px] p-0.5 sm:p-4">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-robbialac"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 sm:h-12 sm:w-12 border-t-2 border-b-2 border-robbialac"></div>
                   </div>
                 ) : hasError ? (
-                  <div className="flex flex-col items-center justify-center h-full gap-4">
-                    <p className="text-red-500">Erro ao carregar dados</p>
+                  <div className="flex flex-col items-center justify-center h-full gap-1 sm:gap-4">
+                    <p className="text-red-500 text-[8px] sm:text-sm">Erro ao carregar</p>
                     <button 
                       onClick={handleRetry}
-                      className="px-4 py-2 bg-robbialac text-white rounded hover:bg-robbialac-dark"
+                      className="px-1 py-0.5 sm:px-4 sm:py-2 bg-robbialac text-white rounded hover:bg-robbialac-dark text-[8px] sm:text-sm"
                     >
-                      Tentar novamente
+                      Recarregar
                     </button>
                   </div>
                 ) : (

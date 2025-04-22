@@ -7,6 +7,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import accidentRoutes from './routes/accidentRoutes';
+import activityRoutes from './routes/activityRoutes';
 import { getDatabaseConfig, validateDatabaseConfig } from './config/database';
 
 const app = express();
@@ -69,6 +70,7 @@ app.get('/api/test', async (req, res) => {
  * Cada módulo de rota é responsável por um conjunto específico de funcionalidades
  */
 app.use('/api/accidents', accidentRoutes);
+app.use('/api/activity', activityRoutes);
 
 /**
  * Middleware de Tratamento de Erros Global

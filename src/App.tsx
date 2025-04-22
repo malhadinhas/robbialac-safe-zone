@@ -27,6 +27,7 @@ import Ranking from "./pages/Ranking";
 import NotFound from "./pages/NotFound";
 import TestApi from './pages/TestApi';
 import AcidenteForm from "./pages/AcidenteForm";
+import FeedPage from "./pages/Feed";
 
 // Configure QueryClient with retry settings
 const queryClient = new QueryClient({
@@ -64,6 +65,7 @@ const App = () => {
                   {/* Private Routes */}
                   <Route element={<PrivateRoute />}>
                     <Route path="/" element={<Dashboard />} />
+                    <Route path="/feed" element={<FeedPage />} />
                     <Route path="/formacoes" element={<Formacoes />} />
                     <Route path="/videos/:zone" element={<Videos />} />
                     <Route path="/videos/visualizar/:id" element={<VideosVisualizar />} />
@@ -75,9 +77,11 @@ const App = () => {
                     <Route path="/definicoes" element={<Definicoes />} />
                     <Route path="/ranking" element={<Ranking />} />
                     <Route path="/acidentes" element={<Acidentes />} />
+                    <Route path="/acidentes/:id" element={<Acidentes />} />
                     <Route path="/acidentes/novo" element={<AcidenteForm />} />
                     <Route path="/acidentes/:id/editar" element={<AcidenteForm />} />
                     <Route path="/sensibilizacao" element={<Sensibilizacao />} />
+                    <Route path="/sensibilizacao/:id" element={<Sensibilizacao />} />
                   </Route>
 
                   {/* Admin Routes */}

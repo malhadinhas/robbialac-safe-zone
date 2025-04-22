@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Image from "next/image";
+import { useIsCompactView } from '@/hooks/use-mobile';
 
 const QuaseAcidentes = () => {
   const navigate = useNavigate();
@@ -44,7 +45,9 @@ const QuaseAcidentes = () => {
   const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'active' | 'archived'>('active');
-  const itemsPerPage = 10;
+  
+  const isCompactView = useIsCompactView();
+  const itemsPerPage = isCompactView ? 4 : 10;
 
   const isAdmin = user?.role === "admin_app" || user?.role === "admin_qa";
 
@@ -66,7 +69,7 @@ const QuaseAcidentes = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, viewMode, itemsPerPage]);
 
   useEffect(() => {
     if (selectedIncident && isEditModalOpen) {
@@ -265,7 +268,7 @@ const QuaseAcidentes = () => {
 
   const paginationItems = () => {
     const items = [];
-    const maxVisiblePages = 5;
+    const maxVisiblePages = isCompactView ? 3 : 5;
     
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
@@ -274,6 +277,7 @@ const QuaseAcidentes = () => {
             <PaginationLink 
               onClick={() => setCurrentPage(i)}
               isActive={currentPage === i}
+              size={isCompactView ? "sm" : "default"}
             >
               {i}
             </PaginationLink>
@@ -286,29 +290,32 @@ const QuaseAcidentes = () => {
           <PaginationLink 
             onClick={() => setCurrentPage(1)}
             isActive={currentPage === 1}
+            size={isCompactView ? "sm" : "default"}
           >
             1
           </PaginationLink>
         </PaginationItem>
       );
       
-      if (currentPage > 3) {
-        items.push(
+      const numEllipsisNeighbours = isCompactView ? 0 : 1;
+      const startPage = Math.max(2, currentPage - numEllipsisNeighbours);
+      const endPage = Math.min(totalPages - 1, currentPage + numEllipsisNeighbours);
+      
+      if (startPage > 2) {
+         items.push(
           <PaginationItem key="page-ellipsis-start">
-            <PaginationLink>...</PaginationLink>
+            <PaginationLink size={isCompactView ? "sm" : "default"}>...</PaginationLink>
           </PaginationItem>
         );
       }
-      
-      const startPage = Math.max(2, currentPage - 1);
-      const endPage = Math.min(totalPages - 1, currentPage + 1);
-      
+
       for (let i = startPage; i <= endPage; i++) {
         items.push(
           <PaginationItem key={`page-${i}`}>
             <PaginationLink 
               onClick={() => setCurrentPage(i)}
               isActive={currentPage === i}
+              size={isCompactView ? "sm" : "default"}
             >
               {i}
             </PaginationLink>
@@ -316,10 +323,10 @@ const QuaseAcidentes = () => {
         );
       }
       
-      if (currentPage < totalPages - 2) {
+       if (endPage < totalPages - 1) {
         items.push(
           <PaginationItem key="page-ellipsis-end">
-            <PaginationLink>...</PaginationLink>
+            <PaginationLink size={isCompactView ? "sm" : "default"}>...</PaginationLink>
           </PaginationItem>
         );
       }
@@ -329,6 +336,7 @@ const QuaseAcidentes = () => {
           <PaginationLink 
             onClick={() => setCurrentPage(totalPages)}
             isActive={currentPage === totalPages}
+            size={isCompactView ? "sm" : "default"}
           >
             {totalPages}
           </PaginationLink>
@@ -376,697 +384,772 @@ const QuaseAcidentes = () => {
 
   return (
     <Layout>
-      <div className="container p-4">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-          <h1 className="text-2xl font-bold">Quase Acidentes ({viewMode === 'active' ? 'Ativos' : 'Arquivados'})</h1>
-          <div className="flex w-full md:w-auto gap-2">
-            <div className="relative flex-grow md:flex-grow-0">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Procurar..."
-                className="pl-8 w-full md:w-[250px]"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            {isAdmin && (
-              <Button 
-                variant="outline"
-                onClick={() => setViewMode(prev => prev === 'active' ? 'archived' : 'active')}
-              >
-                {viewMode === 'active' ? 'Ver Arquivados' : 'Ver Ativos'}
-              </Button>
-            )}
-            {isAdmin && (
-              <Button onClick={() => navigate("/quase-acidentes/novo")}>
-                <Plus className="h-4 w-4 mr-2" /> Novo
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {isLoading ? (
-          <div className="flex justify-center items-center h-40">
-            <p>Carregando...</p>
-          </div>
-        ) : error ? (
-          <div className="flex justify-center items-center h-40">
-            <p className="text-red-500">Erro ao carregar quase acidentes</p>
-          </div>
-        ) : paginatedIncidents.length === 0 ? (
-          <div className="text-center py-10 bg-slate-50 rounded-lg">
-            <p className="text-muted-foreground">
-              {searchQuery ? "Nenhum resultado encontrado para sua busca." : "Nenhum quase acidente registrado."}
-            </p>
-            {searchQuery && (
-              <Button variant="ghost" onClick={() => setSearchQuery("")}>
-                Limpar busca
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {paginatedIncidents.map((incident) => (
-              <Card key={incident._id} className="overflow-hidden">
-                <div 
-                  className="flex items-center gap-4 p-4 cursor-pointer hover:bg-slate-50"
-                  onClick={() => handleIncidentClick(incident)}
+      <div className={`h-full ${isCompactView ? 'flex flex-col overflow-hidden' : 'p-3 sm:p-6 overflow-y-auto'}`}>
+        {isCompactView ? (
+          // ----- MOBILE LAYOUT (Scroll na lista, sem paginação) ----- 
+          <>
+            {/* 1. Cabeçalho (Não encolhe) */}
+            <div className="flex-shrink-0 p-3 border-b">
+              {/* Título */}
+              <h1 className="text-lg font-bold mb-2">
+                Quase Acidentes ({viewMode === 'active' ? 'Ativos' : 'Arquivados'})
+              </h1>
+              {/* Pesquisa */}
+              <div className="relative flex-1 mb-2">
+                <input
+                  type="text"
+                  placeholder="Procurar..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-8 pr-4 py-1 border rounded-lg text-sm"
+                />
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              </div>
+              {/* Botões */}
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => setViewMode(viewMode === 'active' ? 'archived' : 'active')}
+                  className="flex-1 whitespace-nowrap h-8 px-2 text-xs"
                 >
-                  <div className="flex-shrink-0 w-16 h-16">
-                    {incident.images && incident.images.length > 0 ? (
-                      <ImageGallery 
-                        images={incident.images} 
-                        showOnlyFirstImage={true} 
-                        className="m-0 h-full w-full"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 bg-slate-200 rounded-md flex items-center justify-center text-xs text-slate-500">
-                        Sem imagem
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-grow min-w-0">
-                    <h3 className="font-medium text-base truncate">{incident.title}</h3>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {incident.location} • {new Date(incident.date).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0 flex items-center gap-2">
-                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(incident.status)}`}>
-                      {incident.status}
-                    </div>
-                    <Button size="icon" variant="ghost" className="text-muted-foreground">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    
-                    {isAdmin && (
-                      <>
-                        {incident.status === "Arquivado" ? (
-                          <>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="text-green-500"
-                              onClick={(e) => handleReactivateClick(e, incident)}
-                              title="Reativar"
-                            >
-                              <ArchiveX className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="text-red-500"
-                              onClick={(e) => handleDeleteClick(e, incident)}
-                              title="Apagar Permanentemente"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="text-blue-500"
-                              onClick={(e) => handleEditIncident(e, incident)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="text-yellow-500"
-                              onClick={(e) => handleArchiveClick(e, incident)}
-                            >
-                              <Archive className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="text-red-500"
-                              onClick={(e) => handleDeleteClick(e, incident)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
+                  {viewMode === 'active' ? 'Ver Arquivados' : 'Ver Ativos'}
+                </Button>
+                <Button
+                  onClick={() => navigate('/quase-acidentes/novo')}
+                  className="flex-1 bg-robbialac hover:bg-robbialac-dark whitespace-nowrap h-8 px-2 text-xs"
+                >
+                  + Novo
+                </Button>
+              </div>
+            </div>
 
-        {totalPages > 1 && (
-          <div className="mt-6">
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    aria-disabled={currentPage === 1}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-                
-                {paginationItems()}
-                
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    aria-disabled={currentPage === totalPages}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </div>
-        )}
-
-        <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-          <DialogContent className="max-w-6xl w-[95vw] sm:w-auto h-[90vh] sm:h-auto overflow-y-auto p-4 sm:p-6">
-            {selectedIncident && (
-              <>
-                <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b">
-                  <DialogTitle className="text-xl break-words">{selectedIncident.title}</DialogTitle>
-                  <DialogDescription>
-                    Detalhes do Quase Acidente reportado.
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="space-y-4 sm:space-y-6 py-4">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                    {/* Coluna da esquerda - Informações do incidente */}
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="bg-slate-50 p-3 rounded-lg">
-                          <h3 className="text-sm font-medium mb-1">Local</h3>
-                          <p className="text-sm break-words">{selectedIncident.location}</p>
-                        </div>
-                        <div className="bg-slate-50 p-3 rounded-lg">
-                          <h3 className="text-sm font-medium mb-1">Data</h3>
-                          <p className="text-sm">{new Date(selectedIncident.date).toLocaleDateString()}</p>
-                        </div>
-                        <div className="bg-slate-50 p-3 rounded-lg">
-                          <h3 className="text-sm font-medium mb-1">Departamento</h3>
-                          <p className="text-sm break-words">{selectedIncident.department}</p>
-                        </div>
-                        <div className="bg-slate-50 p-3 rounded-lg">
-                          <h3 className="text-sm font-medium mb-1">Gravidade</h3>
-                          <p className="text-sm">{selectedIncident.severity}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="bg-slate-50 p-3 rounded-lg">
-                          <h3 className="text-sm font-medium mb-1">Status</h3>
-                          <div className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${getStatusStyle(selectedIncident.status)}`}>
-                            {selectedIncident.status}
-                          </div>
-                        </div>
-                        <div className="bg-slate-50 p-3 rounded-lg">
-                          <h3 className="text-sm font-medium mb-1">Reportado por</h3>
-                          <p className="text-sm break-words">{selectedIncident.reporterName || selectedIncident.reportedBy}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-slate-50 p-3 rounded-lg">
-                        <h3 className="text-sm font-medium mb-1">Descrição</h3>
-                        <p className="text-sm whitespace-pre-wrap break-words">{selectedIncident.description}</p>
-                      </div>
-                      
-                      {selectedIncident.suggestionToFix && (
-                        <div className="bg-slate-50 p-3 rounded-lg">
-                          <h3 className="text-sm font-medium mb-1">Sugestão de Correção</h3>
-                          <p className="text-sm whitespace-pre-wrap break-words">{selectedIncident.suggestionToFix}</p>
-                        </div>
-                      )}
-                      
-                      {selectedIncident.implementedAction && (
-                        <div className="bg-slate-50 p-3 rounded-lg">
-                          <h3 className="text-sm font-medium mb-1">Ação Implementada</h3>
-                          <p className="text-sm whitespace-pre-wrap break-words">{selectedIncident.implementedAction}</p>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Coluna da direita - Imagens do incidente */}
-                    <div className="space-y-4">
-                      {selectedIncident.images && selectedIncident.images.length > 0 ? (
-                        <div className="bg-slate-50 p-4 rounded-lg">
-                          <h3 className="text-sm font-medium mb-3">Imagens do Quase Acidente</h3>
-                          <div className="relative aspect-[4/3] w-full">
-                            <ImageGallery 
-                              images={selectedIncident.images} 
-                              showControls={true}
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center h-full bg-slate-50 p-8 rounded-lg">
-                          <div className="text-slate-400 mb-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                              <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                              <circle cx="9" cy="9" r="2" />
-                              <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                            </svg>
-                          </div>
-                          <p className="text-slate-500 text-center">Nenhuma imagem disponível para este quase acidente.</p>
-                        </div>
-                      )}
-                      
-                      {selectedIncident.qaQuality && (
-                        <div className="bg-slate-50 p-4 rounded-lg">
-                          <h3 className="text-sm font-medium mb-2">Análise de Risco</h3>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-xs text-slate-500">Nível de Risco</p>
-                              <p className="font-medium">{selectedIncident.risk || "N/A"} pontos</p>
+            {/* 2. Lista QA (Ocupa espaço restante, scroll interno) */} 
+            <div className="flex-1 min-h-0 overflow-y-auto p-3">
+              {isLoading ? (
+                  <div className="flex justify-center items-center pt-10">
+                    <p>Carregando...</p>
+                  </div>
+              ) : error ? (
+                  <div className="flex justify-center items-center pt-10">
+                    <p className="text-red-500">Erro ao carregar</p>
+                  </div>
+              ) : paginatedIncidents.length === 0 ? (
+                  <div className="text-center py-10">
+                    <p className="text-muted-foreground">Nenhum registro encontrado.</p>
+                  </div>
+              ) : (
+                  <div className="grid grid-cols-1 gap-3"> 
+                    {paginatedIncidents.map((incident) => (
+                      <Card 
+                        key={incident._id || incident.id} 
+                        className="cursor-pointer hover:shadow-md flex flex-row items-center p-2"
+                        onClick={() => handleIncidentClick(incident)}
+                      >
+                        {/* Imagem */}
+                        <div className="w-12 h-12 mr-2 flex-shrink-0 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
+                          {incident.images && incident.images.length > 0 ? (
+                            <img src={incident.images[0]} alt={incident.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-500 p-1 text-center">
+                              Sem imagem
                             </div>
-                            <div>
-                              <p className="text-xs text-slate-500">Qualidade QA</p>
-                              <div className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${getQualityColor(selectedIncident.qaQuality)}`}>
-                                {selectedIncident.qaQuality}
-                              </div>
-                            </div>
-                          </div>
+                          )}
                         </div>
-                      )}
-                    </div>
+                        {/* Conteúdo */} 
+                        <div className="flex-1 min-w-0">
+                           <h3 className="text-sm font-semibold truncate mb-0.5">{incident.title}</h3> 
+                            <p className="text-xs text-gray-600 line-clamp-1 mb-1">{incident.description}</p> 
+                            <div className="flex items-center text-xs text-gray-500">
+                              <span className={`px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${getStatusStyle(incident.status)} mr-1.5`}> 
+                                {incident.status}
+                              </span>
+                              <span className="text-[10px] sm:text-xs">
+                                {incident.date ? new Date(incident.date).toLocaleDateString() : 'N/A'}
+                              </span>
+                            </div>
+                        </div>
+                        {/* Ações */} 
+                        <div className="flex items-center space-x-1 ml-2 flex-wrap flex-shrink-0">
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => handleIncidentClick(incident)}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {isAdmin && viewMode === 'active' && (
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => handleEditIncident(e, incident)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {isAdmin && viewMode === 'active' && (
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => handleArchiveClick(e, incident)}>
+                                <Archive className="h-4 w-4 text-yellow-600" />
+                              </Button>
+                            )}
+                            {isAdmin && viewMode === 'archived' && (
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => handleReactivateClick(e, incident)}>
+                                 <ArchiveX className="h-4 w-4 text-green-600" />
+                              </Button>
+                            )}
+                             {isAdmin && viewMode === 'archived' && (
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => handleDeleteClick(e, incident)}>
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            )}
+                        </div>
+                      </Card>
+                    ))}
                   </div>
-                </div>
-
-                {isAdmin && (
-                  <DialogFooter className="sticky bottom-0 bg-white z-10 pt-4 border-t mt-6">
-                    {selectedIncident?.status === "Arquivado" ? (
-                      <>
-                        <Button 
-                          variant="outline"
-                          onClick={() => {
-                            reactivateMutation.mutate(selectedIncident);
-                          }}
-                          className="bg-green-50 hover:bg-green-100 text-green-600"
-                        >
-                          <ArchiveX className="h-4 w-4 mr-2" /> Reativar
-                        </Button>
-                        <Button 
-                          variant="destructive"
-                          onClick={() => {
-                            setIsViewModalOpen(false);
-                            setIsDeleteConfirmOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" /> Apagar
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button 
-                          variant="outline"
-                          onClick={() => {
-                            setIsViewModalOpen(false);
-                            setIsEditModalOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4 mr-2" /> Editar
-                        </Button>
-                        <Button 
-                          variant="destructive"
-                          onClick={() => {
-                            setIsViewModalOpen(false);
-                            setIsArchiveConfirmOpen(true);
-                          }}
-                        >
-                          <Archive className="h-4 w-4 mr-2" /> Arquivar
-                        </Button>
-                      </>
-                    )}
-                  </DialogFooter>
                 )}
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            {selectedIncident && (
-              <>
-                <DialogHeader>
-                  <DialogTitle>Editar Quase Acidente</DialogTitle>
-                  <DialogDescription>
-                    Modifique os detalhes do Quase Acidente e salve as alterações.
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <form onSubmit={handleSubmit} className="py-4">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div>
-                        <label htmlFor="title" className="block text-sm font-medium mb-1">
-                          Título <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                          id="title"
-                          name="title"
-                          value={formData.title || ""}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="description" className="block text-sm font-medium mb-1">
-                          Descrição <span className="text-red-500">*</span>
-                        </label>
-                        <Textarea
-                          id="description"
-                          name="description"
-                          value={formData.description || ""}
-                          onChange={handleInputChange}
-                          rows={4}
-                          required
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label htmlFor="location" className="block text-sm font-medium mb-1">
-                            Local <span className="text-red-500">*</span>
-                          </label>
-                          <Input
-                            id="location"
-                            name="location"
-                            value={formData.location || ""}
-                            onChange={handleInputChange}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="date" className="block text-sm font-medium mb-1">
-                            Data <span className="text-red-500">*</span>
-                          </label>
-                          <Input
-                            id="date"
-                            name="date"
-                            type="date"
-                            value={formData.date || ""}
-                            onChange={handleInputChange}
-                            required
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label htmlFor="department" className="block text-sm font-medium mb-1">
-                            Departamento <span className="text-red-500">*</span>
-                          </label>
-                          <Input
-                            id="department"
-                            name="department"
-                            value={formData.department || ""}
-                            onChange={handleInputChange}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="factoryArea" className="block text-sm font-medium mb-1">
-                            Área da Fábrica
-                          </label>
-                          <Input
-                            id="factoryArea"
-                            name="factoryArea"
-                            value={formData.factoryArea || ""}
-                            onChange={handleInputChange}
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label htmlFor="suggestionToFix" className="block text-sm font-medium mb-1">
-                          Sugestão de Correção
-                        </label>
-                        <Textarea
-                          id="suggestionToFix"
-                          name="suggestionToFix"
-                          value={formData.suggestionToFix || ""}
-                          onChange={handleInputChange}
-                          rows={3}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label htmlFor="severity" className="block text-sm font-medium mb-1">
-                          Gravidade <span className="text-red-500">*</span>
-                        </label>
-                        <Select
-                          value={formData.severity || ''}
-                          onValueChange={(value) => handleSelectChange("severity", value)}
-                        >
-                          <SelectTrigger id="severity">
-                            <SelectValue placeholder="Selecione a gravidade" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Baixo">Baixo</SelectItem>
-                            <SelectItem value="Médio">Médio</SelectItem>
-                            <SelectItem value="Alto">Alto</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="frequency" className="block text-sm font-medium mb-1">
-                          Frequência <span className="text-red-500">*</span>
-                        </label>
-                        <Select
-                          value={formData.frequency || ''}
-                          onValueChange={(value) => handleSelectChange("frequency", value)}
-                        >
-                          <SelectTrigger id="frequency">
-                            <SelectValue placeholder="Selecione a frequência" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Baixa">Baixa</SelectItem>
-                            <SelectItem value="Moderada">Moderada</SelectItem>
-                            <SelectItem value="Alta">Alta</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Risco (Calculado)
-                        </label>
-                        <Input
-                          value={`${risk} pts`}
-                          readOnly
-                          className="bg-gray-100 cursor-not-allowed"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Qualidade QA (Calculada)
-                        </label>
-                        <div className={`px-3 py-2 rounded-md text-sm font-medium ${getQualityColor(qaQuality)}`}>
-                          {qaQuality}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label htmlFor="status" className="block text-sm font-medium mb-1">
-                          Status <span className="text-red-500">*</span>
-                        </label>
-                        <Select
-                          value={formData.status}
-                          onValueChange={(value) => handleSelectChange("status", value)}
-                        >
-                          <SelectTrigger id="status">
-                            <SelectValue placeholder="Selecione o status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Reportado">Reportado</SelectItem>
-                            <SelectItem value="Em Análise">Em Análise</SelectItem>
-                            <SelectItem value="Resolvido">Resolvido</SelectItem>
-                            <SelectItem value="Arquivado">Arquivado</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <label htmlFor="responsible" className="block text-sm font-medium mb-1">
-                          Responsável
-                        </label>
-                        <Input
-                          id="responsible"
-                          name="responsible"
-                          value={formData.responsible || ""}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor="resolutionDeadline" className="block text-sm font-medium mb-1">
-                          Prazo para Resolução
-                        </label>
-                        <Input
-                          id="resolutionDeadline"
-                          name="resolutionDeadline"
-                          type="date"
-                          value={formData.resolutionDeadline || ""}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor="implementedAction" className="block text-sm font-medium mb-1">
-                          Ação Implementada
-                        </label>
-                        <Textarea
-                          id="implementedAction"
-                          name="implementedAction"
-                          value={formData.implementedAction || ""}
-                          onChange={handleInputChange}
-                          rows={3}
-                        />
-                      </div>
-
-                      <div>
-                        <label htmlFor="adminNotes" className="block text-sm font-medium mb-1">
-                          Notas Administrativas
-                        </label>
-                        <Textarea
-                          id="adminNotes"
-                          name="adminNotes"
-                          value={formData.adminNotes || ""}
-                          onChange={handleInputChange}
-                          rows={3}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-6">
-                    <h3 className="text-sm font-medium mb-3">Imagens</h3>
-                    <ImageUploader 
-                      onImagesSelected={() => {}} 
-                      onImagesChange={handleImagesChange}
+            </div>
+          </>
+        ) : (
+          // ----- DESKTOP LAYOUT ----- 
+          <div className="container mx-auto">
+              {/* Header Section */}
+              <div className="p-4 space-y-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                  <h1 className="text-lg sm:text-2xl font-bold">
+                    Quase Acidentes ({viewMode === 'active' ? 'Ativos' : 'Arquivados'})
+                  </h1>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      placeholder="Procurar..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-8 pr-4 py-1 border rounded-lg text-sm"
                     />
-                    
-                    {images.length > 0 && (
-                      <div className="mt-6">
-                        <h4 className="text-sm font-medium mb-3">Imagens Atuais ({images.length})</h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                          {images.map((image, index) => (
-                            <div key={index} className="relative group">
-                              <img 
-                                src={image} 
-                                alt={`Imagem ${index + 1}`} 
-                                className="h-24 w-full object-cover rounded-md border border-gray-200"
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
-                                <Button 
-                                  variant="destructive" 
-                                  size="sm"
-                                  onClick={() => {
-                                    const updatedImages = images.filter((_, i) => i !== index);
-                                    setImages(updatedImages);
-                                  }}
-                                >
-                                  Remover
-                                </Button>
-                              </div>
+                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  </div>
+                  <div className="flex gap-2 sm:flex-none">
+                     <Button 
+                      variant="outline"
+                      onClick={() => setViewMode(viewMode === 'active' ? 'archived' : 'active')}
+                      className="flex-1 whitespace-nowrap h-8 px-2 text-xs sm:h-9 sm:px-3 sm:text-sm"
+                    >
+                      {viewMode === 'active' ? 'Ver Arquivados' : 'Ver Ativos'}
+                    </Button>
+                    <Button
+                      onClick={() => navigate('/quase-acidentes/novo')}
+                      className="flex-1 bg-robbialac hover:bg-robbialac-dark whitespace-nowrap h-8 px-2 text-xs sm:h-9 sm:px-3 sm:text-sm"
+                    >
+                      + Novo
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              {/* Content Section */} 
+              <div className="space-y-2 mt-6">
+                 {isLoading ? ( <p>Carregando...</p> ) 
+                   : error ? ( <p>Erro</p> ) 
+                   : paginatedIncidents.length === 0 ? ( <p>Nenhum registro</p> ) 
+                   : (
+                     <div className="grid grid-cols-1 gap-4">
+                        {paginatedIncidents.map((incident) => (
+                          <Card key={incident._id || incident.id} className="flex flex-row items-center p-3">
+                             {/* Imagem */}
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 mr-2 sm:mr-4 flex-shrink-0 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
+                              {incident.images && incident.images.length > 0 ? (
+                                <img src={incident.images[0]} alt={incident.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-500 p-1 text-center">
+                                  Sem imagem
+                                </div>
+                              )}
                             </div>
-                          ))}
+                            {/* Conteúdo */} 
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-sm font-semibold truncate mb-0.5">{incident.title}</h3> 
+                                <p className="text-xs text-gray-600 line-clamp-1 mb-1">{incident.description}</p> 
+                                <div className="flex items-center text-xs text-gray-500">
+                                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${getStatusStyle(incident.status)} mr-1.5`}> 
+                                    {incident.status}
+                                  </span>
+                                  <span className="text-[10px] sm:text-xs">
+                                    {incident.date ? new Date(incident.date).toLocaleDateString() : 'N/A'}
+                                  </span>
+                                </div>
+                            </div>
+                            {/* Ações */} 
+                            <div className="flex items-center space-x-1 ml-2 flex-wrap flex-shrink-0">
+                                <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={(e) => handleIncidentClick(incident)}>
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                {isAdmin && viewMode === 'active' && (
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={(e) => handleEditIncident(e, incident)}>
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {isAdmin && viewMode === 'active' && (
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={(e) => handleArchiveClick(e, incident)}>
+                                    <Archive className="h-4 w-4 text-yellow-600" />
+                                  </Button>
+                                )}
+                                {isAdmin && viewMode === 'archived' && (
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={(e) => handleReactivateClick(e, incident)}>
+                                     <ArchiveX className="h-4 w-4 text-green-600" />
+                                  </Button>
+                                )}
+                                 {isAdmin && viewMode === 'archived' && (
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 sm:h-7 sm:w-7" onClick={(e) => handleDeleteClick(e, incident)}>
+                                    <Trash2 className="h-4 w-4 text-red-600" />
+                                  </Button>
+                                )}
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                   )
+                 }
+              </div>
+              {/* Pagination Section */} 
+              {totalPages > 1 && ( 
+                <div className="p-3 mt-6 flex items-center justify-center">
+                    <Pagination>
+                      <PaginationContent>
+                         <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            aria-disabled={currentPage === 1}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                        
+                        {paginationItems()} 
+                        
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            aria-disabled={currentPage === totalPages}
+                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                </div>
+              )}
+          </div>
+        )}
+      </div>
+
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="max-w-6xl w-[95vw] sm:w-auto h-[90vh] sm:h-auto overflow-y-auto p-4 sm:p-6">
+          {selectedIncident && (
+            <>
+              <DialogHeader className="sticky top-0 bg-white z-10 pb-4 border-b">
+                <DialogTitle className="text-xl break-words">{selectedIncident.title}</DialogTitle>
+                <DialogDescription>
+                  Detalhes do Quase Acidente reportado.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 sm:space-y-6 py-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="bg-slate-50 p-3 rounded-lg">
+                        <h3 className="text-sm font-medium mb-1">Local</h3>
+                        <p className="text-sm break-words">{selectedIncident.location}</p>
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-lg">
+                        <h3 className="text-sm font-medium mb-1">Data</h3>
+                        <p className="text-sm">{new Date(selectedIncident.date).toLocaleDateString()}</p>
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-lg">
+                        <h3 className="text-sm font-medium mb-1">Departamento</h3>
+                        <p className="text-sm break-words">{selectedIncident.department}</p>
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-lg">
+                        <h3 className="text-sm font-medium mb-1">Gravidade</h3>
+                        <p className="text-sm">{selectedIncident.severity}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="bg-slate-50 p-3 rounded-lg">
+                        <h3 className="text-sm font-medium mb-1">Status</h3>
+                        <div className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${getStatusStyle(selectedIncident.status)}`}>
+                          {selectedIncident.status}
+                        </div>
+                      </div>
+                      <div className="bg-slate-50 p-3 rounded-lg">
+                        <h3 className="text-sm font-medium mb-1">Reportado por</h3>
+                        <p className="text-sm break-words">{selectedIncident.reporterName || selectedIncident.reportedBy}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-slate-50 p-3 rounded-lg">
+                      <h3 className="text-sm font-medium mb-1">Descrição</h3>
+                      <p className="text-sm whitespace-pre-wrap break-words">{selectedIncident.description}</p>
+                    </div>
+                    
+                    {selectedIncident.suggestionToFix && (
+                      <div className="bg-slate-50 p-3 rounded-lg">
+                        <h3 className="text-sm font-medium mb-1">Sugestão de Correção</h3>
+                        <p className="text-sm whitespace-pre-wrap break-words">{selectedIncident.suggestionToFix}</p>
+                      </div>
+                    )}
+                    
+                    {selectedIncident.implementedAction && (
+                      <div className="bg-slate-50 p-3 rounded-lg">
+                        <h3 className="text-sm font-medium mb-1">Ação Implementada</h3>
+                        <p className="text-sm whitespace-pre-wrap break-words">{selectedIncident.implementedAction}</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {selectedIncident.images && selectedIncident.images.length > 0 ? (
+                      <div className="bg-slate-50 p-4 rounded-lg">
+                        <h3 className="text-sm font-medium mb-3">Imagens do Quase Acidente</h3>
+                        <div className="relative aspect-[4/3] w-full">
+                          <ImageGallery 
+                            images={selectedIncident.images} 
+                            showControls={true}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full bg-slate-50 p-8 rounded-lg">
+                        <div className="text-slate-400 mb-3">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                            <circle cx="9" cy="9" r="2" />
+                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                          </svg>
+                        </div>
+                        <p className="text-slate-500 text-center">Nenhuma imagem disponível para este quase acidente.</p>
+                      </div>
+                    )}
+                    
+                    {selectedIncident.qaQuality && (
+                      <div className="bg-slate-50 p-4 rounded-lg">
+                        <h3 className="text-sm font-medium mb-2">Análise de Risco</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-xs text-slate-500">Nível de Risco</p>
+                            <p className="font-medium">{selectedIncident.risk || "N/A"} pontos</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500">Qualidade QA</p>
+                            <div className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${getQualityColor(selectedIncident.qaQuality)}`}>
+                              {selectedIncident.qaQuality}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
 
-                  <DialogFooter className="flex justify-end gap-3 mt-6">
-                    <Button 
-                      variant="outline" 
-                      type="button"
-                      onClick={() => setIsEditModalOpen(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button 
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="bg-robbialac hover:bg-robbialac-dark"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Salvando...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4 mr-2" />
-                          Salvar Alterações
-                        </>
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
+              {isAdmin && (
+                <DialogFooter className="sticky bottom-0 bg-white z-10 pt-4 border-t mt-6">
+                  {selectedIncident?.status === "Arquivado" ? (
+                    <>
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          reactivateMutation.mutate(selectedIncident);
+                        }}
+                        className="bg-green-50 hover:bg-green-100 text-green-600"
+                      >
+                        <ArchiveX className="h-4 w-4 mr-2" /> Reativar
+                      </Button>
+                      <Button 
+                        variant="destructive"
+                        onClick={() => {
+                          setIsViewModalOpen(false);
+                          setIsDeleteConfirmOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" /> Apagar
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          setIsViewModalOpen(false);
+                          setIsEditModalOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4 mr-2" /> Editar
+                      </Button>
+                      <Button 
+                        variant="destructive"
+                        onClick={() => {
+                          setIsViewModalOpen(false);
+                          setIsArchiveConfirmOpen(true);
+                        }}
+                      >
+                        <Archive className="h-4 w-4 mr-2" /> Arquivar
+                      </Button>
+                    </>
+                  )}
+                </DialogFooter>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
-        <AlertDialog open={isArchiveConfirmOpen} onOpenChange={setIsArchiveConfirmOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Arquivar quase acidente?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza que deseja arquivar este quase acidente? Ele será movido para a vista de arquivados.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setIncidentToModify(null)}>Cancelar</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={confirmArchive} 
-                className="bg-yellow-500 hover:bg-yellow-600" 
-                disabled={archiveMutation.isPending}
-              >
-                {archiveMutation.isPending ? "Arquivando..." : "Arquivar"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedIncident && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Editar Quase Acidente</DialogTitle>
+                <DialogDescription>
+                  Modifique os detalhes do Quase Acidente e salve as alterações.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <form onSubmit={handleSubmit} className="py-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="title" className="block text-sm font-medium mb-1">
+                        Título <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        id="title"
+                        name="title"
+                        value={formData.title || ""}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="description" className="block text-sm font-medium mb-1">
+                        Descrição <span className="text-red-500">*</span>
+                      </label>
+                      <Textarea
+                        id="description"
+                        name="description"
+                        value={formData.description || ""}
+                        onChange={handleInputChange}
+                        rows={4}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="location" className="block text-sm font-medium mb-1">
+                          Local <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                          id="location"
+                          name="location"
+                          value={formData.location || ""}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="date" className="block text-sm font-medium mb-1">
+                          Data <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                          id="date"
+                          name="date"
+                          type="date"
+                          value={formData.date || ""}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="department" className="block text-sm font-medium mb-1">
+                          Departamento <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                          id="department"
+                          name="department"
+                          value={formData.department || ""}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="factoryArea" className="block text-sm font-medium mb-1">
+                          Área da Fábrica
+                        </label>
+                        <Input
+                          id="factoryArea"
+                          name="factoryArea"
+                          value={formData.factoryArea || ""}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                    </div>
 
-        <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Apagar quase acidente?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Esta ação é PERMANENTE e não pode ser desfeita. Tem certeza que deseja apagar este quase acidente?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setIncidentToModify(null)}>Cancelar</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={confirmDelete} 
-                className="bg-red-600 hover:bg-red-700" 
-                disabled={deleteMutation.isPending}
-              >
-                {deleteMutation.isPending ? "Apagando..." : "Apagar Permanentemente"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+                    <div>
+                      <label htmlFor="suggestionToFix" className="block text-sm font-medium mb-1">
+                        Sugestão de Correção
+                      </label>
+                      <Textarea
+                        id="suggestionToFix"
+                        name="suggestionToFix"
+                        value={formData.suggestionToFix || ""}
+                        onChange={handleInputChange}
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="severity" className="block text-sm font-medium mb-1">
+                        Gravidade <span className="text-red-500">*</span>
+                      </label>
+                      <Select
+                        value={formData.severity || ''}
+                        onValueChange={(value) => handleSelectChange("severity", value)}
+                      >
+                        <SelectTrigger id="severity">
+                          <SelectValue placeholder="Selecione a gravidade" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Baixo">Baixo</SelectItem>
+                          <SelectItem value="Médio">Médio</SelectItem>
+                          <SelectItem value="Alto">Alto</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="frequency" className="block text-sm font-medium mb-1">
+                        Frequência <span className="text-red-500">*</span>
+                      </label>
+                      <Select
+                        value={formData.frequency || ''}
+                        onValueChange={(value) => handleSelectChange("frequency", value)}
+                      >
+                        <SelectTrigger id="frequency">
+                          <SelectValue placeholder="Selecione a frequência" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Baixa">Baixa</SelectItem>
+                          <SelectItem value="Moderada">Moderada</SelectItem>
+                          <SelectItem value="Alta">Alta</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Risco (Calculado)
+                      </label>
+                      <Input
+                        value={`${risk} pts`}
+                        readOnly
+                        className="bg-gray-100 cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Qualidade QA (Calculada)
+                      </label>
+                      <div className={`px-3 py-2 rounded-md text-sm font-medium ${getQualityColor(qaQuality)}`}>
+                        {qaQuality}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="status" className="block text-sm font-medium mb-1">
+                        Status <span className="text-red-500">*</span>
+                      </label>
+                      <Select
+                        value={formData.status}
+                        onValueChange={(value) => handleSelectChange("status", value)}
+                      >
+                        <SelectTrigger id="status">
+                          <SelectValue placeholder="Selecione o status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Reportado">Reportado</SelectItem>
+                          <SelectItem value="Em Análise">Em Análise</SelectItem>
+                          <SelectItem value="Resolvido">Resolvido</SelectItem>
+                          <SelectItem value="Arquivado">Arquivado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="responsible" className="block text-sm font-medium mb-1">
+                        Responsável
+                      </label>
+                      <Input
+                        id="responsible"
+                        name="responsible"
+                        value={formData.responsible || ""}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="resolutionDeadline" className="block text-sm font-medium mb-1">
+                        Prazo para Resolução
+                      </label>
+                      <Input
+                        id="resolutionDeadline"
+                        name="resolutionDeadline"
+                        type="date"
+                        value={formData.resolutionDeadline || ""}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="implementedAction" className="block text-sm font-medium mb-1">
+                        Ação Implementada
+                      </label>
+                      <Textarea
+                        id="implementedAction"
+                        name="implementedAction"
+                        value={formData.implementedAction || ""}
+                        onChange={handleInputChange}
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="adminNotes" className="block text-sm font-medium mb-1">
+                        Notas Administrativas
+                      </label>
+                      <Textarea
+                        id="adminNotes"
+                        name="adminNotes"
+                        value={formData.adminNotes || ""}
+                        onChange={handleInputChange}
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <h3 className="text-sm font-medium mb-3">Imagens</h3>
+                  <ImageUploader 
+                    onImagesSelected={() => {}} 
+                    onImagesChange={handleImagesChange}
+                  />
+                  
+                  {images.length > 0 && (
+                    <div className="mt-6">
+                      <h4 className="text-sm font-medium mb-3">Imagens Atuais ({images.length})</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                        {images.map((image, index) => (
+                          <div key={index} className="relative group">
+                            <img 
+                              src={image} 
+                              alt={`Imagem ${index + 1}`} 
+                              className="h-24 w-full object-cover rounded-md border border-gray-200"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => {
+                                  const updatedImages = images.filter((_, i) => i !== index);
+                                  setImages(updatedImages);
+                                }}
+                              >
+                                Remover
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <DialogFooter className="flex justify-end gap-3 mt-6">
+                  <Button 
+                    variant="outline" 
+                    type="button"
+                    onClick={() => setIsEditModalOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-robbialac hover:bg-robbialac-dark"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Salvar Alterações
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isArchiveConfirmOpen} onOpenChange={setIsArchiveConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Arquivar quase acidente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja arquivar este quase acidente? Ele será movido para a vista de arquivados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIncidentToModify(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmArchive} 
+              className="bg-yellow-500 hover:bg-yellow-600" 
+              disabled={archiveMutation.isPending}
+            >
+              {archiveMutation.isPending ? "Arquivando..." : "Arquivar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar quase acidente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é PERMANENTE e não pode ser desfeita. Tem certeza que deseja apagar este quase acidente?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIncidentToModify(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              className="bg-red-600 hover:bg-red-700" 
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Apagando..." : "Apagar Permanentemente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };

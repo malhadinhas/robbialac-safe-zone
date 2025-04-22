@@ -6,6 +6,9 @@ import { getSignedUrl } from '../services/storage';
 import { deleteFromR2, deleteFile } from '../services/storage';
 import path from 'path';
 import fs from 'fs/promises';
+import Like from '../models/Like';
+import Comment from '../models/Comment';
+import mongoose from 'mongoose';
 
 export const createAccident = async (req: Request, res: Response) => {
   try {
@@ -66,79 +69,85 @@ export const createAccident = async (req: Request, res: Response) => {
 
 export const getAccidents = async (req: Request, res: Response) => {
   try {
-    logger.info('Iniciando busca de acidentes');
+    const userId = req.user?.id ? new mongoose.Types.ObjectId(req.user.id) : null;
+    logger.info('Iniciando busca de acidentes com agregação');
 
     const { country, startDate, endDate } = req.query;
-    const query: any = {};
+    const matchQuery: any = {};
 
     logger.info(`Filtros: country=${country}, startDate=${startDate}, endDate=${endDate}`);
 
-    if (country) query.country = country;
+    if (country) matchQuery.country = country;
     if (startDate && endDate) {
-      query.date = {
+      matchQuery.date = {
         $gte: new Date(startDate as string),
         $lte: new Date(endDate as string)
       };
     }
 
-    logger.info('Executando Accident.find() com query:', query);
-    
-    try {
-      const accidents = await Accident.find(query).sort({ date: -1 });
-      logger.info(`Encontrados ${accidents.length} acidentes`);
-      
-      if (accidents.length === 0) {
-        return res.json([]);
-      }
-
-      // Gerar URLs assinadas para os PDFs
-      const accidentsWithUrls = await Promise.all(accidents.map(async (accident) => {
-        try {
-          logger.info('Gerando URL assinada para documento', {
-            accidentId: accident._id,
-            pdfKey: accident.pdfFile?.key
-          });
-
-          if (!accident.pdfFile?.key) {
-            logger.warn('Documento sem chave PDF', { accidentId: accident._id });
-            return {
-              ...accident.toObject(),
-              pdfUrl: null
-            };
-          }
-
-          const signedUrl = await getSignedUrl(accident.pdfFile.key);
-          logger.info('URL assinada gerada com sucesso', {
-            accidentId: accident._id,
-            hasUrl: !!signedUrl
-          });
-
-          return {
-            ...accident.toObject(),
-            pdfUrl: signedUrl
-          };
-        } catch (urlError) {
-          logger.error('Erro ao gerar URL para documento específico', {
-            accidentId: accident._id,
-            error: urlError
-          });
-          return {
-            ...accident.toObject(),
-            pdfUrl: null
-          };
+    const aggregationPipeline: any[] = [
+      { $match: matchQuery },
+      { $sort: { date: -1 } },
+      {
+        $lookup: {
+          from: 'likes',
+          localField: '_id',
+          foreignField: 'itemId',
+          as: 'likesData'
         }
-      }));
+      },
+      {
+        $lookup: {
+          from: 'comments',
+          localField: '_id',
+          foreignField: 'itemId',
+          as: 'commentsData'
+        }
+      },
+      {
+        $addFields: {
+          likeCount: { $size: '$likesData' },
+          commentCount: { $size: '$commentsData' },
+          userHasLiked: userId ? { $in: [userId, '$likesData.userId'] } : false
+        }
+      },
+      {
+        $project: {
+          likesData: 0,
+          commentsData: 0
+        }
+      }
+    ];
+
+    logger.info('Executando agregação para Acidentes...');
+    
+    const accidents = await Accident.aggregate(aggregationPipeline);
+    
+    logger.info(`Agregação concluída, ${accidents.length} acidentes processados`);
       
-      logger.info(`URLs geradas para ${accidentsWithUrls.length} documentos`);
-      res.json(accidentsWithUrls);
-    } catch (dbError: any) {
-      logger.error('Erro na consulta do MongoDB:', { 
-        error: dbError.message, 
-        stack: dbError.stack,
-        query 
-      });
-      throw dbError;
+    if (accidents.length === 0) {
+      return res.json([]);
     }
+
+    const accidentsWithUrls = await Promise.all(accidents.map(async (accident) => {
+       try {
+         logger.info('Gerando URL assinada para documento', { accidentId: accident._id, pdfKey: accident.pdfFile?.key });
+         if (!accident.pdfFile?.key) {
+            logger.warn('Documento sem chave PDF', { accidentId: accident._id });
+            return { ...accident, pdfUrl: null };
+         }
+         const signedUrl = await getSignedUrl(accident.pdfFile.key);
+         logger.info('URL assinada gerada com sucesso', { accidentId: accident._id, hasUrl: !!signedUrl });
+         return { ...accident, pdfUrl: signedUrl };
+       } catch (urlError) {
+         logger.error('Erro ao gerar URL para documento específico', { accidentId: accident._id, error: urlError });
+         return { ...accident, pdfUrl: null };
+       }
+    }));
+      
+    logger.info(`URLs geradas para ${accidentsWithUrls.length} documentos`);
+    res.json(accidentsWithUrls);
+    
   } catch (error: any) {
     logger.error('Erro no getAccidents:', { 
       error: error.message, 
@@ -153,24 +162,63 @@ export const getAccidents = async (req: Request, res: Response) => {
 
 export const getAccidentById = async (req: Request, res: Response) => {
   try {
-    const accident = await Accident.findById(req.params.id);
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+       logger.warn('ID inválido fornecido para getAccidentById', { id: req.params.id });
+       return res.status(400).json({ error: 'ID do acidente inválido' });
+    }
+    const docId = new mongoose.Types.ObjectId(req.params.id);
+    const userId = req.user?.id ? new mongoose.Types.ObjectId(req.user.id) : null;
+    logger.info('Buscando acidente por ID com agregação', { docId, userId });
 
-    if (!accident) {
+    const aggregationPipeline: any[] = [
+      { $match: { _id: docId } },
+      {
+        $lookup: { from: 'likes', localField: '_id', foreignField: 'itemId', as: 'likesData' }
+      },
+      {
+        $lookup: { from: 'comments', localField: '_id', foreignField: 'itemId', as: 'commentsData' }
+      },
+      {
+        $addFields: {
+          likeCount: { $size: '$likesData' },
+          commentCount: { $size: '$commentsData' },
+          userHasLiked: userId ? { $in: [userId, '$likesData.userId'] } : false
+        }
+      },
+      {
+        $project: { likesData: 0, commentsData: 0 }
+      }
+    ];
+
+    const results = await Accident.aggregate(aggregationPipeline);
+
+    if (!results || results.length === 0) {
+      logger.warn('Acidente não encontrado após agregação', { docId });
       return res.status(404).json({ error: 'Documento de acidente não encontrado' });
     }
 
-    // Gerar URL assinada para o PDF
-    const signedUrl = await getSignedUrl(accident.pdfFile.key);
-    const accidentWithUrl = {
-      ...accident.toObject(),
-      pdfUrl: signedUrl
-    };
+    const accident = results[0];
+    logger.info('Acidente encontrado com agregação', { docId, likeCount: accident.likeCount, commentCount: accident.commentCount });
 
-    res.json(accidentWithUrl);
+    try {
+        if (!accident.pdfFile?.key) {
+           logger.warn('Documento sem chave PDF', { accidentId: accident._id });
+           res.json({ ...accident, pdfUrl: null });
+        } else {
+          const signedUrl = await getSignedUrl(accident.pdfFile.key);
+           logger.info('URL assinada gerada com sucesso para ID específico', { accidentId: accident._id });
+           res.json({ ...accident, pdfUrl: signedUrl });
+        }   
+      } catch (urlError: any) {
+         logger.error('Erro ao gerar URL para documento específico (by ID)', { accidentId: accident._id, error: urlError.message });
+         res.json({ ...accident, pdfUrl: null });
+      }
+
   } catch (error: any) {
-    logger.error('Erro no getAccidentById:', { 
+    logger.error('Erro no getAccidentById com agregação:', { 
       error: error.message, 
-      id: req.params.id
+      id: req.params.id,
+      stack: error.stack
     });
     res.status(500).json({ 
       error: 'Erro ao buscar documento de acidente',

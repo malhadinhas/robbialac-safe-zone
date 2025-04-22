@@ -132,105 +132,50 @@ export default function Pontuacao() {
     }
   };
   
-  // Define sections for the NoScrollLayout
+  // Versão compacta do header
   const headerSection = (
-    <div className="mb-6">
-      <h1 className="text-3xl font-bold text-gray-800">Sua Pontuação</h1>
-      <p className="text-gray-600">Acompanhe seu progresso e conquistas</p>
+    <div className="mb-2 sm:mb-6 text-center">
+      <h1 className="text-base sm:text-3xl font-bold text-gray-800">Sua Pontuação</h1>
+      <p className="text-xs sm:text-base text-gray-600">Progresso e conquistas</p>
     </div>
   );
   
+  // Versão compacta da seção de progresso
   const progressSection = (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      <Card className="col-span-1 md:col-span-2">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xl">Progresso de Nível</CardTitle>
-          <CardDescription>
-            Você está no nível {currentLevel}
-          </CardDescription>
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 sm:gap-6 mb-2 sm:mb-8">
+      <Card className="col-span-1 sm:col-span-2 hover:shadow-lg transition-shadow">
+        <CardHeader className="p-2 sm:pb-2 border-b">
+          <CardTitle className="text-sm sm:text-xl font-bold">Nível {currentLevel}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-500">Nível {currentLevel}</span>
-              <span className="text-gray-500">Nível {currentLevel + 1}</span>
-            </div>
-            
-            <Progress value={progressToNextLevel} className="h-3" />
-            
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">{user?.points || 0} pontos acumulados</span>
-              <span className="text-gray-600">Faltam {pointsToNextLevel} pontos</span>
-            </div>
-            
-            <div className="pt-4 border-t mt-4">
-              <h4 className="font-medium text-gray-800 mb-3">Distribuição de Pontos</h4>
-              <div className="space-y-3">
-                {isLoading ? (
-                  // Mostrar placeholders de carregamento
-                  <>
-                    {[1, 2, 3].map(index => (
-                      <div key={index} className="animate-pulse">
-                        <div className="flex justify-between text-sm mb-1">
-                          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                          <div className="h-4 bg-gray-200 rounded w-16"></div>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2"></div>
-                      </div>
-                    ))}
-                  </>
-                ) : pointsBreakdown.length === 0 ? (
-                  // Mostrar mensagem quando não há dados
-                  <div className="text-center py-3 text-gray-500">
-                    Nenhum ponto registrado ainda
-                  </div>
-                ) : (
-                  // Mostrar dados reais
-                  pointsBreakdown.map((item, index) => (
-                    <div key={item.category}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>{item.category}</span>
-                        <span>{item.points} pts</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                        <div 
-                          className="h-2 rounded-full transition-all duration-500 ease-in-out" 
-                          style={{ 
-                            width: `${Math.min((item.points / (pointsBreakdown.reduce((sum, current) => sum + current.points, 0) || 1)) * 100, 100)}%`,
-                            backgroundColor: item.color 
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+            <Progress value={progressToNextLevel} className="h-3 bg-gray-100" />
+            <div className="flex items-center justify-between text-[10px] sm:text-sm">
+              <span className="text-gray-600 font-medium">{user?.points || 0} pts</span>
+              <span className="text-gray-600 font-medium">Falta: {pointsToNextLevel}</span>
             </div>
           </div>
         </CardContent>
       </Card>
       
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xl">Pontuação Total</CardTitle>
+      <Card className="hover:shadow-lg transition-shadow">
+        <CardHeader className="p-2 border-b">
+          <CardTitle className="text-sm sm:text-xl font-bold">Total</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center">
-            <div className="text-5xl font-bold text-robbialac mb-6">{user?.points || 0}</div>
-            <div className="text-center space-y-2">
-              <p className="font-medium">Nível {currentLevel}</p>
-              <p className="text-sm text-gray-600">
-                {isLoading ? (
-                  <span className="animate-pulse">Carregando ranking...</span>
-                ) : (
-                  `Ranking: #${userRanking.position} de ${userRanking.totalUsers}`
-                )}
+        <CardContent className="p-4">
+          <div className="flex flex-col items-center space-y-3">
+            <div className="text-2xl sm:text-5xl font-bold text-robbialac">{user?.points || 0}</div>
+            <div className="flex flex-col items-center gap-2 w-full">
+              <p className="text-[10px] sm:text-sm text-gray-600 font-medium">
+                #{userRanking.position} de {userRanking.totalUsers}
               </p>
               <Button 
-                className="mt-4 w-full bg-robbialac hover:bg-robbialac-dark"
+                variant="default"
+                size="sm"
+                className="w-full bg-robbialac hover:bg-robbialac-dark text-[10px] sm:text-sm font-medium"
                 onClick={() => navigate('/ranking')}
               >
-                Ver Ranking Completo
+                Ver Ranking
               </Button>
             </div>
           </div>
@@ -239,71 +184,34 @@ export default function Pontuacao() {
     </div>
   );
   
-  const medalsTab = (
-    <div className="space-y-10">
+  // Versão compacta das medalhas
+  const medalsSection = (
+    <div className="space-y-2 sm:space-y-10">
       <div>
-        <h2 className="text-2xl font-bold mb-6">Medalhas Conquistadas</h2>
+        <h2 className="text-sm sm:text-2xl font-bold mb-2">Medalhas</h2>
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 sm:grid-cols-3 gap-1 sm:gap-4">
             {[1, 2, 3].map(i => (
               <div key={i} className="animate-pulse">
-                <div className="bg-gray-200 rounded-lg h-40 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-full"></div>
+                <div className="bg-gray-200 rounded-lg h-20 sm:h-40"></div>
               </div>
             ))}
           </div>
         ) : medals.length === 0 ? (
-          <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-            <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Sem medalhas ainda</h3>
-            <p className="mt-1 text-sm text-gray-500">Complete atividades de segurança para ganhar medalhas.</p>
+          <div className="text-center p-4 sm:py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+            <p className="text-[10px] sm:text-sm text-gray-500 font-medium">Complete atividades para ganhar medalhas</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {medals.map((medal) => (
+          <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 sm:gap-6">
+            {medals.slice(0, 3).map((medal) => (
+              <div key={`earned-${medal._id}`} className="hover:scale-105 transition-transform">
               <MedalCard 
-                key={`earned-${medal._id}`} 
                 medal={medal} 
                 isAcquired={true} 
                 userPoints={user?.points || 0} 
-              />
-            ))}
-          </div>
-        )}
-      </div>
-      
-      <div>
-        <h2 className="text-2xl font-bold mb-6">Próximas Conquistas</h2>
-        {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="animate-pulse">
-                <div className="bg-gray-200 rounded-lg h-40 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-full"></div>
+                  isCompact={isCompactView}
+                />
               </div>
-            ))}
-          </div>
-        ) : unacquiredMedals.length === 0 ? (
-          <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-            <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Parabéns!</h3>
-            <p className="mt-1 text-sm text-gray-500">Você conquistou todas as medalhas disponíveis.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {unacquiredMedals.map((medal) => (
-              <MedalCard 
-                key={`unacquired-${medal._id}`} 
-                medal={medal} 
-                isAcquired={false} 
-                userPoints={user?.points || 0} 
-              />
             ))}
           </div>
         )}
@@ -311,106 +219,100 @@ export default function Pontuacao() {
     </div>
   );
   
-  const historyTab = (
-    <div>
-      <h2 className="text-2xl font-bold mb-6">Histórico de Atividades</h2>
-      
-      {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="flex items-start p-4 border border-gray-100 rounded-lg shadow-sm bg-white animate-pulse">
-              <div className="w-8 h-8 bg-gray-200 rounded-full mr-4"></div>
-              <div className="flex-1">
-                <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-              </div>
-              <div className="w-16 h-8 bg-gray-200 rounded"></div>
-            </div>
-          ))}
-        </div>
-      ) : activities.length === 0 ? (
-        <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-          <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">Sem atividades recentes</h3>
-          <p className="mt-1 text-sm text-gray-500">Suas atividades aparecerão aqui quando você começar a interagir com a plataforma.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {activities.map((activity) => (
-            <div key={activity.id} className="flex items-start p-4 border border-gray-100 rounded-lg shadow-sm bg-white">
-              <div className="mr-4 mt-1">{getTypeIcon(activity.category)}</div>
-              <div className="flex-1">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-medium">{activity.description}</div>
-                    <div className="text-sm text-gray-500">
-                      {format(parseISO(activity.date), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                    </div>
+  // Versão compacta do histórico
+  const historySection = (
+    <div className="mt-4">
+      <h2 className="text-sm sm:text-2xl font-bold mb-2">Histórico Recente</h2>
+      <div className="space-y-2">
+        {activities.slice(0, 3).map((activity) => (
+          <div key={activity.id} className="flex items-start p-3 border border-gray-200 rounded-lg shadow-sm bg-white hover:shadow-md transition-all">
+            <div className="mr-3 mt-1 scale-90 sm:scale-100">{getTypeIcon(activity.category)}</div>
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between items-start gap-2">
+                <div className="min-w-0">
+                  <div className="font-semibold text-[11px] sm:text-base truncate">{activity.description}</div>
+                  <div className="text-[9px] sm:text-sm text-gray-500 font-medium">
+                    {format(parseISO(activity.date), "dd/MM/yyyy")}
                   </div>
-                  <div className="px-2 py-1 bg-gray-100 rounded text-sm font-medium text-gray-800">
-                    +{activity.points} pts
+                </div>
+                <div className="px-2 py-1 bg-robbialac/10 rounded-full text-[10px] sm:text-sm font-bold text-robbialac whitespace-nowrap">
+                  +{activity.points}
                   </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
-      )}
     </div>
   );
   
-  const tabsSection = (
-    <Tabs defaultValue="medals" className="mb-8">
-      <TabsList className="mb-6">
-        <TabsTrigger value="medals" className="px-6">Medalhas</TabsTrigger>
-        <TabsTrigger value="history" className="px-6">Histórico</TabsTrigger>
-      </TabsList>
-      <TabsContent value="medals">
-        {medalsTab}
-      </TabsContent>
-      <TabsContent value="history">
-        {historyTab}
-      </TabsContent>
-    </Tabs>
-  );
-  
+  // Versão compacta do sistema de pontuação
   const pointsSystemSection = (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl">Sistema de Pontuação</CardTitle>
-        <CardDescription>Como ganhar pontos na plataforma</CardDescription>
+    <Card className="mt-4 hover:shadow-lg transition-shadow">
+      <CardHeader className="p-3 border-b">
+        <CardTitle className="text-sm sm:text-xl font-bold">Como Pontuar</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <h3 className="font-medium text-blue-800 mb-2">Assistir Vídeos</h3>
-            <ul className="text-sm space-y-2 text-gray-700">
-              <li>• Vídeos de Segurança: 50 pts</li>
-              <li>• Vídeos de Qualidade: 50 pts</li>
-              <li>• Vídeos de Procedimentos: 50 pts</li>
-              <li>• Formação Completa: +100 pts</li>
+      <CardContent className="p-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          <div className="p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+            <div className="flex items-center gap-2 mb-3">
+              {getTypeIcon('video')}
+              <h3 className="font-bold text-[11px] sm:text-base text-blue-800">Vídeos</h3>
+            </div>
+            <ul className="text-[9px] sm:text-sm space-y-2 text-gray-700">
+              <li className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                <span className="font-medium">Segurança: 50 pts</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                <span className="font-medium">Formação: +100 pts</span>
+              </li>
+              <li className="flex items-center gap-2 text-[8px] sm:text-xs text-gray-500 mt-3 italic">
+                Pontos atribuídos ao completar a visualização
+              </li>
             </ul>
           </div>
           
-          <div className="p-4 bg-orange-50 rounded-lg">
-            <h3 className="font-medium text-orange-800 mb-2">Reportar Quase Acidentes</h3>
-            <ul className="text-sm space-y-2 text-gray-700">
-              <li>• Severidade Baixa: 50 pts</li>
-              <li>• Severidade Média: 75 pts</li>
-              <li>• Severidade Alta: 100 pts</li>
-              <li>• Com evidência fotográfica: +25 pts</li>
+          <div className="p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
+            <div className="flex items-center gap-2 mb-3">
+              {getTypeIcon('incident')}
+              <h3 className="font-bold text-[11px] sm:text-base text-orange-800">Incidentes</h3>
+            </div>
+            <ul className="text-[9px] sm:text-sm space-y-2 text-gray-700">
+              <li className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-orange-400"></span>
+                <span className="font-medium">Baixo: 50 pts</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-orange-400"></span>
+                <span className="font-medium">Alto: 100 pts</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-orange-400"></span>
+                <span className="font-medium">Com evidência: +25 pts</span>
+              </li>
             </ul>
           </div>
           
-          <div className="p-4 bg-yellow-50 rounded-lg">
-            <h3 className="font-medium text-yellow-800 mb-2">Conquistas e Bônus</h3>
-            <ul className="text-sm space-y-2 text-gray-700">
-              <li>• Nova Medalha: 100 pts</li>
-              <li>• Primeiro da semana: 10 pts</li>
-              <li>• Sequência de 5 dias: 50 pts</li>
-              <li>• Completar área: 200 pts</li>
+          <div className="p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors">
+            <div className="flex items-center gap-2 mb-3">
+              {getTypeIcon('medal')}
+              <h3 className="font-bold text-[11px] sm:text-base text-yellow-800">Bônus</h3>
+            </div>
+            <ul className="text-[9px] sm:text-sm space-y-2 text-gray-700">
+              <li className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
+                <span className="font-medium">Medalha: 100 pts</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
+                <span className="font-medium">Área: 200 pts</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
+                <span className="font-medium">Nível: +500 pts</span>
+              </li>
             </ul>
           </div>
         </div>
@@ -418,24 +320,36 @@ export default function Pontuacao() {
     </Card>
   );
   
-  // Conditional rendering based on view mode
-  const pageContent = isCompactView ? (
-    <NoScrollLayout 
-      sections={[headerSection, progressSection, tabsSection, pointsSystemSection]} 
-      showPagination={true}
-    />
-  ) : (
-    <>
+  // Layout responsivo sem tabs
+  const pageContent = (
+    <div className="space-y-2 sm:space-y-4">
       {headerSection}
       {progressSection}
-      {tabsSection}
+      {medalsSection}
+      {historySection}
       {pointsSystemSection}
-    </>
+    </div>
   );
   
+  if (isCompactView) {
+    // Mobile Layout
+    return (
+      <Layout>
+        <div className="h-full overflow-y-auto p-4 space-y-4">
+          {headerSection}
+          {progressSection}
+          {medalsSection}
+          {historySection}
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
-      {pageContent}
+      <div className="h-full overflow-y-auto p-4 sm:p-6">
+        {pageContent}
+      </div>
     </Layout>
   );
 }

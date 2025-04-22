@@ -26,6 +26,7 @@ import sensibilizacaoRoutes from './routes/sensibilizacaoRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import authRoutes from './routes/authRoutes';
 import { hashPassword } from './services/auth';
+import interactionRoutes from './routes/interactionRoutes';
 
 /**
  * Verificação das variáveis de ambiente necessárias para o Cloudflare R2
@@ -123,6 +124,7 @@ app.use('/api/activities', activityRoutes);   // Registro de atividades
 app.use('/api/system', systemRoutes);         // Configurações do sistema
 app.use('/api/sensibilizacao', sensibilizacaoRoutes); // Gestão de sensibilização
 app.use('/api/analytics', analyticsRoutes); // Adiciona as rotas de analytics
+app.use('/api/interactions', interactionRoutes);
 
 /**
  * Rota de diagnóstico para verificar status do banco de dados
