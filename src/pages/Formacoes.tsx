@@ -308,25 +308,28 @@ export default function Formacoes() {
               
               <form onSubmit={handleVideoUpload} className="p-4 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="videoTitle" className="block text-sm font-medium text-gray-700 mb-1">
                     Título do Vídeo
                   </label>
                   <input
                     type="text"
+                    id="videoTitle"
                     name="title"
                     value={videoData.title}
                     onChange={handleInputChange}
                     className="w-full border rounded-md p-2"
                     placeholder="Ex: Procedimentos de Segurança"
                     required
+                    autoComplete="off"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="videoDescription" className="block text-sm font-medium text-gray-700 mb-1">
                     Descrição
                   </label>
                   <textarea
+                    id="videoDescription"
                     name="description"
                     value={videoData.description}
                     onChange={handleInputChange}
@@ -334,19 +337,22 @@ export default function Formacoes() {
                     rows={3}
                     placeholder="Descreva o conteúdo do vídeo"
                     required
+                    autoComplete="off"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="videoCategory" className="block text-sm font-medium text-gray-700 mb-1">
                     Categoria
                   </label>
                   <select
+                    id="videoCategory"
                     name="category"
                     value={videoData.category}
                     onChange={handleInputChange}
                     className="w-full border rounded-md p-2"
                     required
+                    autoComplete="off"
                   >
                     <option value="">Selecione uma categoria</option>
                     <option value="Segurança">Segurança</option>
@@ -356,15 +362,17 @@ export default function Formacoes() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="videoZone" className="block text-sm font-medium text-gray-700 mb-1">
                     Zona da Fábrica
                   </label>
                   <select
+                    id="videoZone"
                     name="zone"
                     value={videoData.zone}
                     onChange={handleInputChange}
                     className="w-full border rounded-md p-2"
                     required
+                    autoComplete="off"
                   >
                     <option value="">Selecione uma zona</option>
                     {factoryZones.map((zone) => (
@@ -376,11 +384,12 @@ export default function Formacoes() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="videoFile" className="block text-sm font-medium text-gray-700 mb-1">
                     Arquivo de Vídeo
                   </label>
                   <input
                     type="file"
+                    id="videoFile"
                     name="video"
                     onChange={handleFileChange}
                     accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska"
