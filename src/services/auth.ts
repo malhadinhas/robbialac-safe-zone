@@ -76,6 +76,7 @@ export async function loginUser(email: string, password: string): Promise<User |
 
 export function logoutUser(): void {
   localStorage.removeItem('robbialac_user');
+  localStorage.removeItem('token');
 }
 
 export function getCurrentUser(): User | null {
