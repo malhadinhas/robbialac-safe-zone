@@ -3,6 +3,7 @@ export type UserRole = 'admin_app' | 'admin_qa' | 'user';
 export interface User {
   id: string;
   email: string;
+  password: string;
   name: string;
   role: UserRole;
   points: number;

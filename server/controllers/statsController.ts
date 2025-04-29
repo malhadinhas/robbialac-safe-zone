@@ -19,6 +19,141 @@ interface UserRanking {
 }
 
 /**
+ * @module server/controllers/sensibilizacaoController
+ * @description Este módulo contém os controladores para gerir documentos de sensibilização na plataforma.
+ * Os documentos de sensibilização são materiais educativos em PDF que podem ser carregados,
+ * visualizados e interagidos pelos utilizadores. O módulo gere todo o ciclo de vida destes
+ * documentos, desde o upload até à sua remoção, incluindo interações sociais como likes e comentários.
+ */
+
+/**
+ * @function createSensibilizacao
+ * @description Cria um novo documento de sensibilização na plataforma.
+ * Este controlador:
+ * 1. Valida se um arquivo PDF foi fornecido
+ * 2. Gera uma chave única para o arquivo baseada no timestamp e nome original
+ * 3. Armazena o arquivo:
+ *    - Em desenvolvimento: salva localmente em /storage/temp/sensibilizacao
+ *    - Em produção: faz upload para Cloudflare R2
+ * 4. Cria um novo documento no MongoDB com os metadados do arquivo e informações adicionais
+ * 
+ * @param {Request} req - Requisição Express contendo:
+ *    - req.file: Arquivo PDF (obrigatório)
+ *    - req.body.name: Nome do documento
+ *    - req.body.country: País relacionado
+ *    - req.body.date: Data do documento
+ * @param {Response} res - Resposta Express
+ * @returns {Promise<void>} Retorna o documento criado (201) ou erro (400)
+ */
+
+/**
+ * @function getSensibilizacoes
+ * @description Busca e retorna documentos de sensibilização com suporte a filtros e interações sociais.
+ * Este controlador implementa:
+ * 1. Filtragem por:
+ *    - País (country)
+ *    - Intervalo de datas (startDate e endDate)
+ * 2. Agregação MongoDB para:
+ *    - Contagem de likes e comentários
+ *    - Verificação se o utilizador atual deu like
+ * 3. Ordenação por data (mais recentes primeiro)
+ * 4. Geração de URLs assinadas para acesso aos PDFs
+ * 
+ * O pipeline de agregação:
+ * - Filtra documentos baseado nos critérios
+ * - Faz join com coleções de likes e comentários
+ * - Calcula contagens e estado de like do utilizador
+ * - Remove dados desnecessários do resultado
+ * 
+ * @param {Request} req - Requisição Express contendo:
+ *    - req.query.country?: Filtro por país
+ *    - req.query.startDate?: Data inicial
+ *    - req.query.endDate?: Data final
+ *    - req.user?.id: ID do utilizador atual (opcional)
+ * @param {Response} res - Resposta Express
+ * @returns {Promise<void>} Array de documentos com URLs assinadas e dados de interação
+ */
+
+/**
+ * @function getSensibilizacaoById
+ * @description Busca um documento específico por ID com todas as suas interações sociais.
+ * Este controlador realiza:
+ * 1. Validação do ID MongoDB
+ * 2. Agregação complexa para obter:
+ *    - Dados base do documento
+ *    - Contagem total de likes
+ *    - Contagem total de comentários
+ *    - Estado de like do utilizador atual
+ * 3. Geração de URL assinada para o PDF
+ * 
+ * Processo detalhado:
+ * - Valida formato do ID
+ * - Executa pipeline de agregação
+ * - Verifica existência do documento
+ * - Gera URL segura para o PDF
+ * - Combina todos os dados numa resposta única
+ * 
+ * @param {Request} req - Requisição Express contendo:
+ *    - req.params.id: ID do documento
+ *    - req.user?.id: ID do utilizador atual (opcional)
+ * @param {Response} res - Resposta Express
+ * @returns {Promise<void>} Documento com dados de interação e URL do PDF ou erro (404)
+ */
+
+/**
+ * @function updateSensibilizacao
+ * @description Atualiza um documento de sensibilização existente, incluindo seu arquivo PDF.
+ * Este controlador permite:
+ * 1. Atualização de metadados:
+ *    - Nome do documento
+ *    - País relacionado
+ *    - Data do documento
+ * 2. Substituição do arquivo PDF:
+ *    - Remove arquivo antigo do R2
+ *    - Faz upload do novo arquivo
+ *    - Atualiza metadados do arquivo
+ * 
+ * Processo de atualização:
+ * - Verifica existência do documento
+ * - Se novo PDF fornecido:
+ *   * Remove PDF antigo
+ *   * Upload do novo
+ *   * Atualiza metadados
+ * - Atualiza dados no MongoDB
+ * - Gera nova URL assinada
+ * 
+ * @param {Request} req - Requisição Express contendo:
+ *    - req.params.id: ID do documento
+ *    - req.body: Dados a atualizar
+ *    - req.file?: Novo arquivo PDF (opcional)
+ * @param {Response} res - Resposta Express
+ * @returns {Promise<void>} Documento atualizado com nova URL ou erro (404)
+ */
+
+/**
+ * @function deleteSensibilizacao
+ * @description Remove completamente um documento de sensibilização e seus recursos associados.
+ * Este controlador executa:
+ * 1. Verificação de existência do documento
+ * 2. Remoção do arquivo PDF do armazenamento:
+ *    - Remove do Cloudflare R2 em produção
+ *    - Remove do armazenamento local em desenvolvimento
+ * 3. Remoção do documento do MongoDB
+ * 
+ * Processo de exclusão:
+ * - Busca documento por ID
+ * - Verifica existência
+ * - Remove arquivo físico
+ * - Remove documento do banco
+ * - Não remove automaticamente likes/comentários (mantidos para histórico)
+ * 
+ * @param {Request} req - Requisição Express contendo:
+ *    - req.params.id: ID do documento a ser removido
+ * @param {Response} res - Resposta Express
+ * @returns {Promise<void>} 204 em caso de sucesso ou erro (404/500)
+ */
+
+/**
  * Obtém a distribuição de pontos do usuário por categoria de atividade
  */
 export const getUserPointsBreakdown = async (req: Request, res: Response) => {

@@ -25,7 +25,7 @@ export const getVideos = async (req: Request, res: Response) => {
     res.json(videosFromDb); 
 
   } catch (error) {
-    logger.error('Erro ao recuperar vídeos em GET /api/videos', { error: getErrorMessage(error) });
+    logger.error('Erro ao recuperar vídeos em GET /api/videos', { error: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ message: 'Erro ao recuperar vídeos' });
   }
 };
@@ -66,8 +66,8 @@ export const getVideoById = async (req: Request, res: Response) => {
     res.json(video); 
 
   } catch (error) {
-    logger.error('Erro ao obter vídeo por ID em GET /api/videos/:id', { error: getErrorMessage(error), id: req.params.id });
-    res.status(500).json({ message: 'Erro interno ao obter vídeo', error: getErrorMessage(error) });
+    logger.error('Erro ao obter vídeo por ID em GET /api/videos/:id', { error: error instanceof Error ? error.message : String(error), id: req.params.id });
+    res.status(500).json({ message: 'Erro interno ao obter vídeo', error: error instanceof Error ? error.message : String(error) });
   }
 };
 
@@ -172,7 +172,7 @@ export const createVideo = async (req: Request, res: Response) => {
 
       // Salvar para obter o ID
       await video.save();
-      videoId = video._id;
+      videoId = video._id?.toString() ?? null;
       
       logger.info('Vídeo criado com sucesso, iniciando processamento', { 
         id: videoId,
@@ -339,7 +339,7 @@ export const createVideo = async (req: Request, res: Response) => {
       });
     }
   } catch (error) {
-    logger.error('Erro GERAL ao criar vídeo', { error: error.message, stack: error.stack });
+    logger.error('Erro GERAL ao criar vídeo', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     
     // Limpar arquivo temporário original em caso de erro inicial
     if (originalFilePath) {
@@ -351,16 +351,16 @@ export const createVideo = async (req: Request, res: Response) => {
       }
     }
 
-    if (error.name === 'ValidationError') {
+    if (error instanceof Error && error.name === 'ValidationError') {
       return res.status(400).json({ 
         message: 'Erro de validação',
-        errors: error.errors 
+        errors: (error as any).errors 
       });
     }
 
     res.status(500).json({ 
       message: 'Erro ao criar vídeo',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
     });
   }
 };
@@ -451,13 +451,13 @@ export const getLastViewedVideosByCategory = async (req: Request, res: Response)
     res.json(videos);
   } catch (error) {
     logger.error('Erro ao buscar vídeos por categoria', { 
-      error,
-      category,
+      error: error instanceof Error ? error.message : String(error),
+      category: req.params.category,
       message: error instanceof Error ? error.message : 'Erro desconhecido'
     });
     res.status(500).json({ 
       message: 'Erro ao buscar vídeos',
-      details: error instanceof Error ? error.message : 'Erro desconhecido'
+      details: error instanceof Error ? error.message : 'Erro desconhecido' 
     });
   }
 };

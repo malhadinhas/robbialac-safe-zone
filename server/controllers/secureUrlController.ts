@@ -1,3 +1,15 @@
+/**
+ * @module server/controllers/secureUrlController
+ * @description Controlador responsável por gerar URLs seguras para acesso a ficheiros
+ * armazenados no Cloudflare R2. Utiliza o SDK AWS para gerar URLs assinadas temporárias.
+ */
+
+/**
+ * Importação das dependências necessárias:
+ * - Express para tipos Request/Response
+ * - SDK AWS S3 para interação com R2
+ * - Utilitários para assinatura de URLs e logging
+ */
 import { Request, Response } from 'express';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -6,7 +18,11 @@ import dotenv from 'dotenv';
 
 dotenv.config(); // Carregar variáveis de ambiente do .env
 
-// Configurações do R2 (lidas do .env do servidor)
+/**
+ * @const R2_CONFIG
+ * @description Configuração do cliente R2 baseada em variáveis de ambiente.
+ * Inclui credenciais e configurações do bucket.
+ */
 const R2_CONFIG = {
   accountId: process.env.R2_ACCOUNT_ID,
   accessKeyId: process.env.R2_ACCESS_KEY_ID,
@@ -34,6 +50,11 @@ if (!R2_CONFIG.accountId || !R2_CONFIG.accessKeyId || !R2_CONFIG.secretAccessKey
   // Considerar lançar um erro ou ter um estado de erro interno
 }
 
+/**
+ * Inicialização do cliente S3
+ * @description Configura e inicializa o cliente S3 com as credenciais R2
+ * e configurações de conexão otimizadas.
+ */
 let s3Client: S3Client;
 try {
   s3Client = new S3Client({
@@ -61,22 +82,36 @@ try {
    // Tratar o erro apropriadamente - talvez impedir o arranque ou retornar erros 500 nos endpoints
 }
 
+/**
+ * @function getUrlExpiration
+ * @description Obtém o tempo de expiração para URLs assinadas
+ * @param {Request} req - Requisição Express
+ * @returns {number} Tempo de expiração em segundos (padrão: 3600)
+ */
 const getUrlExpiration = (req: Request): number => {
   const expiration = Number(process.env.R2_URL_EXPIRATION);
   return !isNaN(expiration) ? expiration : 3600; // Padrão: 1 hora
 };
 
+/**
+ * @function generateSecureUrl
+ * @description Gera uma URL assinada temporária para acesso a um objeto no R2
+ * @param {Request} req - Requisição Express (espera query params 'url' ou 'key')
+ * @param {Response} res - Resposta Express
+ * @returns {Promise<void>} Responde com a URL assinada ou erro
+ */
 export const generateSecureUrl = async (req: Request, res: Response) => {
   try {
+    // Verificações iniciais
     if (!s3Client) {
-      logger.error('[SecureUrlController] Cliente S3 não inicializado corretamente.');
       return res.status(500).json({ error: 'Erro interno do servidor: Cliente S3 não inicializado' });
     }
 
-    // Extrai a key da URL ou dos parâmetros da consulta
+    // Extração da chave do objeto
     const urlKey = req.query.url as string;
     const keyParam = req.query.key as string;
     
+    // Validações e processamento
     if (!urlKey && !keyParam) {
       logger.error('[SecureUrlController] Requisição sem url ou key');
       return res.status(400).json({ error: 'URL ou key do objeto é necessária' });
@@ -103,7 +138,7 @@ export const generateSecureUrl = async (req: Request, res: Response) => {
       Chave secreta disponível: ${!!R2_CONFIG.secretAccessKey}`
     );
 
-    // Cria o comando para obter o objeto
+    // Geração da URL assinada
     const command = new GetObjectCommand({
       Bucket: R2_CONFIG.bucketName!,
       Key: objectKey
@@ -132,13 +167,13 @@ export const generateSecureUrl = async (req: Request, res: Response) => {
     // Mantemos o formato "signedUrl" para compatibilidade com o cliente
     return res.json({ signedUrl });
   } catch (error) {
+    // Tratamento de erros
     logger.error('[SecureUrlController] Erro ao gerar URL segura', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       objectKey: urlKey || keyParam,
       bucketName: R2_CONFIG.bucketName
     });
-    
     return res.status(500).json({ message: 'Falha ao gerar URL segura.' });
   }
 }; 
