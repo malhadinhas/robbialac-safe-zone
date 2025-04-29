@@ -1,44 +1,51 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-// Interface para o documento de sensibilização
+// Interface TypeScript que define a estrutura de um documento de Sensibilização
 export interface ISensibilizacao extends Document {
-  name: string;
-  country: string;
-  date: Date;
-  pdfFile: {
-    key: string;
-    originalName: string;
-    size: number;
-    mimeType: string;
+  name: string;                // Nome do documento de sensibilização
+  country: string;             // País associado ao documento
+  date: Date;                  // Data do documento
+  pdfFile: {                   // Informação sobre o ficheiro PDF associado
+    key: string;               // Chave/ID do ficheiro (ex: no storage)
+    originalName: string;      // Nome original do ficheiro
+    size: number;              // Tamanho do ficheiro em bytes
+    mimeType: string;          // Tipo MIME do ficheiro
   };
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date;             // Data de criação do registo (gerado automaticamente)
+  updatedAt: Date;             // Data da última atualização (gerado automaticamente)
 }
 
+// Definição do schema do Mongoose para Sensibilização
 const SensibilizacaoSchema: Schema = new Schema({
   name: { 
     type: String, 
-    required: true 
+    required: true           // Campo obrigatório
   },
   country: { 
     type: String, 
-    required: true 
+    required: true           // Campo obrigatório
   },
   date: { 
     type: Date, 
-    required: true 
+    required: true           // Campo obrigatório
   },
-  pdfFile: {
+  pdfFile: {                 // Subdocumento para ficheiro PDF
     key: { type: String },
     originalName: { type: String },
     size: { type: Number },
     mimeType: { type: String }
   }
 }, {
-  timestamps: true // Isso adiciona createdAt e updatedAt automaticamente
+  timestamps: true // Isto adiciona automaticamente os campos createdAt e updatedAt
 });
 
-// Índices para melhorar a performance das consultas
+// Índice para melhorar a performance das consultas por data
 SensibilizacaoSchema.index({ date: -1 });
 
-export default mongoose.model<ISensibilizacao>('Sensibilizacao', SensibilizacaoSchema); 
+// Exporta o modelo Sensibilizacao, pronto a ser usado nos controladores e serviços
+export default mongoose.model<ISensibilizacao>('Sensibilizacao', SensibilizacaoSchema);
+
+// -----------------------------------------------------------------------------
+// Este ficheiro define o modelo de dados (schema e interface) para documentos de sensibilização na base de dados MongoDB, usando o Mongoose.
+// Permite guardar e consultar documentos de sensibilização de forma tipada e validada.
+// Garante consistência e performance nas operações relacionadas a estes documentos na aplicação. 

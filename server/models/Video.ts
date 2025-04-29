@@ -1,27 +1,28 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { randomUUID } from 'crypto';
 
-// Interface para o documento de vídeo
+// Interface TypeScript que define a estrutura de um documento de Vídeo
 export interface IVideo extends Document {
-  videoId: string;
-  title: string;
-  description: string;
-  r2VideoKey: string;
-  r2ThumbnailKey: string;
-  category: string;
-  zone?: string;
-  duration?: number;
-  views: number;
-  uploadDate: Date;
-  r2Qualities?: {
+  videoId: string;                // ID único do vídeo (string UUID)
+  title: string;                  // Título do vídeo
+  description: string;            // Descrição do vídeo
+  r2VideoKey: string;             // Chave do vídeo no storage (ex: Cloudflare R2)
+  r2ThumbnailKey: string;         // Chave da thumbnail no storage
+  category: string;               // Categoria do vídeo
+  zone?: string;                  // Zona associada ao vídeo (opcional)
+  duration?: number;              // Duração do vídeo em segundos (opcional)
+  views: number;                  // Número de visualizações
+  uploadDate: Date;               // Data de upload
+  r2Qualities?: {                 // Chaves para diferentes qualidades do vídeo (opcional)
     high?: string;
     medium?: string;
     low?: string;
   };
-  status: 'processing' | 'ready' | 'error';
-  processingError?: string;
+  status: 'processing' | 'ready' | 'error'; // Estado do vídeo
+  processingError?: string;       // Mensagem de erro de processamento (opcional)
 }
 
+// Definição do schema do Mongoose para Video
 const VideoSchema = new Schema<IVideo>({
   videoId: {
     type: String,
@@ -81,20 +82,20 @@ const VideoSchema = new Schema<IVideo>({
     type: String
   }
 }, {
-  timestamps: true
+  timestamps: true // Adiciona automaticamente createdAt e updatedAt
 });
 
 // Índices para melhorar a performance das consultas
-VideoSchema.index({ category: 1 });
-VideoSchema.index({ views: -1 });
-VideoSchema.index({ uploadDate: -1 });
-VideoSchema.index({ videoId: 1 }, { unique: true });
+VideoSchema.index({ category: 1 });           // Para buscas por categoria
+VideoSchema.index({ views: -1 });             // Para ordenar por visualizações
+VideoSchema.index({ uploadDate: -1 });        // Para ordenar por data de upload
+VideoSchema.index({ videoId: 1 }, { unique: true }); // Garante unicidade do videoId
 
 // Middleware para garantir que o documento nunca tenha id null
 VideoSchema.pre('save', function(next) {
   // Atualiza updatedAt
   if (this.isModified()) {
-    this.updatedAt = new Date();
+    (this as any).updatedAt = new Date();
   }
   
   // Garante que o id não seja nulo
@@ -123,4 +124,9 @@ VideoSchema.methods.incrementViews = function() {
 
 // Criar e exportar o modelo
 const Video = mongoose.model<IVideo>('Video', VideoSchema);
-export default Video; 
+export default Video;
+
+// -----------------------------------------------------------------------------
+// Este ficheiro define o modelo de dados (schema e interface) para vídeos na base de dados MongoDB, usando o Mongoose.
+// Permite guardar e consultar vídeos de forma tipada e validada.
+// Garante consistência, performance e funcionalidades extra (como métodos utilitários) nas operações relacionadas a vídeos na aplicação. 
