@@ -8,6 +8,7 @@ import { ptBR } from 'date-fns/locale';
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Video {
   id: string;
@@ -95,6 +96,7 @@ function RecentActivityCard({
     videos.length > 0 ? "videos" : "quaseAcidentes"
   );
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const handleVideoClick = (videoId: string) => {
     navigate(`/videos/visualizar/${videoId}`);
@@ -150,83 +152,116 @@ function RecentActivityCard({
       )}
       
       <CardContent className="p-2 sm:p-3">
-        <Tabs defaultValue={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-          <TabsList className="w-full mb-2 h-8">
-            <TabsTrigger value="videos" className="text-xs">Vídeos</TabsTrigger>
-            <TabsTrigger value="quaseAcidentes" className="text-xs">Quase Acidentes</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="videos" className="mt-0">
-            {videos.length > 0 ? (
-              <div className="space-y-2">
-                {videos.map(video => (
-                  <div 
-                    key={video.id} 
-                    className="group flex items-center p-2 hover:bg-gray-50 cursor-pointer transition-colors rounded-md border border-transparent hover:border-gray-200"
-                    onClick={() => handleVideoClick(video.id)}
-                  >
-                    <div className="flex-shrink-0 w-14 h-10 bg-gray-100 rounded overflow-hidden mr-2 relative">
-                      <VideoThumbnail video={video} />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Film className="w-4 h-4 text-white" />
+        {!isMobile ? (
+          <Tabs defaultValue={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+            <TabsList className="w-full mb-2 h-8">
+              <TabsTrigger value="videos" className="text-xs">Vídeos</TabsTrigger>
+              <TabsTrigger value="quaseAcidentes" className="text-xs">Quase Acidentes</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="videos" className="mt-0">
+              {videos.length > 0 ? (
+                <div className="space-y-2">
+                  {videos.map(video => (
+                    <div 
+                      key={video.id} 
+                      className="group flex items-center p-2 hover:bg-gray-50 cursor-pointer transition-colors rounded-md border border-transparent hover:border-gray-200"
+                      onClick={() => handleVideoClick(video.id)}
+                    >
+                      <div className="flex-shrink-0 w-14 h-10 bg-gray-100 rounded overflow-hidden mr-2 relative">
+                        <VideoThumbnail video={video} />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Film className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate text-xs">{video.title}</p>
+                        <div className="flex items-center gap-2 text-[10px] text-gray-500 mt-1">
+                          <span className="flex items-center">
+                            <Eye className="w-3 h-3 mr-1" />
+                            {video.views || 0}
+                          </span>
+                          <span className="flex items-center">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate text-xs">{video.title}</p>
-                      <div className="flex items-center gap-2 text-[10px] text-gray-500 mt-1">
-                        <span className="flex items-center">
-                          <Eye className="w-3 h-3 mr-1" />
-                          {video.views || 0}
-                        </span>
-                        <span className="flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}
-                        </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-500 text-xs">
+                  Nenhum vídeo recente
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="quaseAcidentes" className="mt-0">
+              {incidents.length > 0 ? (
+                <div className="space-y-2">
+                  {incidents.map(incident => (
+                    <div
+                      key={incident.id}
+                      onClick={() => handleIncidentClick(incident.id)}
+                      className={`group flex items-center p-2 cursor-pointer transition-all rounded-md border-l-4 hover:translate-x-1 ${getSeverityColor(incident.severity)}`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-medium text-gray-900 truncate text-xs">
+                            {incident.title}
+                          </p>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${getStatusColor(incident.status)}`}>
+                            {incident.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-500">
+                          <Calendar className="w-3 h-3" />
+                          {formatDate(incident.date || incident.createdAt)}
+                        </div>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-500 text-xs">
+                  Nenhum quase acidente recente
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        ) : (
+          incidents.length > 0 ? (
+            <div className="space-y-2">
+              {incidents.map(incident => (
+                <div
+                  key={incident.id}
+                  onClick={() => handleIncidentClick(incident.id)}
+                  className={`group flex items-center p-2 cursor-pointer transition-all rounded-md border-l-4 hover:translate-x-1 ${getSeverityColor(incident.severity)}`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-medium text-gray-900 truncate text-xs">
+                        {incident.title}
+                      </p>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${getStatusColor(incident.status)}`}>
+                        {incident.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-500">
+                      <Calendar className="w-3 h-3" />
+                      {formatDate(incident.date || incident.createdAt)}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-4 text-gray-500 text-xs">
-                Nenhum vídeo recente
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="quaseAcidentes" className="mt-0">
-            {incidents.length > 0 ? (
-              <div className="space-y-2">
-                {incidents.map(incident => (
-                  <div
-                    key={incident.id}
-                    onClick={() => handleIncidentClick(incident.id)}
-                    className={`group flex items-center p-2 cursor-pointer transition-all rounded-md border-l-4 hover:translate-x-1 ${getSeverityColor(incident.severity)}`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="font-medium text-gray-900 truncate text-xs">
-                          {incident.title}
-                        </p>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${getStatusColor(incident.status)}`}>
-                          {incident.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-500">
-                        <Calendar className="w-3 h-3" />
-                        {formatDate(incident.date || incident.createdAt)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-4 text-gray-500 text-xs">
-                Nenhum quase acidente recente
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-gray-500 text-xs">
+              Nenhum quase acidente recente
+            </div>
+          )
+        )}
       </CardContent>
     </Card>
   );

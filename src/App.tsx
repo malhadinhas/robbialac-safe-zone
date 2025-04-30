@@ -28,6 +28,7 @@ import NotFound from "./pages/NotFound";
 import TestApi from './pages/TestApi';
 import AcidenteForm from "./pages/AcidenteForm";
 import FeedPage from "./pages/Feed";
+import QuaseAcidentesVisualizar from "./pages/QuaseAcidentesVisualizar";
 
 // Configure QueryClient with retry settings
 const queryClient = new QueryClient({
@@ -73,6 +74,7 @@ const App = () => {
                     <Route path="/quase-acidentes/editar/:id" element={<QuaseAcidentesEditar />} />
                     <Route path="/quase-acidentes/novo" element={<QuaseAcidentesNovo />} />
                     <Route path="/quase-acidentes/estatisticas" element={<QuaseAcidentesEstatisticas />} />
+                    <Route path="/quase-acidentes/visualizar/:id" element={<QuaseAcidentesVisualizar />} />
                     <Route path="/pontuacao" element={<Pontuacao />} />
                     <Route path="/definicoes" element={<Definicoes />} />
                     <Route path="/ranking" element={<Ranking />} />

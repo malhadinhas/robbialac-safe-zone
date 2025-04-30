@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Factory3DModelManager, { FactoryZone } from "@/components/Factory3DModelManager";
 import VideosCategoryCard from '@/components/VideosCategoryCard';
-import { useIsCompactView } from '@/hooks/use-mobile';
+import { useIsCompactView, useIsMobile } from '@/hooks/use-mobile';
 import { getZoneStats, ZoneStats } from '@/services/zoneStatsService';
 import { Progress } from "@/components/ui/progress";
 import { uploadVideo, getVideos } from '@/services/videoService';
@@ -33,6 +33,7 @@ export default function Formacoes() {
   const [useSimpleView, setUseSimpleView] = useState(false);
   const [enableControls, setEnableControls] = useState(true);
   const isCompactView = useIsCompactView();
+  const isMobile = useIsMobile();
   const [zoneStats, setZoneStats] = useState<ZoneStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [videoData, setVideoData] = useState({
@@ -46,6 +47,7 @@ export default function Formacoes() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState('');
   const [categoryVideos, setCategoryVideos] = useState<Record<string, Video[]>>({});
+  const [showZoneList, setShowZoneList] = useState(false);
   
   useEffect(() => {
     setIsAdmin(user?.role === 'admin_app');
@@ -262,35 +264,59 @@ export default function Formacoes() {
   
   return (
     <Layout>
-      <div className="p-4 flex flex-col h-full overflow-y-auto">
+      <div className={`p-4 flex flex-col ${isMobile ? 'min-h-screen overflow-y-auto' : 'h-full'}`}>
         <div className="flex justify-between items-center mb-4 flex-shrink-0">
           <h1 className="text-2xl font-bold">Formações</h1>
           <div className="flex space-x-2">
             {isAdmin && (
               <Button onClick={showImportModal} variant="default">Importar Vídeo</Button>
             )}
-            <Button onClick={() => navigate('/videos/lista')} variant="outline">Ver Lista</Button>
           </div>
         </div>
 
         <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
-          <Card className="border flex-1 min-h-0 flex flex-col">
-            <CardHeader className="flex-shrink-0">
-              <CardTitle>Mapa da Fábrica</CardTitle>
-              <CardDescription>Selecione uma área da fábrica para ver os vídeos relacionados</CardDescription>
+          <Card className={`${isMobile ? 'border flex flex-col' : 'border flex-1 min-h-0 flex flex-col'}`}>
+            <CardHeader className="flex-shrink-0 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Mapa da Fábrica</CardTitle>
+                <CardDescription>Selecione uma área da fábrica para ver os vídeos relacionados</CardDescription>
+              </div>
+              <Button variant="outline" onClick={() => setShowZoneList((v) => !v)}>
+                {showZoneList ? 'Ver Objeto 3D' : 'Ver Lista'}
+              </Button>
             </CardHeader>
             <CardContent className="flex-1 p-2 relative overflow-hidden">
-              <ErrorBoundary fallback={<div className="text-red-500">Erro ao carregar o modelo 3D.</div>}>
-                <Suspense fallback={<div className="flex items-center justify-center h-full">Carregando modelo 3D...</div>}>
-                  <Factory3DModelManager 
-                    onZoneClick={handleZoneClick} 
-                    enableControls={enableControls}
-                  />
-                </Suspense>
-              </ErrorBoundary>
-              <p className="text-sm text-muted-foreground text-center mt-2 absolute bottom-2 left-1/2 transform -translate-x-1/2">
-                Interaja com o modelo 3D para explorar as diferentes áreas da fábrica
-              </p>
+              {showZoneList ? (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 rounded-lg p-4">
+                  <p className="text-gray-500 text-center mb-4">Selecione uma das áreas abaixo:</p>
+                  <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {factoryZones.map((z) => (
+                      <Button
+                        key={z.zone}
+                        style={{ backgroundColor: z.color, color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}
+                        className="w-full py-6 rounded-lg shadow text-lg"
+                        onClick={() => handleZoneClick(z.zone)}
+                      >
+                        Área de {z.zone}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className={`${isMobile ? 'h-80' : 'h-[500px]'} w-full`}>
+                  <ErrorBoundary fallback={<div className="text-red-500">Erro ao carregar o modelo 3D.</div>}>
+                    <Suspense fallback={<div className="flex items-center justify-center h-full">Carregando modelo 3D...</div>}>
+                      <Factory3DModelManager 
+                        onZoneClick={handleZoneClick} 
+                        enableControls={enableControls}
+                      />
+                    </Suspense>
+                  </ErrorBoundary>
+                  <p className="text-sm text-muted-foreground text-center mt-2">
+                    Interaja com o modelo 3D para explorar as diferentes áreas da fábrica
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

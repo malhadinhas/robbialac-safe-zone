@@ -88,31 +88,25 @@ export async function getIncidents(req: Request, res: Response): Promise<void> {
  */
 export async function getIncidentById(req: Request, res: Response): Promise<void> {
   try {
-    const { incidentId } = req.params; // Obtém o ID do parâmetro da rota.
+    const { incidentId } = req.params;
+    const collection = await getCollection<Incident>('incidents');
+    let incident = null;
 
-    // Validação: Verifica se o ID fornecido é um ObjectId válido.
-    if (!ObjectId.isValid(incidentId)) {
-      logger.warn('ID de incidente inválido fornecido para busca.', { incidentId });
-      res.status(400).json({ error: 'ID de incidente inválido' });
-      return; // Para a execução.
+    if (ObjectId.isValid(incidentId)) {
+      // Buscar por _id (ObjectId)
+      incident = await collection.findOne({ _id: new ObjectId(incidentId) });
+    } else {
+      // Buscar por id (UUID string)
+      incident = await collection.findOne({ id: incidentId });
     }
 
-    // Obtém a coleção 'incidents'.
-    const collection = await getCollection<Incident>('incidents');
-    // Busca um único documento onde o campo _id corresponde ao ObjectId.
-    const incident = await collection.findOne({ _id: new ObjectId(incidentId) });
-
-    // Verifica se o incidente foi encontrado.
     if (!incident) {
       logger.warn('Incidente não encontrado pelo ID.', { incidentId });
-      // Responde com 404 Not Found.
       res.status(404).json({ error: 'Incidente não encontrado' });
-      return; // Para a execução.
+      return;
     }
 
     logger.info('Incidente recuperado com sucesso pelo ID.', { incidentId });
-    // Responde com o documento do incidente encontrado.
-    // Garante que as datas sejam objetos Date (embora findOne já deva retornar assim).
     res.json({
       ...incident,
       date: new Date(incident.date),
@@ -121,9 +115,7 @@ export async function getIncidentById(req: Request, res: Response): Promise<void
     });
 
   } catch (error) {
-    // Captura e loga erros.
     logger.error('Erro ao buscar incidente por ID:', { incidentId: req.params.incidentId, error });
-    // Responde com erro 500.
     res.status(500).json({ error: 'Erro ao buscar incidente' });
   }
 }

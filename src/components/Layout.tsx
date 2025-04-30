@@ -77,7 +77,7 @@ export function Layout({ children }: LayoutProps) {
   const userEmail = user?.email || ''; // Email a exibir ou vazio
 
   return (
-    <div className="h-screen w-full overflow-hidden flex flex-col md:flex-row">
+    <div className={`h-screen w-full flex flex-col md:flex-row ${isMobile ? '' : 'overflow-hidden'}`}>
       {shouldCollapseMenu && (
         <header 
           className="bg-robbialac text-white p-3 flex items-center justify-between z-30 flex-shrink-0"
@@ -260,7 +260,7 @@ export function Layout({ children }: LayoutProps) {
         />
       )}
       
-      <main className="flex-1 h-screen overflow-hidden">
+      <main className={`flex-1 ${isMobile ? 'overflow-y-auto' : 'h-screen overflow-hidden'}`}>
         {children}
       </main>
     </div>

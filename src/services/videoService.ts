@@ -115,7 +115,7 @@ export const uploadVideo = async (
     progress.status = 'uploading';
     onProgress?.(progress);
 
-    const response = await api.post('/videos', formData, {
+    const response = await api.post('/videos/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
