@@ -1,58 +1,81 @@
 import winston from 'winston';
-import 'winston-mongodb'; // Importa a tipagem e o transport
+import 'winston-mongodb'; // Importa a tipagem e o transport para MongoDB
 
-// URI do MongoDB (garantir que está carregado do .env)
-const mongoUri = process.env.VITE_MONGODB_URI || process.env.MONGODB_URI; // Tenta ambas as variáveis
+// URI do MongoDB para logging
+// Tenta ambas as variáveis de ambiente para maior flexibilidade
+const mongoUri = process.env.VITE_MONGODB_URI || process.env.MONGODB_URI;
+
+// Validação da URI do MongoDB
 if (!mongoUri) {
   console.error('!!!!!!!!!! ERRO CRÍTICO: URI do MongoDB não definida para o logger. Verifique as variáveis de ambiente (VITE_MONGODB_URI ou MONGODB_URI) !!!!!!!!!');
-  // Considerar lançar um erro aqui em produção para impedir o arranque sem logging DB
-  // throw new Error('MongoDB URI not configured for logging');
+  // Em produção, considerar lançar erro para impedir arranque sem logging DB
 }
 
-// Configuração do logger
+// Configuração avançada do logger
 const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info', // Nível de log configurável
+  // Nível de log configurável via variável de ambiente
+  level: process.env.LOG_LEVEL || 'info',
+  
+  // Formatação dos logs
   format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.errors({ stack: true }), // Inclui stack trace nos erros
-    winston.format.json()
+    winston.format.timestamp(), // Adiciona timestamp
+    winston.format.errors({ stack: true }), // Inclui stack trace completo em erros
+    winston.format.json() // Formato JSON para logs estruturados
   ),
+
+  // Transports (destinos dos logs)
   transports: [
-    // Manter logs em ficheiro
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' }),
+    // Transport para arquivo de erros
+    new winston.transports.File({ 
+      filename: 'error.log', 
+      level: 'error' 
+    }),
     
-    // Adicionar transport para MongoDB se a URI estiver definida
+    // Transport para arquivo combinado
+    new winston.transports.File({ 
+      filename: 'combined.log' 
+    }),
+    
+    // Transport para MongoDB (se URI estiver definida)
     ...(mongoUri ? [new winston.transports.MongoDB({
-      level: 'warn', // Logar warnings e erros para a DB
+      level: 'warn', // Loga warnings e erros na DB
       db: mongoUri,
-      options: { useNewUrlParser: true, useUnifiedTopology: true },
-      collection: 'errorLogs', // Nome da coleção
+      options: { 
+        useNewUrlParser: true, 
+        useUnifiedTopology: true 
+      },
+      collection: 'errorLogs', // Coleção para armazenar logs
       format: winston.format.combine(
-        winston.format.timestamp(), 
-        winston.format.metadata(), // Inclui metadados
+        winston.format.timestamp(),
+        winston.format.metadata(), // Inclui metadados adicionais
         winston.format.json()
       ),
-      metaKey: 'metadata' // Chave onde os metadados serão guardados
+      metaKey: 'metadata' // Chave para armazenar metadados
     })] : [])
   ],
-  exceptionHandlers: [ // Capturar exceções não tratadas
-    new winston.transports.File({ filename: 'exceptions.log' })
-    // Poderia adicionar MongoDB aqui também para exceções
+
+  // Handlers para exceções não tratadas
+  exceptionHandlers: [
+    new winston.transports.File({ 
+      filename: 'exceptions.log' 
+    })
   ],
-  rejectionHandlers: [ // Capturar rejeições de Promises não tratadas
-    new winston.transports.File({ filename: 'rejections.log' })
-    // Poderia adicionar MongoDB aqui também para rejeições
+
+  // Handlers para rejeições de Promises não tratadas
+  rejectionHandlers: [
+    new winston.transports.File({ 
+      filename: 'rejections.log' 
+    })
   ]
 });
 
-// Adicionar console log em desenvolvimento
+// Configuração adicional para ambiente de desenvolvimento
 if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
-    level: 'debug', // Mostrar debug na consola em dev
+    level: 'debug', // Mostra logs de debug no console
     format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.simple()
+      winston.format.colorize(), // Adiciona cores
+      winston.format.simple() // Formato simplificado para console
     )
   }));
 }
