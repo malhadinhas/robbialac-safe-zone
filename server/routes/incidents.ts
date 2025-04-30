@@ -31,7 +31,7 @@ router.get('/:incidentId', isAuthenticated, getIncidentById);
 router.put('/:incidentId', isAuthenticated, hasRole(['admin_app', 'admin_qa']), updateIncident);
 
 // DELETE /api/incidents/:incidentId - Apagar incidente permanentemente (requer privilégios de administrador)
-router.delete('/:incidentId', isAuthenticated, isAdmin, deleteIncident);
+router.delete('/:incidentId', isAuthenticated, hasRole(['admin_qa', 'admin_app']), deleteIncident);
 
 // Nova rota para incidentes recentes
 // Adicionar getRecentIncidents ao import do controlador acima quando for criado
