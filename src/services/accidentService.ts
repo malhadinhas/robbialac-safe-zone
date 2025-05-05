@@ -27,12 +27,7 @@ export const getAccidentById = async (id: string): Promise<Accident> => {
 // Criar um novo documento de acidente
 export const createAccident = async (formData: FormData): Promise<Accident> => {
   try {
-    console.log("FormData sendo enviado:", {
-      name: formData.get('name'),
-      country: formData.get('country'),
-      date: formData.get('date'),
-      file: formData.get('document') ? 'Arquivo PDF presente' : 'Sem arquivo'
-    });
+    console.log("Enviando dados para criar acidente");
     
     const response = await api.post('/accidents', formData, {
       headers: {

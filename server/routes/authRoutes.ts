@@ -31,8 +31,11 @@ router.post('/login', async (req: Request, res: Response) => {
     
     logger.info('Login bem-sucedido e token gerado', { userId: user.id, email: user.email });
 
+    // Remover _id do utilizador antes de devolver
+    const { _id, ...userWithoutMongoId } = user;
+
     // Retornar dados do utilizador e token
-    res.json({ user, token });
+    res.json({ user: userWithoutMongoId, token });
 
   } catch (error: any) {
     logger.error('Erro durante o processo de login na rota /api/auth/login', { 

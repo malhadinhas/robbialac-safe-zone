@@ -27,6 +27,8 @@ import analyticsRoutes from './routes/analyticsRoutes';
 import authRoutes from './routes/authRoutes';
 import { hashPassword } from './services/auth';
 import interactionRoutes from './routes/interactionRoutes';
+import corsMiddleware from './config/cors';
+import fileAccessMiddleware from './middleware/fileAccessMiddleware';
 
 /**
  * Verificação das variáveis de ambiente necessárias para o Cloudflare R2
@@ -65,14 +67,8 @@ const port = 3000;
 const TEMP_DIR = path.join(process.cwd(), 'temp');
 
 // Configurações de segurança
-app.use(helmet()); // Proteção contra vulnerabilidades comuns
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'], // Origens permitidas
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],      // Métodos HTTP permitidos
-  allowedHeaders: ['Content-Type', 'Authorization', 'Range'], // Headers permitidos
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],      // Headers expostos
-  credentials: true                                          // Permite credenciais
-}));
+app.use(helmet());
+app.use(corsMiddleware);
 
 /**
  * Configuração de limites de upload
@@ -81,8 +77,8 @@ app.use(cors({
 app.use(express.json({ limit: '10gb' }));
 app.use(express.urlencoded({ limit: '10gb', extended: true }));
 
-// Servir arquivos estáticos do diretório temp
-app.use('/videos', express.static(TEMP_DIR));
+// Servir arquivos estáticos do diretório temp com proteção
+app.use('/videos', fileAccessMiddleware, express.static(TEMP_DIR));
 
 /**
  * Configuração específica para ambiente de desenvolvimento
@@ -90,7 +86,7 @@ app.use('/videos', express.static(TEMP_DIR));
  */
 if (process.env.NODE_ENV === 'development') {
   const TEMP_STORAGE_DIR = path.join(process.cwd(), 'storage', 'temp');
-  app.use('/temp', express.static(TEMP_STORAGE_DIR));
+  app.use('/temp', fileAccessMiddleware, express.static(TEMP_STORAGE_DIR));
   logger.info('Modo de desenvolvimento - Servindo arquivos temporários de:', TEMP_STORAGE_DIR);
 }
 

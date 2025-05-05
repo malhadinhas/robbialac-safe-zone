@@ -30,9 +30,12 @@ import MobileDashboard from "@/components/dashboard/MobileDashboard";
 import { CategoryVideosCard } from "@/components/dashboard/CategoryVideosCard";
 import { FeedCard } from "@/components/dashboard/FeedCard";
 import { useNavigate } from "react-router-dom";
+import AvatarUploader from "@/components/ui/AvatarUploader";
+import { updateUser } from "@/services/userService";
+import { toast } from "sonner";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, updateUserAvatar } = useAuth();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const isCompactView = useIsCompactView();
@@ -44,6 +47,7 @@ export default function Dashboard() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<string | undefined>(user?.avatarUrl);
 
   const navigate = useNavigate();
 
@@ -200,6 +204,19 @@ export default function Dashboard() {
     );
   };
 
+  // Handler para alteração do avatar
+  const handleAvatarChange = async (base64: string) => {
+    if (!user) return;
+    try {
+      await updateUser({ ...user, id: user._id, avatarUrl: base64 });
+      setAvatar(base64);
+      updateUserAvatar(base64);
+      toast.success("Avatar atualizado com sucesso!");
+    } catch (err) {
+      toast.error("Erro ao atualizar avatar");
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -251,47 +268,61 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Coluna 1: Cards de progresso do usuário */}
             <div className="md:col-span-1 grid grid-cols-1 gap-4">
-              <Card className="h-auto">
-                <CardHeader className="pb-2 space-y-0">
-                  <CardTitle className="text-sm font-medium">Seu Progresso</CardTitle>
-              </CardHeader>
-                <CardContent className="pb-4">
+              <Card className="h-auto flex flex-col items-center p-4 rounded-2xl shadow-lg">
+                {/* Avatar editável */}
+                <AvatarUploader
+                  avatarUrl={avatar}
+                  name={user?.name}
+                  onAvatarChange={handleAvatarChange}
+                />
+                <CardHeader className="pb-2 space-y-0 w-full text-center">
+                  <CardTitle className="text-base font-bold">Seu Progresso</CardTitle>
+                </CardHeader>
+                <CardContent className="pb-4 w-full">
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Nível {currentLevel}</span>
-                      <span className="text-sm font-medium">Nível {currentLevel + 1}</span>
-                </div>
-                    <Progress value={progressToNextLevel} className="h-2" />
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-blue-700">Nível {currentLevel}</span>
+                      <span className="font-semibold text-gray-400">Nível {currentLevel + 1}</span>
+                    </div>
+                    <div className="relative w-full h-4 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="absolute left-0 top-0 h-4 bg-gradient-to-r from-blue-500 to-blue-300 rounded-full transition-all duration-500"
+                        style={{ width: `${progressToNextLevel}%` }}
+                      />
+                      <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs text-white font-bold">
+                        {Math.round(progressToNextLevel)}%
+                      </span>
+                    </div>
                     <p className="text-xs text-gray-500 text-center">
-                  {pointsToNextLevel} pontos para o próximo nível
+                      {pointsToNextLevel} pontos para o próximo nível
                     </p>
-                </div>
-              </CardContent>
-            </Card>
-            
+                  </div>
+                </CardContent>
+              </Card>
+              
               <Card className="h-auto">
                 <CardHeader className="pb-2 space-y-0">
                   <CardTitle className="text-sm font-medium">Pontuação Total</CardTitle>
-              </CardHeader>
+                </CardHeader>
                 <CardContent className="pb-4">
                   <div className="text-center">
                     <p className="text-3xl font-bold mb-1">{user?.points || 0}</p>
-                <div className="flex items-center justify-center">
-                      <p className="text-xs text-gray-500">Pontos acumulados</p>
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="p-0 h-auto text-xs text-robbialac ml-1"
-                        onClick={() => navigate('/ranking')}
-                      >
-                        Ver Ranking
-                      </Button>
-                    </div>
+                  <div className="flex items-center justify-center">
+                        <p className="text-xs text-gray-500">Pontos acumulados</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="ml-2"
+                          onClick={() => navigate('/ranking')}
+                        >
+                          Ver Ranking
+                        </Button>
+                      </div>
                   </div>
-              </CardContent>
-            </Card>
-          </div>
-    
+                </CardContent>
+              </Card>
+            </div>
+      
             {/* Coluna 2: Card de Atividade Recente */}
             <div className="md:col-span-1">
               <RecentActivityCard 

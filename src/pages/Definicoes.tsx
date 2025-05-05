@@ -167,111 +167,6 @@ export default function Definicoes() {
     </Card>
   );
 
-  // Storage Card Component
-  const StorageCard = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle>Armazenamento de Vídeos</CardTitle>
-        <CardDescription>
-          Configure a integração com Cloudflare R2 para armazenamento de vídeos
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="r2-account-id">ID da Conta Cloudflare</Label>
-          <Input 
-            id="r2-account-id" 
-            value={r2AccountId}
-            onChange={(e) => setR2AccountId(e.target.value)}
-            placeholder="ex: 485c3c736434b646ff46725121de873c" 
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="r2-access-key">Access Key ID</Label>
-          <Input 
-            id="r2-access-key" 
-            value={r2AccessKeyId}
-            onChange={(e) => setR2AccessKeyId(e.target.value)}
-            placeholder="ex: 56f3925666837ff8ba99087b930e88cb" 
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="r2-secret-key">Secret Access Key</Label>
-          <Input 
-            id="r2-secret-key" 
-            type="password"
-            value={r2SecretKey}
-            onChange={(e) => setR2SecretKey(e.target.value)}
-            placeholder="••••••••••••••••" 
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="r2-bucket">Nome do Bucket</Label>
-          <Input 
-            id="r2-bucket" 
-            value={r2BucketName}
-            onChange={(e) => setR2BucketName(e.target.value)}
-            placeholder="ex: workplace-safety-videos" 
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="r2-public-url">URL Pública do R2</Label>
-          <Input 
-            id="r2-public-url" 
-            value={r2PublicUrl}
-            onChange={(e) => setR2PublicUrl(e.target.value)}
-            placeholder="ex: https://pub-xyz.r2.dev" 
-          />
-        </div>
-        
-        <Button onClick={handleSaveR2Config} className="mt-4">
-          Salvar Configuração R2
-        </Button>
-      </CardContent>
-    </Card>
-  );
-
-  // Database Card Component
-  const DatabaseCard = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle>Banco de Dados</CardTitle>
-        <CardDescription>
-          Configure a conexão com MongoDB Atlas
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="mongo-uri">URI de Conexão</Label>
-          <Input 
-            id="mongo-uri" 
-            value={mongoUri}
-            onChange={(e) => setMongoUri(e.target.value)}
-            placeholder="mongodb+srv://..." 
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="mongo-db">Nome do Banco</Label>
-          <Input 
-            id="mongo-db" 
-            value={mongoDbName}
-            onChange={(e) => setMongoDbName(e.target.value)}
-            placeholder="workplace-safety" 
-          />
-        </div>
-        
-        <Button onClick={handleSaveMongoConfig} className="mt-4">
-          Salvar Configuração MongoDB
-        </Button>
-      </CardContent>
-    </Card>
-  );
-
   // Mobile/Tablet Layout - Using Accordion for Admin section
   const MobileLayout = () => (
     <div className="container py-4 h-full flex flex-col">
@@ -299,22 +194,6 @@ export default function Definicoes() {
                 <AccordionTrigger className="text-base font-semibold">WhatsApp</AccordionTrigger>
                 <AccordionContent>
                   <WhatsAppIntegration />
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Section for Storage */}
-              <AccordionItem value="storage">
-                <AccordionTrigger className="text-base font-semibold">Storage</AccordionTrigger>
-                <AccordionContent>
-                  <StorageCard />
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Section for Database */}
-              <AccordionItem value="database">
-                <AccordionTrigger className="text-base font-semibold">Database</AccordionTrigger>
-                <AccordionContent>
-                   <DatabaseCard />
                 </AccordionContent>
               </AccordionItem>
 
@@ -363,8 +242,6 @@ export default function Definicoes() {
           {isAdminApp && (
             <>
               <TabsTrigger value="whatsapp">{t('whatsapp')}</TabsTrigger>
-              <TabsTrigger value="storage">{t('storage')}</TabsTrigger>
-              <TabsTrigger value="database">{t('database')}</TabsTrigger>
               <TabsTrigger value="medals">{t('medals')}</TabsTrigger>
             </>
           )}
@@ -390,14 +267,6 @@ export default function Definicoes() {
           <>
             <TabsContent value="whatsapp" className="mt-0 flex-grow overflow-y-auto">
               <WhatsAppIntegration />
-            </TabsContent>
-            
-            <TabsContent value="storage" className="mt-0 flex-grow overflow-y-auto">
-              <StorageCard />
-            </TabsContent>
-            
-            <TabsContent value="database" className="mt-0 flex-grow overflow-y-auto">
-              <DatabaseCard />
             </TabsContent>
             
             <TabsContent value="medals" className="mt-0 flex-grow overflow-y-auto">

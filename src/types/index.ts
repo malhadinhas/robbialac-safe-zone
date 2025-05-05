@@ -10,6 +10,8 @@ export interface User {
   medals: Medal[];
   viewedVideos: string[];
   reportedIncidents: string[];
+  _id?: string;
+  avatarUrl?: string;
 }
 
 export interface Medal {

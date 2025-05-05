@@ -27,16 +27,11 @@ export const getSensibilizacaoById = async (id: string): Promise<Sensibilizacao>
 // Criar um novo documento de sensibilização
 export const createSensibilizacao = async (formData: FormData): Promise<Sensibilizacao> => {
   try {
-    console.log("FormData sendo enviado para sensibilização:", {
-      name: formData.get('name'),
-      country: formData.get('country'),
-      date: formData.get('date'),
-      file: formData.get('document') ? 'Arquivo PDF presente' : 'Sem arquivo'
-    });
+    console.log("Enviando dados para sensibilização");
     
     // Verificar token de autenticação
     const token = localStorage.getItem('robbialac_token');
-    console.log("Token de autenticação presente:", !!token);
+    console.log("Token de autenticação presente");
     
     const response = await api.post('/sensibilizacao', formData, {
       headers: {

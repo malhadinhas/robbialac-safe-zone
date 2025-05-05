@@ -64,7 +64,6 @@ export async function loginUser(email: string, password: string): Promise<User |
   
   // --- ARMAZENAR O TOKEN --- 
   localStorage.setItem('token', token); 
-  console.log("[authService] Token stored in localStorage."); // Log para confirmar
   // ------------------------
 
   // Salvar informações do usuário no localStorage

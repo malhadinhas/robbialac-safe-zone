@@ -3,6 +3,7 @@ import { getCollection } from '../services/database'; // Função para obter uma
 import { User } from '../types'; // Tipo User definido na aplicação
 import { hashPassword } from '../services/auth'; // Função para fazer hash da password
 import logger from '../utils/logger'; // Logger para registar informações e erros
+import { ObjectId } from 'mongodb';
 
 // Função para obter todos os utilizadores
 export async function getUsers(req: Request, res: Response) {
@@ -21,13 +22,19 @@ export async function getUserById(req: Request, res: Response) {
   try {
     const { id } = req.params; // Extrai o id dos parâmetros da rota
     const collection = await getCollection<User>('users'); // Obtém a coleção 'users'
-    const user = await collection.findOne({ id }); // Procura o utilizador pelo id
-    
+    let user = null;
+    try {
+      user = await collection.findOne({ _id: new ObjectId(id) });
+    } catch (e) {
+      // id não é um ObjectId válido
+      return res.status(400).json({ error: 'ID inválido' });
+    }
     if (!user) {
       return res.status(404).json({ error: 'Usuário não encontrado' }); // Se não encontrar, retorna 404
     }
-    
-    res.json(user); // Retorna o utilizador encontrado
+    // Mapeamento _id -> _id
+    const { _id, ...userWithoutMongoId } = user;
+    res.json(userWithoutMongoId); // Retorna o utilizador encontrado sem _id
   } catch (error) {
     console.error('Erro ao buscar usuário:', error); // Log de erro
     res.status(500).json({ error: 'Erro ao buscar usuário' }); // Retorna erro 500
@@ -44,8 +51,9 @@ export async function getUserByEmail(req: Request, res: Response) {
     if (!user) {
       return res.status(404).json({ error: 'Usuário não encontrado' }); // Se não encontrar, retorna 404
     }
-    
-    res.json(user); // Retorna o utilizador encontrado
+    // Mapeamento _id -> id
+    const { _id, ...userWithoutMongoId } = user;
+    res.json(userWithoutMongoId); // Retorna o utilizador encontrado sem _id
   } catch (error) {
     console.error('Erro ao buscar usuário por email:', error); // Log de erro
     res.status(500).json({ error: 'Erro ao buscar usuário' }); // Retorna erro 500
@@ -104,24 +112,31 @@ export async function createUser(req: Request, res: Response) {
 // Função para atualizar um utilizador existente
 export async function updateUser(req: Request, res: Response) {
   try {
-    const { id } = req.params; // Extrai o id dos parâmetros da rota
-    const updateData = req.body; // Dados a atualizar
-    const collection = await getCollection<User>('users'); // Obtém a coleção 'users'
-    
-    // Atualiza o utilizador com os novos dados
+    const { id } = req.params; // id é o _id do MongoDB
+    const updateData = req.body;
+    const collection = await getCollection<User>('users');
+
+    let objectId;
+    try {
+      objectId = new ObjectId(id);
+    } catch (e) {
+      return res.status(400).json({ error: 'ID inválido' });
+    }
+
+    // Atualiza o utilizador pelo _id
     const result = await collection.updateOne(
-      { id },
+      { _id: objectId },
       { $set: updateData }
     );
-    
+
     if (result.matchedCount === 0) {
-      return res.status(404).json({ error: 'Usuário não encontrado' }); // Se não encontrar, retorna 404
+      return res.status(404).json({ error: 'Usuário não encontrado' });
     }
-    
-    res.json({ message: 'Usuário atualizado com sucesso' }); // Retorna mensagem de sucesso
+
+    res.json({ message: 'Usuário atualizado com sucesso' });
   } catch (error) {
-    console.error('Erro ao atualizar usuário:', error); // Log de erro
-    res.status(500).json({ error: 'Erro ao atualizar usuário' }); // Retorna erro 500
+    console.error('Erro ao atualizar usuário:', error);
+    res.status(500).json({ error: 'Erro ao atualizar usuário' });
   }
 }
 
