@@ -1,73 +1,131 @@
-# Welcome to your Lovable project
+# Bem-vindo ao projeto RobbiSeg
 
-## Project info
+## Informação do Projeto
 
-**URL**: https://lovable.dev/projects/14f8263d-6ed6-4c82-b679-51a797dc1e80
+A RobbiSeg é uma plataforma web para gestão de segurança industrial que inclui:
 
-## How can I edit this code?
+- Visualização de vídeos de formação por área da fábrica e categoria
+- Sistema de reporte de quase-acidentes
+- Quadro de pontuação e gamificação
+- Integração com WhatsApp para reportes automáticos
+- Painel de controlo com estatísticas e análises
 
-There are several ways of editing your application.
+## Tecnologias Utilizadas
 
-**Use Lovable**
+Este projeto é construído com:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/14f8263d-6ed6-4c82-b679-51a797dc1e80) and start prompting.
+- **Frontend**:
+  - React
+  - TypeScript
+  - TailwindCSS
+  - ShadcnUI
+- **Armazenamento**:
+  - Cloudflare R2
+  - Cloudflare Workers
+- **Base de Dados**:
+  - MongoDB Atlas
+- **Multimédia**:
+  - HLS (HTTP Live Streaming)
+  - FFmpeg para conversão de vídeo
+- **Integrações**:
+  - WhatsApp Business API
 
-Changes made via Lovable will be committed automatically to this repo.
+## Como Editar Este Código
 
-**Use your preferred IDE**
+Existem várias formas de editar a aplicação:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Desenvolvimento Local
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Requisitos:
 
-Follow these steps:
+- Node.js & npm - [instalar com nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- FFmpeg (para processamento de vídeos)
+- MongoDB (local ou acesso ao MongoDB Atlas)
+
+Passos para iniciar:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# 1. Clonar o repositório
+git clone <URL_DO_GIT>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# 2. Navegar para a pasta do projeto
+cd robbialac-security
 
-# Step 3: Install the necessary dependencies.
-npm i
+# 3. Instalar as dependências
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 4. Configurar variáveis de ambiente
+cp src/.env.example .env
+# Editar .env com as credenciais necessárias
+
+# 5. Iniciar o servidor de desenvolvimento
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Editar no GitHub
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- Navegue até ao ficheiro desejado
+- Clique no botão "Edit" (ícone de lápis)
+- Faça as alterações e confirme as mudanças
 
-**Use GitHub Codespaces**
+### Utilizar GitHub Codespaces
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- Na página principal do repositório
+- Clique no botão "Code" (botão verde)
+- Selecione o separador "Codespaces"
+- Clique em "New codespace"
+- Edite os ficheiros e faça commit das alterações
 
-## What technologies are used for this project?
+## Estrutura do Projeto
 
-This project is built with:
+```
+robbialac-security/
+├── public/                 # Ficheiros estáticos
+├── src/
+│   ├── components/         # Componentes React reutilizáveis
+│   ├── config/            # Ficheiros de configuração
+│   ├── contexts/          # Contextos React
+│   ├── hooks/             # Hooks personalizados
+│   ├── lib/               # Bibliotecas e utilitários
+│   ├── pages/             # Componentes de página
+│   ├── services/          # Serviços e APIs
+│   └── types/             # Definições de tipo TypeScript
+└── docs/                  # Documentação do projeto
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Implementação em Produção
 
-## How can I deploy this project?
+Para implementar em produção:
 
-Simply open [Lovable](https://lovable.dev/projects/14f8263d-6ed6-4c82-b679-51a797dc1e80) and click on Share -> Publish.
+1. Construir a aplicação:
 
-## Can I connect a custom domain to my Lovable project?
+```bash
+npm run build
+```
 
-Yes it is!
+2. Configurar serviços:
+   - Alojar ficheiros estáticos (Vercel, Netlify, etc.)
+   - Configurar MongoDB Atlas
+   - Configurar Cloudflare R2
+   - Configurar variáveis de ambiente
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Documentação Adicional
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Para informação mais detalhada sobre:
+
+- Configuração do ambiente
+- Gestão de utilizadores
+- Processamento de vídeos
+- Segurança e otimização
+
+Consulte a documentação completa em `docs/DEVELOPER.md`
+
+## Suporte e Contacto
+
+- **Email de Suporte**: suporte@exemplo.com
+- **Documentação API**: https://api-docs.exemplo.com
+- **Repositório**: https://github.com/exemplo/robbialac-security
+
+---
+
+Última atualização: Abril 2025
