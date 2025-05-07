@@ -1,11 +1,15 @@
 import { useState, useEffect, MouseEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertTriangle, FileText, ThumbsUp, MessageSquare } from 'lucide-react';
+import { AlertTriangle, FileText, ThumbsUp, MessageSquare, Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getFeedActivity, FeedItem } from '@/services/feedService';
 import { Button } from '@/components/ui/button';
+// Importar modais
+import { QuaseAcidentesViewModal } from '@/components/incidents/QuaseAcidentesViewModal';
+import { AcidenteViewModal } from '@/components/acidentes/AcidenteViewModal';
+import { SensibilizacaoViewModal } from '@/components/sensibilizacao/SensibilizacaoViewModal';
 
 // Componente para exibir um item do feed
 const FeedItemCard: React.FC<{
@@ -31,6 +35,7 @@ const FeedItemCard: React.FC<{
         return item.documentType === 'Acidente' 
           ? <AlertTriangle size={16} className="text-red-500" />
           : <FileText size={16} className="text-blue-500" />;
+      case 'video': return <Video size={16} className="text-purple-500" />;
       default: return null;
     }
   };
@@ -91,6 +96,12 @@ export function FeedCard() {
   const [error, setError] = useState<string | null>(null);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
 
+  // Estado para modais
+  const [qaModalId, setQaModalId] = useState<string | null>(null);
+  const [acidenteModalId, setAcidenteModalId] = useState<string | null>(null);
+  const [sensibilizacaoModalId, setSensibilizacaoModalId] = useState<string | null>(null);
+  const [openComments, setOpenComments] = useState(false);
+
   useEffect(() => {
     const loadFeedData = async () => {
       setLoading(true);
@@ -108,59 +119,96 @@ export function FeedCard() {
     loadFeedData();
   }, []);
 
-  // Navegação para o item clicado
-  const handleItemClick = (item: FeedItem, openComments: boolean = false) => {
-    let path = '';
+  // Handler de click atualizado
+  const handleItemClick = (item: FeedItem, openCommentsParam: boolean = false) => {
+    setOpenComments(openCommentsParam);
     if (item.type === 'qa') {
-      path = `/quase-acidentes/${item._id}`; 
+      setQaModalId(item._id);
     } else if (item.type === 'document' && item.documentType) {
-      path = item.documentType === 'Acidente' 
-        ? `/acidentes/${item._id}`
-        : `/sensibilizacao/${item._id}`;
-    } else {
-      return; // Não navegar se dados incompletos
+      if (item.documentType === 'Acidente') {
+        setAcidenteModalId(item._id);
+      } else if (item.documentType === 'Sensibilizacao') {
+        setSensibilizacaoModalId(item._id);
+      }
+    } else if (item.type === 'video') {
+      navigate(`/videos/visualizar/${item._id}`);
     }
-    
-    navigate(path, { state: { openComments } });
+  };
+
+  // Fechar modais
+  const closeAllModals = () => {
+    setQaModalId(null);
+    setAcidenteModalId(null);
+    setSensibilizacaoModalId(null);
+    setOpenComments(false);
   };
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-lg">Feed de Atividades</CardTitle>
-          <Button 
-            variant="link" 
-            className="p-0 h-auto" 
-            onClick={() => navigate('/feed')}
-          >
-            Ver todos
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="py-0 px-2">
-        {loading ? (
-          <div className="flex items-center justify-center p-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-robbialac"></div>
+    <>
+      <Card className="h-full">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-lg">Feed de Atividades</CardTitle>
+            <Button 
+              variant="link" 
+              className="p-0 h-auto" 
+              onClick={() => navigate('/feed')}
+            >
+              Ver todos
+            </Button>
           </div>
-        ) : error ? (
-          <div className="text-center text-red-600 p-2 text-sm">
-            {error}
-          </div>
-        ) : feedItems.length === 0 ? (
-          <p className="text-center text-muted-foreground py-4 text-sm">Nenhuma atividade recente</p>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {feedItems.map(item => (
-              <FeedItemCard 
-                key={item._id} 
-                item={item} 
-                onClick={handleItemClick} 
-              />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent className="py-0 px-2">
+          {loading ? (
+            <div className="flex items-center justify-center p-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-robbialac"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center text-red-600 p-2 text-sm">
+              {error}
+            </div>
+          ) : feedItems.length === 0 ? (
+            <p className="text-center text-muted-foreground py-4 text-sm">Nenhuma atividade recente</p>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {feedItems.map(item => (
+                <FeedItemCard 
+                  key={item._id} 
+                  item={item} 
+                  onClick={handleItemClick} 
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      {/* Modais QA */}
+      {qaModalId && (
+        <QuaseAcidentesViewModal 
+          isOpen={!!qaModalId} 
+          onClose={closeAllModals} 
+          incidentId={qaModalId} 
+          openComments={openComments}
+        />
+      )}
+      {/* Modais Acidente */}
+      {acidenteModalId && (
+        <AcidenteViewModal
+          isOpen={!!acidenteModalId}
+          onClose={closeAllModals}
+          accidentId={acidenteModalId}
+          openComments={openComments}
+        />
+      )}
+      {/* Modais Sensibilização */}
+      {sensibilizacaoModalId && (
+        <SensibilizacaoViewModal
+          isOpen={!!sensibilizacaoModalId}
+          onClose={closeAllModals}
+          docId={sensibilizacaoModalId}
+          openComments={openComments}
+        />
+      )}
+    </>
   );
 } 

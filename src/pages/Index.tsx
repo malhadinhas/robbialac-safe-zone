@@ -322,19 +322,9 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             </div>
-      
-            {/* Coluna 2: Card de Atividade Recente */}
-            <div className="md:col-span-1">
-              <RecentActivityCard 
-                title="Atividade Recente"
-                videos={recentVideos.slice(0, 1)}
-                incidents={recentIncidents.slice(0, 1)}
-                className="h-full"
-              />
-            </div>
 
-            {/* Coluna 3-4: Feed */}
-            <div className="md:col-span-2">
+            {/* Coluna 2-4: Feed expandido */}
+            <div className="md:col-span-3">
               <FeedCard />
             </div>
           </div>

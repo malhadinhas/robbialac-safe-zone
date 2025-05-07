@@ -144,11 +144,6 @@ export function SensibilizacaoComponent() {
       formData.append('document', selectedFile);
 
       toast("A processar o upload e a criar o documento...");
-      console.log("Enviando formulário para criar documento de sensibilização:", {
-        nome: newSensibilizacao.name,
-        país: newSensibilizacao.country,
-        data: newSensibilizacao.date
-      });
       
       await createSensibilizacao(formData);
       setShowAddModal(false);

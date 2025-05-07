@@ -315,18 +315,10 @@ export function Acidentes() {
   }, [accidents, docIdFromUrl]);
 
   useEffect(() => {
-    if (!loading && displayedAccidents.length === 1 && docIdFromUrl) {
-      const shouldOpenComments = location.state?.openComments;
-      if (shouldOpenComments) {
-        const docToOpen = displayedAccidents[0];
-        if (docToOpen) {
-            console.log(`Tentando abrir comentários para acidente ${docIdFromUrl} devido ao state da navegação.`);
-            openCommentsModal(docToOpen);
-            navigate(location.pathname, { replace: true, state: {} }); 
-        }
-      }
+    if (docIdFromUrl && !modalOpen) {
+      handleOpenComments(docIdFromUrl);
     }
-  }, [loading, displayedAccidents, docIdFromUrl, location.state, navigate]);
+  }, [docIdFromUrl, modalOpen]);
 
   return (
     <Layout>

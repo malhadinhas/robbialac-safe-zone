@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import Image from "next/image";
 import { useIsCompactView } from '@/hooks/use-mobile';
+import { QuaseAcidentesViewModal } from "@/components/incidents/QuaseAcidentesViewModal";
 
 const QuaseAcidentes = () => {
   const navigate = useNavigate();
@@ -1150,6 +1151,15 @@ const QuaseAcidentes = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {isViewModalOpen && selectedIncident && (
+          <QuaseAcidentesViewModal
+            isOpen={isViewModalOpen}
+            onClose={() => setIsViewModalOpen(false)}
+            incidentId={selectedIncident._id || selectedIncident.id}
+            openComments={false}
+          />
+        )}
     </Layout>
   );
 };
