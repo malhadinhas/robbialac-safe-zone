@@ -15,6 +15,8 @@ import { Incident, Department } from '../types';
 import logger from '../utils/logger'; // Utilitário de logging
 import { ObjectId } from 'mongodb'; // Tipo ObjectId do MongoDB
 import crypto from 'crypto'; // Módulo crypto do Node.js para gerar UUID
+import Like from '../models/Like';
+import Comment from '../models/Comment';
 
 /**
  * @function getIncidents
@@ -37,41 +39,46 @@ export async function getIncidents(req: Request, res: Response): Promise<void> {
 
     // Define a query baseada no filtro de status fornecido.
     if (statusFilter === 'not_archived') {
-      // Busca incidentes onde o status NÃO é ($ne) 'Arquivado'.
       query = { status: { $ne: 'Arquivado' } };
       logger.info('Buscando incidentes não arquivados...');
     } else if (statusFilter === 'archived') {
-      // Busca incidentes onde o status é exatamente 'Arquivado'.
       query = { status: 'Arquivado' };
       logger.info('Buscando incidentes arquivados...');
     } else {
-      // Se nenhum filtro de status válido for passado, busca todos os incidentes.
       logger.info('Buscando todos os incidentes (sem filtro de status)...');
     }
 
     // Executa a busca na coleção:
-    // - find(query): Aplica o filtro construído.
-    // - sort({ date: -1 }): Ordena os resultados pela data em ordem descendente (mais recentes primeiro).
-    // - toArray(): Converte o cursor resultante em um array de documentos.
     const incidents = await collection.find(query).sort({ date: -1 }).toArray();
+    const incidentIds = incidents.map(inc => inc._id);
 
-    // Formata as datas (embora neste caso pareça redundante, pois já devem ser Date)
-    // É uma boa prática garantir que os tipos de data estejam corretos antes de enviar.
+    // Buscar contadores de likes e comentários para todos os incidentes
+    const likeCounts = await Like.aggregate([
+      { $match: { itemId: { $in: incidentIds }, itemType: 'qa' } },
+      { $group: { _id: '$itemId', count: { $sum: 1 } } }
+    ]);
+    const commentCounts = await Comment.aggregate([
+      { $match: { itemId: { $in: incidentIds }, itemType: 'qa' } },
+      { $group: { _id: '$itemId', count: { $sum: 1 } } }
+    ]);
+    const likesMap = new Map(likeCounts.map(item => [item._id.toString(), item.count]));
+    const commentsMap = new Map(commentCounts.map(item => [item._id.toString(), item.count]));
+
+    // Formata as datas e inclui os contadores
     const formattedIncidents = incidents.map(incident => ({
       ...incident,
-      date: incident.date, // Assumindo que já é Date
-      completionDate: incident.completionDate, // Assumindo que já é Date ou undefined/null
-      resolutionDeadline: incident.resolutionDeadline // Assumindo que já é Date ou undefined/null
+      date: incident.date,
+      completionDate: incident.completionDate,
+      resolutionDeadline: incident.resolutionDeadline,
+      likeCount: likesMap.get(incident._id.toString()) || 0,
+      commentCount: commentsMap.get(incident._id.toString()) || 0
     }));
 
     logger.info(`Encontrados ${incidents.length} incidentes com filtro '${statusFilter || 'nenhum'}'`);
-    // Responde com o array de incidentes formatados.
     res.json(formattedIncidents);
 
   } catch (error) {
-    // Captura e loga erros detalhados.
     logger.error('Erro detalhado ao buscar incidentes:', error);
-    // Responde com erro 500 Internal Server Error.
     res.status(500).json({
       error: 'Erro ao buscar incidentes',
       details: error instanceof Error ? error.message : 'Erro desconhecido'

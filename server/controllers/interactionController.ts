@@ -12,6 +12,10 @@ import Comment from '../models/Comment';    // Modelo Mongoose para Comentários
 import { isValidObjectId } from 'mongoose'; // Função do Mongoose para validar formato de ObjectId
 import logger from '../utils/logger';     // Utilitário de logging
 import { ObjectId } from 'mongodb';         // Tipo ObjectId do MongoDB/Mongoose
+import { registerActivityData } from './activityController';
+import Accident from '../models/Accident';
+import Sensibilizacao from '../models/Sensibilizacao';
+import { getCollection } from '../services/database';
 
 /**
  * @function isValidItemType
@@ -82,6 +86,34 @@ export const addLike = async (req: Request, res: Response): Promise<void> => {
             { $setOnInsert: likeData }, // Dados a serem inseridos se não encontrado
             { upsert: true, new: false, runValidators: true } // Habilita upsert
         );
+
+        // Buscar título do item para registo de atividade
+        let itemTitle = '';
+        if (itemType === 'qa') {
+            const incidentsCollection = await getCollection('incidents');
+            const qa = await incidentsCollection.findOne({ _id: new ObjectId(itemId) });
+            itemTitle = qa?.title || '';
+        } else if (itemType === 'accident') {
+            const accident = await Accident.findById(itemId).select('name');
+            itemTitle = accident?.name || '';
+        } else if (itemType === 'sensibilizacao') {
+            const sensibilizacao = await Sensibilizacao.findById(itemId).select('name');
+            itemTitle = sensibilizacao?.name || '';
+        }
+
+        // Registar atividade
+        await registerActivityData({
+            userId,
+            category: itemType === 'qa' ? 'incident' : itemType === 'accident' ? 'incident' : 'training',
+            activityId: itemId,
+            points: 1,
+            details: {
+                action: 'like',
+                itemType,
+                itemTitle,
+                userName: req.user?.name
+            }
+        });
 
         logger.info('Like adicionado/confirmado com sucesso.', { userId, itemId, itemType });
         // 6. Retorna sucesso. Usar 200 OK é mais simples do que diferenciar entre criação (201) e confirmação.
@@ -218,6 +250,35 @@ export const addComment = async (req: Request, res: Response): Promise<void> => 
         //               Verificar a definição do Model ou usar o retorno de save() se necessário.
         logger.info('Comentário adicionado com sucesso.', { userId, itemId, itemType, commentId: newComment._id?.toString() });
 
+        // Buscar título do item para registo de atividade
+        let itemTitle = '';
+        if (itemType === 'qa') {
+            const incidentsCollection = await getCollection('incidents');
+            const qa = await incidentsCollection.findOne({ _id: new ObjectId(itemId) });
+            itemTitle = qa?.title || '';
+        } else if (itemType === 'accident') {
+            const accident = await Accident.findById(itemId).select('name');
+            itemTitle = accident?.name || '';
+        } else if (itemType === 'sensibilizacao') {
+            const sensibilizacao = await Sensibilizacao.findById(itemId).select('name');
+            itemTitle = sensibilizacao?.name || '';
+        }
+
+        // Registar atividade
+        await registerActivityData({
+            userId,
+            category: itemType === 'qa' ? 'incident' : itemType === 'accident' ? 'incident' : 'training',
+            activityId: itemId,
+            points: 1,
+            details: {
+                action: 'comment',
+                itemType,
+                itemTitle,
+                commentText: text.trim(),
+                userName: req.user?.name
+            }
+        });
+
         // 6. Formatar e retornar o comentário recém-criado na resposta.
         //    É boa prática retornar o objeto criado para o frontend.
         const responseComment = {
@@ -303,4 +364,31 @@ export const getCommentsByItem = async (req: Request, res: Response): Promise<vo
         // Retorna erro 500 Internal Server Error.
         res.status(500).json({ message: 'Erro ao buscar comentários.', details: error.message });
     }
+};
+
+/**
+ * @function getLikeInfo
+ * @description Devolve o número de likes e se o utilizador autenticado já fez like num item.
+ * @route GET /api/interactions/like/:itemType/:itemId
+ */
+export const getLikeInfo = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { itemType, itemId } = req.params;
+    const userId = req.user?.id;
+    if (!itemId || !itemType || !isValidObjectId(itemId) || !isValidItemType(itemType)) {
+      return res.status(400).json({ message: 'Dados inválidos.' });
+    }
+    // Contar likes
+    const likeCount = await Like.countDocuments({ itemId: new ObjectId(itemId), itemType });
+    // Verificar se o utilizador já fez like
+    let userHasLiked = false;
+    if (userId) {
+      const like = await Like.findOne({ itemId: new ObjectId(itemId), itemType, userId: new ObjectId(userId) });
+      userHasLiked = !!like;
+    }
+    res.json({ likeCount, userHasLiked });
+  } catch (error) {
+    logger.error('Erro ao obter info de likes:', error);
+    res.status(500).json({ message: 'Erro ao obter info de likes.' });
+  }
 }; 

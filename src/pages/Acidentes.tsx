@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { addInteractionLike } from '@/services/interactionService';
+import { AcidenteViewModal } from '@/components/acidentes/AcidenteViewModal';
 
 const COUNTRIES = [
   { value: 'Portugal', label: 'Portugal' },
@@ -35,6 +37,9 @@ const Acidentes: React.FC = () => {
     country: 'Portugal', // Valor padrão
     date: new Date(),
   });
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedAccident, setSelectedAccident] = useState<Accident | null>(null);
+  const [openComments, setOpenComments] = useState(false);
 
   // Verificar permissões do usuário
   const hasAddPermission = user?.role === 'admin_qa' || user?.role === 'admin_app';
@@ -145,82 +150,198 @@ const Acidentes: React.FC = () => {
     }
   };
 
+  const handleLikeClick = async (accident: Accident) => {
+    if (!accident._id) {
+      toast.error('ID inválido para like');
+      return;
+    }
+    try {
+      await addInteractionLike(accident._id, 'accident');
+      loadAccidents();
+      if (window?.dispatchEvent) window.dispatchEvent(new Event('feedShouldRefresh'));
+    } catch (e) {
+      toast.error('Erro ao gostar do acidente');
+    }
+  };
+
+  const openCommentsModal = (accident: Accident) => {
+    setSelectedAccident(accident);
+    setOpenComments(true);
+    setIsViewModalOpen(true);
+  };
+
+  const handleCardClick = (accident: Accident) => {
+    setSelectedAccident(accident);
+    setOpenComments(false);
+    setIsViewModalOpen(true);
+  };
+
   return (
     <Layout>
-      <div className="h-full flex flex-col p-3 sm:p-6">
-        <div className="flex-shrink-0 flex justify-between items-center mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl font-semibold">Acidentes</h1>
+      <div className="min-h-screen h-full w-full bg-[#f7faff] p-3 sm:p-6 overflow-y-auto">
+        {/* Header Section */}
+        <div className="p-4 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-800">
+              Acidentes
+            </h1>
           {hasAddPermission && (
             <Button
               onClick={() => setShowAddModal(true)}
-              className="bg-robbialac hover:bg-robbialac-dark text-white h-8 px-2 text-xs sm:h-9 sm:px-3 sm:text-sm"
+                className="bg-[#1E90FF] hover:bg-[#1877cc] text-white font-semibold rounded-full px-6 py-2 shadow-lg"
             >
-              <FaPlus className="mr-1 sm:mr-2" /> Adicionar Acidente
+                <FaPlus className="mr-2" />
+                Novo Acidente
             </Button>
           )}
+          </div>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        {/* Content Section */}
+        <div className="mt-6 flex justify-center items-start min-h-[60vh]">
           {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-robbialac"></div>
+            <div className="flex justify-center items-center py-10 w-full">
+              <p>Carregando...</p>
             </div>
           ) : accidents.length === 0 ? (
-             <div className="text-center py-10">
-                <p className="text-muted-foreground">Nenhum acidente registrado.</p>
+            <div className="text-center py-10 w-full">
+              <p className="text-gray-500">Nenhum acidente registrado.</p>
              </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-              {accidents.map((accident) => (
-                <div key={accident._id} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-md p-2 flex flex-col justify-between shadow-sm">
-                  <div>
-                    <div className="flex justify-between items-start gap-1 mb-1">
-                      <h2 className="text-sm leading-tight font-medium line-clamp-2 text-gray-900 dark:text-gray-100">{accident.name}</h2>
-                      {hasDeletePermission && (
+            // Se houver apenas um acidente (detalhe)
+            accidents.length === 1 ? (
+              <div className="w-full max-w-2xl">
+                <div className="bg-white rounded-2xl shadow-xl transition-all overflow-hidden flex flex-col">
+                  <div className="p-6 pb-2 border-b">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-1">{accidents[0].name}</h3>
+                    <div className="flex items-center text-base text-gray-500 mb-4">
+                      <span className="mr-4 font-medium">País: {accidents[0].country}</span>
+                      <span>Data: {format(new Date(accidents[0].date), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                    </div>
+                  </div>
+                  <div className="w-full flex justify-center items-center bg-[#f7faff] p-6">
+                    {accidents[0].pdfUrl ? (
+                      <div className="w-full flex justify-center">
+                        <FaFilePdf className="h-40 w-40 text-gray-400" />
+                      </div>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <p className="text-gray-500">PDF não disponível</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-6 flex flex-col gap-4 border-t">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDeleteAccident(accident._id!)}
-                          className="text-red-500 hover:text-red-700 h-6 w-6 p-0 flex-shrink-0"
-                           aria-label="Remover Acidente"
+                          className={`rounded-full hover:bg-blue-50`}
+                          onClick={() => handleLikeClick(accidents[0])}
+                          aria-label="Gosto"
                         >
-                          <FaTrash className="h-3 w-3" />
+                          <span className="text-gray-400">👍</span>
+                          <span className="ml-1 text-base">{accidents[0].likeCount || 0}</span>
                         </Button>
-                      )}
-                    </div>
-                    <div className="space-y-0.5 mb-2">
-                      <p className="text-xs text-gray-600 dark:text-gray-400 leading-tight">
-                        <span className="font-medium text-gray-700 dark:text-gray-300">País:</span> {accident.country}
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 leading-tight">
-                        <span className="font-medium text-gray-700 dark:text-gray-300">Data:</span> {format(new Date(accident.date), 'dd/MM/yyyy', { locale: ptBR })}
-                      </p>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`rounded-full hover:bg-blue-50`}
+                          onClick={() => openCommentsModal(accidents[0])}
+                          aria-label="Comentários"
+                        >
+                          <span className="text-gray-400">💬</span>
+                          <span className="ml-1 text-base">{accidents[0].commentCount || 0}</span>
+                        </Button>
+                      </div>
+                      <Button
+                        className="rounded-full bg-[#1E90FF] hover:bg-[#1877cc] text-white font-semibold px-6 py-2 shadow-lg flex items-center gap-2"
+                        onClick={() => handleCardClick(accidents[0])}
+                      >
+                        <FaFilePdf className="h-5 w-5" />
+                        Ver Documento Completo
+                      </Button>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full flex items-center justify-center gap-1 text-robbialac hover:text-robbialac-dark border-robbialac hover:bg-robbialac/10 dark:text-robbialac dark:border-robbialac dark:hover:bg-robbialac/20 text-xs h-7 px-2 mt-auto"
-                    onClick={() => handleViewPDF(accident)}
-                    disabled={!accident.pdfUrl}
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+              {accidents.map((accident) => (
+                  <div
+                    key={accident._id}
+                    className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all overflow-hidden flex flex-col"
                   >
-                    <FaFilePdf className="h-3 w-3" /> Ver PDF
-                  </Button>
+                    {/* PDF Preview */}
+                    <div className="w-full aspect-[4/3] bg-gray-100">
+                      {accident.pdfUrl ? (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <FaFilePdf className="h-16 w-16 text-gray-400" />
+                        </div>
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <p className="text-gray-500">PDF não disponível</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-4 flex-1 flex flex-col">
+                      <h3 className="text-lg font-bold text-gray-800 mb-2">{accident.name}</h3>
+                      <div className="flex items-center text-sm text-gray-500 mb-4">
+                        <span className="mr-4">{accident.country}</span>
+                        <span>{format(new Date(accident.date), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-between mt-auto">
+                        <div className="flex items-center space-x-4">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={`rounded-full hover:bg-blue-50`}
+                            onClick={() => handleLikeClick(accident)}
+                            aria-label="Gosto"
+                          >
+                            <span className="text-gray-400">👍</span>
+                            <span className="ml-1 text-base">{accident.likeCount || 0}</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={`rounded-full hover:bg-blue-50`}
+                            onClick={() => openCommentsModal(accident)}
+                            aria-label="Comentários"
+                          >
+                            <span className="text-gray-400">💬</span>
+                            <span className="ml-1 text-base">{accident.commentCount || 0}</span>
+                          </Button>
+                        </div>
+                        <Button
+                          className="rounded-full bg-[#1E90FF] hover:bg-[#1877cc] text-white font-semibold px-6 py-2 shadow-lg flex items-center gap-2"
+                          onClick={() => handleCardClick(accident)}
+                        >
+                          <FaFilePdf className="h-5 w-5" />
+                          Ver Documento Completo
+                        </Button>
+                      </div>
+                    </div>
                 </div>
               ))}
             </div>
+            )
           )}
-        </div>
       </div>
 
+        {/* Add Modal */}
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="max-w-[98vw] sm:max-w-lg h-auto max-h-[95vh] p-3 sm:p-4 overflow-y-auto">
+          <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-base sm:text-xl">Adicionar Novo Acidente</DialogTitle>
+              <DialogTitle className="text-xl font-bold">Adicionar Acidente</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
+            <div className="space-y-4 py-4">
             <div>
-              <Label htmlFor="name" className="text-xs sm:text-sm font-medium">Nome do Acidente</Label>
+                <Label htmlFor="name">Nome do Acidente</Label>
               <Input
                 id="name"
                 value={newAccident.name}
@@ -229,10 +350,13 @@ const Acidentes: React.FC = () => {
               />
             </div>
             <div>
-              <Label htmlFor="country" className="text-xs sm:text-sm font-medium">País</Label>
-              <Select value={newAccident.country} onValueChange={handleCountryChange}>
+                <Label htmlFor="country">País</Label>
+                <Select
+                  value={newAccident.country}
+                  onValueChange={handleCountryChange}
+                >
                 <SelectTrigger id="country" className="mt-1">
-                  <SelectValue placeholder="Selecione um país" />
+                    <SelectValue placeholder="Selecione o país" />
                 </SelectTrigger>
                 <SelectContent>
                   {COUNTRIES.map((country) => (
@@ -244,38 +368,46 @@ const Acidentes: React.FC = () => {
               </Select>
             </div>
             <div>
-              <Label htmlFor="pdf" className="text-xs sm:text-sm font-medium">Documento PDF</Label>
+                <Label htmlFor="document">Arquivo PDF</Label>
               <Input
-                id="pdf"
+                  id="document"
                 type="file"
                 accept=".pdf"
                 onChange={handleFileChange}
                 className="mt-1"
               />
-              {selectedFile && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Arquivo selecionado: {selectedFile.name}
-                </p>
-              )}
+              </div>
             </div>
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-end space-x-2">
               <Button
                 variant="outline"
                 onClick={() => setShowAddModal(false)}
-                className="text-xs sm:text-sm"
+                className="rounded-full"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleAddAccident}
-                className="bg-robbialac hover:bg-robbialac-dark text-white text-xs sm:text-sm"
+                className="bg-[#1E90FF] hover:bg-[#1877cc] text-white font-semibold rounded-full"
               >
                 Adicionar
               </Button>
-            </div>
           </div>
         </DialogContent>
       </Dialog>
+
+      {isViewModalOpen && selectedAccident && (
+        <AcidenteViewModal
+          isOpen={isViewModalOpen}
+          onClose={() => {
+            setIsViewModalOpen(false);
+            setOpenComments(false);
+          }}
+          accidentId={selectedAccident._id}
+          openComments={openComments}
+        />
+      )}
+      </div>
     </Layout>
   );
 };

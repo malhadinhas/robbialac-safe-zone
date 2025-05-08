@@ -9,6 +9,7 @@ import { DepartmentWithEmployees } from '@/services/departmentService';
 import { toast } from 'sonner';
 import { Layout } from '@/components/Layout';
 import { DepartmentIncidents } from '@/components/dashboard/DepartmentIncidents';
+import { Button } from "@/components/ui/button";
 
 interface DepartmentData {
   department: DepartmentWithEmployees;
@@ -91,84 +92,103 @@ export default function QuaseAcidentesEstatisticas() {
 
   return (
     <Layout>
-      <div className="h-full p-3 sm:p-6 overflow-y-auto">
-        <div className="mb-1 sm:mb-6">
-          <h1 className="text-base sm:text-2xl font-semibold">Estatísticas</h1>
-          <p className="text-gray-500 text-[8px] sm:text-sm">
+      <div className="h-full bg-[#f7faff] p-3 sm:p-6 overflow-y-auto">
+        <div className="container mx-auto">
+          {/* Header Section */}
+          <div className="p-4 space-y-4">
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
+              <div>
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-800">
+                  Estatísticas
+                </h1>
+                <p className="text-gray-500 text-sm mt-1">
             Análise e metas por departamento
           </p>
+              </div>
+            </div>
         </div>
 
-        <div className="space-y-1 sm:space-y-4">
-          <div className="grid grid-cols-4 sm:grid-cols-2 lg:grid-cols-4 gap-0.5 sm:gap-4">
-            <Card className="p-0.5 sm:p-4">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 sm:pb-2">
-                <CardTitle className="text-[8px] sm:text-sm font-medium">Tot</CardTitle>
+          {/* Content Section */}
+          <div className="mt-6 space-y-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all">
+                <CardHeader className="p-4">
+                  <CardTitle className="text-sm font-medium text-gray-500">Total</CardTitle>
               </CardHeader>
-              <CardContent className="p-0 sm:p-2">
-                <div className="text-sm sm:text-2xl font-bold text-robbialac leading-none">{totalIncidents}</div>
+                <CardContent className="p-4 pt-0">
+                  <div className="text-2xl font-bold text-[#1E90FF]">{totalIncidents}</div>
               </CardContent>
             </Card>
 
-            <Card className="p-0.5 sm:p-4">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 sm:pb-2">
-                <CardTitle className="text-[8px] sm:text-sm font-medium">Meta</CardTitle>
+              <Card className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all">
+                <CardHeader className="p-4">
+                  <CardTitle className="text-sm font-medium text-gray-500">Meta</CardTitle>
               </CardHeader>
-              <CardContent className="p-0 sm:p-2">
-                <div className="text-sm sm:text-2xl font-bold text-robbialac leading-none">{totalTarget}</div>
+                <CardContent className="p-4 pt-0">
+                  <div className="text-2xl font-bold text-[#1E90FF]">{totalTarget}</div>
               </CardContent>
             </Card>
 
-            <Card className="p-0.5 sm:p-4">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 sm:pb-2">
-                <CardTitle className="text-[8px] sm:text-sm font-medium">%</CardTitle>
+              <Card className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all">
+                <CardHeader className="p-4">
+                  <CardTitle className="text-sm font-medium text-gray-500">Percentual</CardTitle>
               </CardHeader>
-              <CardContent className="p-0 sm:p-2">
-                <div className="text-sm sm:text-2xl font-bold text-robbialac leading-none">{targetPercentage}%</div>
+                <CardContent className="p-4 pt-0">
+                  <div className="text-2xl font-bold text-[#1E90FF]">{targetPercentage}%</div>
               </CardContent>
             </Card>
 
-            <Card className="p-0.5 sm:p-4">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 sm:pb-2">
-                <CardTitle className="text-[8px] sm:text-sm font-medium">Dias</CardTitle>
+              <Card className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all">
+                <CardHeader className="p-4">
+                  <CardTitle className="text-sm font-medium text-gray-500">Dias Restantes</CardTitle>
               </CardHeader>
-              <CardContent className="p-0 sm:p-2">
-                <div className="text-sm sm:text-2xl font-bold text-robbialac leading-none">{daysRemaining}</div>
+                <CardContent className="p-4 pt-0">
+                  <div className="text-2xl font-bold text-[#1E90FF]">{daysRemaining}</div>
               </CardContent>
             </Card>
           </div>
 
-          <Card className="flex-1">
-            <CardHeader className="p-1 sm:p-4">
-              <CardTitle className="text-xs sm:text-lg">Quase Acidentes</CardTitle>
-              <CardDescription className="text-[8px] sm:text-sm">
+            {/* Chart Card */}
+            <Card className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all">
+              <CardHeader className="p-6">
+                <CardTitle className="text-xl font-bold text-gray-800">Quase Acidentes</CardTitle>
+                <CardDescription className="text-gray-500">
                 Reportados vs Meta
               </CardDescription>
             </CardHeader>
-            <CardContent className="min-h-[150px] sm:min-h-[300px] p-0.5 sm:p-4">
+              <CardContent className="p-6 pt-0">
+                <div className="min-h-[300px]">
               {isLoading ? (
                 <div className="flex items-center justify-center h-full">
-                  <div className="animate-spin rounded-full h-4 w-4 sm:h-12 sm:w-12 border-t-2 border-b-2 border-robbialac"></div>
+                      <p className="text-gray-500">Carregando...</p>
                 </div>
               ) : hasError ? (
-                <div className="flex flex-col items-center justify-center h-full gap-1 sm:gap-4">
-                  <p className="text-red-500 text-[8px] sm:text-sm">Erro ao carregar</p>
-                  <button 
+                    <div className="flex flex-col items-center justify-center h-full gap-4">
+                      <p className="text-red-500">Erro ao carregar dados</p>
+                      <Button
                     onClick={handleRetry}
-                    className="px-1 py-0.5 sm:px-4 sm:py-2 bg-robbialac text-white rounded hover:bg-robbialac-dark text-[8px] sm:text-sm"
+                        className="bg-[#1E90FF] hover:bg-[#1877cc] text-white font-semibold rounded-full px-6 py-2 shadow-lg"
                   >
                     Recarregar
-                  </button>
+                      </Button>
                 </div>
               ) : (
                 <DepartmentIncidentsChart data={departmentData} />
               )}
+                </div>
             </CardContent>
           </Card>
 
-          {/* Adicionar tabela de incidentes por departamento */}
-          <div className="mt-4">
+            {/* Department Incidents Table */}
+            <Card className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all">
+              <CardHeader className="p-6">
+                <CardTitle className="text-xl font-bold text-gray-800">Incidentes por Departamento</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 pt-0">
             <DepartmentIncidents />
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

@@ -24,6 +24,8 @@ export default function Videos() {
   
   const zoneTitle = zone ? capitalizeFirstLetter(zone) : '';
   
+  const ALL_CATEGORIES = ['Segurança', 'Qualidade', 'Procedimentos'];
+  
   useEffect(() => {
     const fetchVideos = async () => {
       try {
@@ -93,70 +95,55 @@ export default function Videos() {
   
   return (
     <Layout>
-      <div className="container mx-auto py-6">
-        <div className="flex items-center mb-6">
-          <Button variant="ghost" onClick={handleBackClick} className="mr-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
+      <div className="bg-[#f7faff] min-h-screen py-8 flex flex-col items-center">
+        <div className="w-full max-w-6xl mx-auto">
+          <div className="flex items-center mb-8 px-2 sm:px-0">
+            <Button variant="ghost" onClick={handleBackClick} className="mr-4 text-[#1E90FF] hover:bg-[#e6f0fa] rounded-full px-5 py-2 font-semibold text-base">
+              <ArrowLeft className="h-5 w-5 mr-2" />
             Voltar
           </Button>
-          <h1 className="text-2xl font-bold">Vídeos - {zoneTitle}</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Vídeos - {zoneTitle}</h1>
         </div>
-        
+          <div className="h-4" />
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-robbialac"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1E90FF]"></div>
           </div>
         ) : (
           (() => {
             if (videos.length === 0) {
               return (
-                <div className="text-center py-12 border rounded-lg bg-gray-50">
-                  <p className="text-gray-500">Nenhum vídeo disponível para esta zona.</p>
+                  <div className="text-center py-12 border rounded-2xl bg-white shadow-md">
+                    <p className="text-gray-500 text-lg">Nenhum vídeo disponível para esta zona.</p>
                 </div>
               );
             } else {
-              // Calcula categorias aqui dentro
+                // Agrupar vídeos por categoria
               const videosByCategory: Record<string, Video[]> = {};
+                ALL_CATEGORIES.forEach(cat => { videosByCategory[cat] = []; });
               videos.forEach(video => {
-                const categoryKey = video.category || 'Sem Categoria'; 
-                if (!videosByCategory[categoryKey]) {
-                  videosByCategory[categoryKey] = [];
-                }
+                  const categoryKey = ALL_CATEGORIES.includes(video.category) ? video.category : 'Procedimentos';
                 videosByCategory[categoryKey].push(video);
               });
-              const categories = Object.keys(videosByCategory);
-
-              // Segurança: caso raro de vídeos sem categorias válidas
-              if (categories.length === 0) {
                  return (
-                  <div className="text-center py-12 border rounded-lg bg-gray-50">
-                    <p className="text-gray-500">Nenhuma categoria encontrada para os vídeos disponíveis.</p>
-                  </div>
-                );
-              }
-
-              // Renderiza as Tabs
-              return (
-                <Tabs defaultValue={categories[0]} className="space-y-6">
-                  <TabsList>
-                    {categories.map(category => (
-                      <TabsTrigger key={category} value={category}>
+                  <Tabs defaultValue={ALL_CATEGORIES[0]} className="space-y-8 w-full">
+                    <TabsList className="bg-white rounded-full shadow p-1 flex gap-2 mb-6">
+                      {ALL_CATEGORIES.map(category => (
+                        <TabsTrigger key={category} value={category} className="rounded-full px-6 py-2 text-base font-semibold data-[state=active]:bg-[#1E90FF] data-[state=active]:text-white data-[state=inactive]:text-[#1E90FF] data-[state=inactive]:bg-white transition">
                         {category}
                       </TabsTrigger>
                     ))}
                   </TabsList>
-                  
-                  {Object.entries(videosByCategory).map(([category, categoryVideos]) => (
-                    <TabsContent key={category} value={category}>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {categoryVideos.map(video => (
+                    {ALL_CATEGORIES.map(category => (
+                      <TabsContent key={category} value={category} className="w-full">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                          {videosByCategory[category].map(video => (
                           <VideoCardItem key={video.id || video._id} video={video} />
                         ))}
                       </div>
-                      
-                      {categoryVideos.length === 0 && (
-                        <div className="text-center py-12 border rounded-lg bg-gray-50">
-                          <p className="text-gray-500">Nenhum vídeo disponível nesta categoria.</p>
+                        {videosByCategory[category].length === 0 && (
+                          <div className="text-center py-12 border rounded-2xl bg-white shadow-md mt-6">
+                            <p className="text-gray-500 text-lg">Nenhum vídeo disponível nesta categoria.</p>
                         </div>
                       )}
                     </TabsContent>
@@ -166,6 +153,7 @@ export default function Videos() {
             }
           })()
         )}
+        </div>
       </div>
     </Layout>
   );

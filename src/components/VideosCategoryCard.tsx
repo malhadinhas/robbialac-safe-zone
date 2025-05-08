@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Video } from "@/types";
 import { Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { getSecureR2Url } from '@/services/videoService';
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNavigate } from 'react-router-dom';
 
 interface VideosCategoryCardProps {
   category: string;
@@ -16,9 +17,25 @@ interface VideosCategoryCardProps {
 }
 
 function VideosCategoryCard({ category, displayTitle, description, videos, count, color }: VideosCategoryCardProps) {
-  const [hoveredVideo, setHoveredVideo] = useState<Video | null>(null);
-  const [isLoadingVideo, setIsLoadingVideo] = useState(false);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const video = videos[0];
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchThumbnail = async () => {
+      if (video && video.r2ThumbnailKey) {
+        try {
+          const url = await getSecureR2Url(video.r2ThumbnailKey);
+          setThumbnailUrl(url);
+        } catch {
+          setThumbnailUrl(null);
+        }
+      } else {
+        setThumbnailUrl(null);
+      }
+    };
+    fetchThumbnail();
+  }, [video]);
 
   const getIcon = (category: string) => {
     switch (category) {
@@ -33,84 +50,59 @@ function VideosCategoryCard({ category, displayTitle, description, videos, count
     }
   };
 
-  const fetchVideoUrl = async (video: Video) => {
-    try {
-      setIsLoadingVideo(true);
-      const url = await getSecureR2Url(video.r2VideoKey);
-      setVideoUrl(url);
-    } catch (error) {
-      toast.error('Erro ao carregar vídeo');
-    } finally {
-      setIsLoadingVideo(false);
+  const handleGoToVideo = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (video) {
+      navigate(`/videos/visualizar/${video.id || video._id}`);
     }
   };
 
-  const handleMouseEnter = async (video: Video) => {
-    setHoveredVideo(video);
-    await fetchVideoUrl(video);
-  };
-
-  const handleMouseLeave = () => {
-    setHoveredVideo(null);
-    setVideoUrl(null);
-  };
-
   return (
-    <Card 
-      className="relative overflow-hidden transition-all duration-300 hover:shadow-lg cursor-pointer"
-      onMouseEnter={() => videos.length > 0 && handleMouseEnter(videos[0])}
-      onMouseLeave={handleMouseLeave}
+    <div
+      className="group relative flex flex-col bg-white rounded-2xl shadow-md overflow-hidden transition-all min-h-[320px] hover:shadow-lg cursor-pointer"
+      onClick={handleGoToVideo}
     >
-      <CardHeader className="relative z-10">
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <span>{getIcon(category)}</span>
-          <span>{displayTitle}</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="relative min-h-[120px]">
-        {hoveredVideo ? (
-          <div className="absolute inset-0 bg-background">
-            {isLoadingVideo ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <Skeleton className="w-full h-[100px]" />
+      {/* Header da categoria */}
+      <div className={`flex items-center px-5 py-3 ${
+        category === 'Segurança' ? 'bg-red-50 text-red-500' :
+        category === 'Qualidade' ? 'bg-blue-50 text-blue-500' :
+        'bg-green-50 text-green-500'
+      } rounded-t-2xl`}> 
+        <span className="mr-2 text-xl">{getIcon(category)}</span>
+        <p className="text-base font-semibold truncate">
+          {displayTitle}
+        </p>
+      </div>
+      {video ? (
+        <>
+          <div className="relative w-full aspect-video bg-gray-100">
+            {thumbnailUrl ? (
+              <img src={thumbnailUrl} alt={video.title} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                <Play className="w-6 h-6 text-gray-400" />
               </div>
-            ) : videoUrl ? (
-              <div className="p-2">
-                <video
-                  src={videoUrl}
-                  className="w-full h-[100px] object-contain bg-black/5 rounded-md"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  onError={() => toast.error('Erro ao reproduzir vídeo')}
-                />
-                <div className="mt-2">
-                  <h3 className="font-medium text-sm">{hoveredVideo.title}</h3>
+            )}
+            <button
+              className="absolute bottom-3 right-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg p-3 flex items-center justify-center opacity-90 group-hover:opacity-100 transition"
+              title="Ver vídeo"
+              onClick={handleGoToVideo}
+            >
+              <Play className="w-5 h-5" />
+            </button>
                 </div>
-              </div>
-            ) : null}
+          <div className="px-5 py-4 flex-1 flex items-end">
+            <p className="text-base font-semibold text-gray-800 truncate w-full">
+              {video.title}
+            </p>
           </div>
+        </>
         ) : (
-          <>
-            <div className="text-sm text-muted-foreground mb-4">
-              {description}
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-medium" style={{ color }}>
-                {count} {count === 1 ? 'vídeo' : 'vídeos'}
-              </div>
-              {videos.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Play className="w-4 h-4" />
-                  <span className="text-sm">Passe o mouse para ver</span>
+        <div className="flex flex-1 flex-col items-center justify-center bg-gray-50 h-full min-h-[180px] px-5 py-8 rounded-b-2xl">
+          <p className="text-gray-400 text-base font-medium">Nenhum vídeo disponível</p>
                 </div>
               )}
             </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
   );
 }
 

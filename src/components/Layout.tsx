@@ -20,10 +20,10 @@ export function Layout({ children }: LayoutProps) {
   const isDesktop = !isMobileOrTablet;
   const orientation = useOrientation();
   const adaptiveSpacing = useAdaptiveSpacing();
-
+  
   // Estado do menu: só relevante em mobile/tablet
   const [menuOpen, setMenuOpen] = useState(false);
-
+  
   // Fecha o menu ao mudar para desktop
   useEffect(() => {
     if (window.innerWidth >= 1024) setMenuOpen(false);
@@ -33,11 +33,11 @@ export function Layout({ children }: LayoutProps) {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
+  
   const toggleMenu = () => {
     if (isMobileOrTablet) setMenuOpen(prev => !prev);
   };
-
+  
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/" },
     { icon: BookOpen, label: "Formações", path: "/formacoes" },
@@ -48,14 +48,14 @@ export function Layout({ children }: LayoutProps) {
     { icon: Medal, label: "Pontuação", path: "/pontuacao" },
     { icon: Settings, label: "Definições", path: "/definicoes" }
   ];
-
+  
   const isActive = (path: string) => {
     if (path === "/") {
       return location.pathname === "/";
     }
     return location.pathname.startsWith(path);
   };
-
+  
   // User info
   const userInitial = user?.name ? user.name.substring(0, 1).toUpperCase() : '?';
   const userName = user?.name || 'Utilizador';
@@ -66,34 +66,34 @@ export function Layout({ children }: LayoutProps) {
       {/* Header só para mobile/tablet */}
       {isMobileOrTablet && (
         <header 
-          className="bg-robbialac text-white p-3 flex items-center justify-between z-30 flex-shrink-0"
+          className="bg-white text-[#1E90FF] p-3 flex items-center justify-between z-30 flex-shrink-0 shadow-md rounded-b-2xl"
           style={{ paddingLeft: adaptiveSpacing.md, paddingRight: adaptiveSpacing.md }}
         >
           <Button 
             variant="ghost" 
             size="icon"
-            className="text-white hover:bg-white/10"
+            className="text-[#1E90FF] hover:bg-[#eaf4ff]"
             onClick={toggleMenu}
           >
             <Menu size={24} />
             <span className="sr-only">Abrir menu</span>
           </Button>
           <div className="flex-1 flex items-center justify-center">
-            <span className="font-bold text-lg">RobbiSeg</span>
+            <span className="font-bold text-lg">LearnSafe360</span>
           </div>
           <div className="w-10"></div> 
         </header>
       )}
       {/* Menu lateral fixo em desktop */}
-      <aside
+      <aside 
         className={cn(
           "transition-all duration-300 ease-in-out z-40",
-          "hidden lg:flex fixed left-0 top-0 h-full w-[14rem] flex-col bg-[#1E90FF] text-white",
-          isMobileOrTablet && menuOpen ? "fixed inset-0 flex flex-col bg-[#1E90FF] text-white w-[14rem] max-w-full h-full" : ""
+          "hidden lg:flex fixed left-0 top-0 h-full w-[16rem] flex-col bg-white text-[#222] shadow-lg rounded-2xl m-4",
+          isMobileOrTablet && menuOpen ? "fixed inset-0 flex flex-col bg-white text-[#222] w-[16rem] max-w-full h-full shadow-lg rounded-2xl" : ""
         )}
-        style={{
-          width: '14rem',
-          height: '100vh',
+        style={{ 
+          width: '16rem',
+          height: 'calc(100vh - 2rem)',
         }}
       >
         {/* Botão de fechar só em mobile/tablet */}
@@ -101,29 +101,23 @@ export function Layout({ children }: LayoutProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-4 right-4 text-white hover:bg-white/10 z-50"
+            className="absolute top-4 right-4 text-[#1E90FF] hover:bg-[#eaf4ff] z-50"
             onClick={() => setMenuOpen(false)}
           >
             <X size={24} />
             <span className="sr-only">Fechar menu</span>
           </Button>
         )}
-        {/* Logotipo e User Info */}
-        <div className="p-3 flex flex-col items-center">
-          <img 
-            src="/lovable-uploads/6e68a784-6498-4199-a8ef-936b67038a4b.png" 
-            alt="RobbiSeg Logo" 
-            className="w-12 h-12 rounded-full bg-white mb-2" 
+        {/* Logotipo */}
+        <div className="p-6 pb-2 flex flex-col items-center">
+              <img 
+                src="/lovable-uploads/6e68a784-6498-4199-a8ef-936b67038a4b.png" 
+                alt="RobbiSeg Logo" 
+            className="w-10 h-10 rounded-full bg-white mb-2 shadow" 
           />
-          <div className="bg-white text-robbialac rounded-full w-8 h-8 flex items-center justify-center font-bold shrink-0 text-sm mb-1">
-            {userInitial}
-          </div>
-          <div className="overflow-hidden text-center mb-2">
-            <p className="font-medium text-xs sm:text-sm whitespace-normal">{userName}</p>
-            <p className="text-xs text-white/70 whitespace-normal break-words">{userEmail}</p>
-          </div>
-          <Separator className="bg-white/20 my-2" />
+          <span className="font-bold text-xl text-[#1E90FF]">LearnSafe360</span>
         </div>
+        <Separator className="bg-gray-100 my-2" />
         {/* Navigation Menu */}
         <nav className="flex flex-col flex-1 overflow-y-auto p-2">
           <ul className="space-y-1 w-full">
@@ -133,31 +127,38 @@ export function Layout({ children }: LayoutProps) {
                   to={item.path}
                   onClick={() => isMobileOrTablet && setMenuOpen(false)}
                   className={cn(
-                    "flex items-center rounded-md transition-colors px-3 py-2 space-x-3",
+                    "flex items-center gap-3 rounded-full transition-all px-4 py-2 my-1 group",
                     isActive(item.path)
-                      ? "bg-white text-[#1E90FF] font-medium"
-                      : "text-white hover:bg-white/10"
+                      ? "bg-[#eaf4ff] text-[#1E90FF] font-semibold shadow-sm"
+                      : "text-[#222] hover:bg-[#eaf4ff] hover:text-[#1E90FF]"
                   )}
                   title={item.label}
                 >
-                  <item.icon size={18} />
-                  <span className="text-xs sm:text-sm whitespace-normal">{item.label}</span>
+                  <span className={cn(
+                    "flex items-center justify-center w-9 h-9 rounded-full transition-all",
+                    isActive(item.path)
+                      ? "bg-[#1E90FF]/10 text-[#1E90FF]"
+                      : "bg-gray-100 group-hover:bg-[#1E90FF]/10 group-hover:text-[#1E90FF] text-[#222]"
+                  )}>
+                    <item.icon size={20} />
+                  </span>
+                  <span className="text-base whitespace-normal font-medium">{item.label}</span>
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
-        {/* Logout Button */}
-        <div className="sticky bottom-0 bg-[#1E90FF] pb-safe p-4 border-t border-white/20">
+        {/* Botão Sair */}
+        <div className="sticky bottom-0 bg-transparent pb-10 flex justify-center items-center p-6">
           <Button 
-            variant="ghost" 
-            size="default"
-            className="w-full text-white hover:bg-white/10 justify-start"
+            variant="default" 
+            size="lg"
+            className="w-4/5 rounded-full bg-[#1E90FF] hover:bg-[#1877cc] text-white font-bold shadow-lg text-base py-3 flex items-center justify-center gap-2"
             onClick={logout}
             title="Sair"
           >
-            <LogOut className="mr-2 h-4 w-4" />
-            <span className="text-sm">Sair</span>
+            <LogOut className="h-5 w-5" />
+            <span className="text-base">Sair</span>
           </Button>
         </div>
       </aside>
@@ -166,7 +167,7 @@ export function Layout({ children }: LayoutProps) {
         <div className="fixed inset-0 bg-black/50 z-30" onClick={() => setMenuOpen(false)} />
       )}
       {/* Main content: margem à esquerda só em desktop */}
-      <main className={isDesktop ? "flex-1 h-screen overflow-y-auto ml-[14rem]" : "flex-1 h-screen overflow-y-auto"}>
+      <main className={isDesktop ? "flex-1 h-screen overflow-y-auto ml-[18rem]" : "flex-1 h-screen overflow-y-auto"}>
         {children}
       </main>
     </div>

@@ -126,16 +126,16 @@ export default function Definicoes() {
 
   // Interface Card Component
   const InterfaceCard = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('interface')}</CardTitle>
-        <CardDescription>{t('customize_app')}</CardDescription>
+    <Card className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all">
+      <CardHeader className="p-6">
+        <CardTitle className="text-xl font-bold text-gray-800">{t('interface')}</CardTitle>
+        <CardDescription className="text-gray-500">{t('customize_app')}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="p-6 pt-0 space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="language">{t('language')}</Label>
+          <Label htmlFor="language" className="text-sm font-medium text-gray-700">{t('language')}</Label>
           <Select value={i18n.language} onValueChange={changeLanguage}>
-            <SelectTrigger id="language">
+            <SelectTrigger id="language" className="rounded-lg">
               <SelectValue placeholder={t('select_language')} />
             </SelectTrigger>
             <SelectContent>
@@ -147,15 +147,19 @@ export default function Definicoes() {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="email-notifications">{t('notifications_email')}</Label>
+          <Label htmlFor="email-notifications" className="text-sm font-medium text-gray-700">{t('notifications_email')}</Label>
           <Input 
             id="email-notifications" 
             type="email" 
             placeholder={t('email_placeholder')} 
+            className="rounded-lg"
           />
         </div>
         
-        <Button onClick={handleSave} className="mt-4">
+        <Button 
+          onClick={handleSave} 
+          className="bg-[#1E90FF] hover:bg-[#1877cc] text-white font-semibold rounded-full px-6 py-2 shadow-lg"
+        >
           {saved ? (
             <>
               <Check className="mr-2 h-4 w-4" />
@@ -292,7 +296,8 @@ export default function Definicoes() {
 
   return (
     <Layout>
-      <div className="h-full">
+      <div className="h-full bg-[#f7faff] p-3 sm:p-6 overflow-y-auto">
+        {/* Renderização responsiva: Tabs para desktop e mobile */}
         {isCompactView ? <MobileLayout /> : <DesktopLayout />}
       </div>
     </Layout>

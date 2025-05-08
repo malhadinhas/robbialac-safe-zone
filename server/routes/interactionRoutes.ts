@@ -4,7 +4,8 @@ import {
   addLike,
   removeLike,
   addComment,
-  getCommentsByItem
+  getCommentsByItem,
+  getLikeInfo
 } from '../controllers/interactionController';
 
 const router = Router();
@@ -21,6 +22,9 @@ router.post('/like', addLike);
 // DELETE /api/interactions/like - Remover like de um item
 // Body: { itemId: string, itemType: 'qa' | 'accident' | 'sensibilizacao' }
 router.delete('/like', removeLike);
+
+// GET /api/interactions/like/:itemType/:itemId - Info de likes
+router.get('/like/:itemType/:itemId', getLikeInfo);
 
 // --- Rotas de Comentários ---
 

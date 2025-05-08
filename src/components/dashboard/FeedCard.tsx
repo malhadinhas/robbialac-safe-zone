@@ -16,75 +16,56 @@ const FeedItemCard: React.FC<{
   item: FeedItem;
   onClick: (item: FeedItem, openComments?: boolean) => void;
 }> = ({ item, onClick }) => {
-  let displayDate = 'Data inválida';
-  try {
-    const parsedDate = new Date(item.date);
-    if (!isNaN(parsedDate.getTime())) {
-      displayDate = formatDistanceToNow(parsedDate, { addSuffix: true, locale: ptBR });
-    } else {
-      console.warn("Invalid date string received:", item.date);
+  const getIcon = () => {
+    if (item.type === 'activity') {
+      return item.action === 'like' ? <ThumbsUp className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />;
     }
-  } catch (e) {
-    console.error("Error formatting date:", item.date, e);
-  }
-
-  const getIconForItem = () => {
     switch (item.type) {
-      case 'qa': return <AlertTriangle size={16} className="text-amber-500" />;
+      case 'qa':
+        return <AlertTriangle className="h-4 w-4" />;
       case 'document': 
-        return item.documentType === 'Acidente' 
-          ? <AlertTriangle size={16} className="text-red-500" />
-          : <FileText size={16} className="text-blue-500" />;
-      case 'video': return <Video size={16} className="text-purple-500" />;
-      default: return null;
+        return <FileText className="h-4 w-4" />;
+      default:
+        return <FileText className="h-4 w-4" />;
     }
   };
 
-  // Handler para a área de interações
-  const handleInteractionAreaClick = (event: MouseEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-    onClick(item, true);
+  const getTitle = () => {
+    if (item.type === 'activity') {
+      return item.action === 'like'
+        ? `${item.userName} gostou de ${item.title}`
+        : `${item.userName} comentou em ${item.title}`;
+    }
+    return item.title;
+  };
+
+  const getSubtitle = () => {
+    if (item.type === 'activity' && item.action === 'comment' && item.commentText) {
+      return item.commentText;
+    }
+    return item.documentType || '';
   };
 
   return (
     <div 
-      className="p-2 hover:bg-gray-50 rounded-md border border-transparent hover:border-gray-200 cursor-pointer transition-all"
-      onClick={() => onClick(item, false)}
+      className="p-2 hover:bg-gray-50 cursor-pointer transition-colors"
+      onClick={() => onClick(item, item.type === 'activity' && item.action === 'comment')}
     >
-      <div className="flex items-start gap-2">
-        <div className="flex-shrink-0 mt-0.5">{getIconForItem()}</div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium line-clamp-1" title={item.title}>{item.title}</p>
-          <p className="text-xs text-muted-foreground">{displayDate}</p>
-          
-          {(item.likeCount || item.commentCount) && (
-            <div 
-              className="flex items-center gap-3 mt-1 cursor-pointer"
-              onClick={handleInteractionAreaClick}
-            >
-              {item.likeCount && item.likeCount > 0 && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <ThumbsUp size={12} className="text-blue-500"/>
-                  <span>{item.likeCount}</span>
-                </div>
-              )}
-              {item.commentCount && item.commentCount > 0 && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <MessageSquare size={12} className="text-gray-500"/>
-                  <span>{item.commentCount}</span>
-                </div>
-              )}
-            </div>
-          )}
+      <div className="flex items-start space-x-2">
+        <div className="flex-shrink-0 mt-1">
+          {getIcon()}
         </div>
-        
-        {item.type === 'document' && item.documentType && (
-          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ml-auto ${
-            item.documentType === 'Acidente' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
-          }`}>
-            {item.documentType}
-          </span>
-        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-gray-900 truncate">
+            {getTitle()}
+          </p>
+          <p className="text-xs text-gray-500 truncate">
+            {getSubtitle()}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            {formatDistanceToNow(new Date(item.date), { addSuffix: true, locale: ptBR })}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -145,69 +126,81 @@ export function FeedCard() {
 
   return (
     <>
-      <Card className="h-full">
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-lg">Feed de Atividades</CardTitle>
-            <Button 
-              variant="link" 
-              className="p-0 h-auto" 
-              onClick={() => navigate('/feed')}
-            >
-              Ver todos
-            </Button>
+    <Card className="h-full">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-lg">Feed de Atividades</CardTitle>
+          <Button 
+            variant="link" 
+            className="p-0 h-auto" 
+            onClick={() => navigate('/feed')}
+          >
+            Ver todos
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="py-0 px-2">
+        {loading ? (
+          <div className="flex items-center justify-center p-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-robbialac"></div>
           </div>
-        </CardHeader>
-        <CardContent className="py-0 px-2">
-          {loading ? (
-            <div className="flex items-center justify-center p-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-robbialac"></div>
-            </div>
-          ) : error ? (
-            <div className="text-center text-red-600 p-2 text-sm">
-              {error}
-            </div>
-          ) : feedItems.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4 text-sm">Nenhuma atividade recente</p>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {feedItems.map(item => (
-                <FeedItemCard 
-                  key={item._id} 
-                  item={item} 
-                  onClick={handleItemClick} 
-                />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        ) : error ? (
+          <div className="text-center text-red-600 p-2 text-sm">
+            {error}
+          </div>
+        ) : feedItems.length === 0 ? (
+          <p className="text-center text-muted-foreground py-4 text-sm">Nenhuma atividade recente</p>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {feedItems.map(item => (
+              <FeedItemCard 
+                key={item._id} 
+                item={item} 
+                onClick={handleItemClick} 
+              />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
       {/* Modais QA */}
       {qaModalId && (
-        <QuaseAcidentesViewModal 
-          isOpen={!!qaModalId} 
-          onClose={closeAllModals} 
-          incidentId={qaModalId} 
-          openComments={openComments}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end">
+          <div className="w-1/2 h-full bg-white shadow-lg">
+            <QuaseAcidentesViewModal 
+              isOpen={!!qaModalId} 
+              onClose={closeAllModals} 
+              incidentId={qaModalId} 
+              openComments={openComments}
+            />
+          </div>
+        </div>
       )}
       {/* Modais Acidente */}
       {acidenteModalId && (
-        <AcidenteViewModal
-          isOpen={!!acidenteModalId}
-          onClose={closeAllModals}
-          accidentId={acidenteModalId}
-          openComments={openComments}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end">
+          <div className="w-1/2 h-full bg-white shadow-lg">
+            <AcidenteViewModal
+              isOpen={!!acidenteModalId}
+              onClose={closeAllModals}
+              accidentId={acidenteModalId}
+              openComments={openComments}
+            />
+          </div>
+        </div>
       )}
       {/* Modais Sensibilização */}
       {sensibilizacaoModalId && (
-        <SensibilizacaoViewModal
-          isOpen={!!sensibilizacaoModalId}
-          onClose={closeAllModals}
-          docId={sensibilizacaoModalId}
-          openComments={openComments}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end">
+          <div className="w-1/2 h-full bg-white shadow-lg">
+            <SensibilizacaoViewModal
+              isOpen={!!sensibilizacaoModalId}
+              onClose={closeAllModals}
+              docId={sensibilizacaoModalId}
+              openComments={openComments}
+            />
+          </div>
+        </div>
       )}
     </>
   );

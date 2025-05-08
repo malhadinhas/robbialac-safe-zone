@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
@@ -19,6 +19,10 @@ export default function ImageGallery({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const mouseDownX = useRef<number | null>(null);
+  const mouseDragging = useRef<boolean>(false);
   
   if (!images || images.length === 0) {
     return null;
@@ -60,13 +64,61 @@ export default function ImageGallery({
     setZoomLevel(prev => Math.max(prev - 0.25, 0.5));
   };
   
+  // Funções de swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = () => {
+    if (touchStartX.current !== null && touchEndX.current !== null) {
+      const delta = touchStartX.current - touchEndX.current;
+      if (Math.abs(delta) > 50) {
+        if (delta > 0) handleNextImage({ stopPropagation: () => {} } as any);
+        else handlePrevImage({ stopPropagation: () => {} } as any);
+      }
+    }
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+  // Mouse drag (desktop)
+  const handleMouseDown = (e: React.MouseEvent) => {
+    mouseDownX.current = e.clientX;
+    mouseDragging.current = true;
+  };
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!mouseDragging.current || mouseDownX.current === null) return;
+    const delta = mouseDownX.current - e.clientX;
+    if (Math.abs(delta) > 50) {
+      if (delta > 0) handleNextImage({ stopPropagation: () => {} } as any);
+      else handlePrevImage({ stopPropagation: () => {} } as any);
+      mouseDragging.current = false;
+      mouseDownX.current = null;
+    }
+  };
+  const handleMouseUp = () => {
+    mouseDragging.current = false;
+    mouseDownX.current = null;
+  };
+  
   return (
     <>
       <div className={`${className} ${!showOnlyFirstImage ? 'mt-4' : ''}`}>
         {!showOnlyFirstImage && !showControls && <p className="text-sm font-medium mb-2">Imagens ({images.length})</p>}
         
         {showControls && images.length > 0 ? (
-          <div className="relative">
+          <div
+            className="relative"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            style={{ cursor: 'grab' }}
+          >
             <div className="flex items-center justify-center bg-slate-100 rounded-md overflow-hidden" style={{ minHeight: "300px" }}>
               <img 
                 src={images[currentImageIndex]} 
@@ -77,6 +129,14 @@ export default function ImageGallery({
                   (e.target as HTMLImageElement).src = '/src/assets/placeholder-image.png';
                 }}
                 onClick={() => setSelectedImage(images[currentImageIndex])}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                draggable={false}
               />
             </div>
             

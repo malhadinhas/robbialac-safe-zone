@@ -5,7 +5,7 @@ import { Accident } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from "sonner";
-import { FaPlus, FaTrash, FaExternalLinkAlt, FaThumbsUp, FaComment, FaChevronLeft } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaExternalLinkAlt, FaThumbsUp, FaComment, FaChevronLeft, FaFilePdf } from 'react-icons/fa';
 import { pdfjs, Document, Page } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { PDFViewer } from '@/components/PDFViewer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { AcidenteViewModal } from './AcidenteViewModal';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
@@ -35,7 +36,6 @@ type Country = typeof COUNTRIES[number]['value'];
 export function Acidentes() {
   const { user } = useAuth();
   const { id: docIdFromUrl } = useParams<{ id: string }>();
-  const location = useLocation();
   const navigate = useNavigate();
 
   const [accidents, setAccidents] = useState<Accident[]>([]);
@@ -47,37 +47,19 @@ export function Acidentes() {
     country: 'Portugal',
     date: new Date(),
   });
-  const [modalOpen, setModalOpen] = useState(false);
-  const [pdfUrlInModal, setPdfUrlInModal] = useState<string | null>(null);
-  const [pdfTitleInModal, setPdfTitleInModal] = useState<string>('');
-
-  const [comments, setComments] = useState<Map<string, { _id?: string; user: { _id: string, name: string }; text: string; createdAt?: Date }[]>>(new Map());
-  const [commentInputText, setCommentInputText] = useState<string>('');
-  const [showCommentsModal, setShowCommentsModal] = useState<boolean>(false);
-  const [selectedAccidentForComments, setSelectedAccidentForComments] = useState<Accident | null>(null);
-
-  const [isMobile, setIsMobile] = useState(false);
-  const [mobilePdfWidth, setMobilePdfWidth] = useState<number | undefined>();
 
   const hasAddPermission = user?.role === 'admin_qa' || user?.role === 'admin_app';
   const hasDeletePermission = user?.role === 'admin_qa';
 
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [pdfUrlInModal, setPdfUrlInModal] = useState<string | null>(null);
+  const [pdfTitleInModal, setPdfTitleInModal] = useState<string>('');
+
+  const [selectedAccidentId, setSelectedAccidentId] = useState<string | null>(null);
+  const [openCommentsOnModal, setOpenCommentsOnModal] = useState(false);
+
   useEffect(() => {
     loadAccidents();
-
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (mobile) {
-          setMobilePdfWidth(window.innerWidth - 32);
-      } else {
-          setMobilePdfWidth(undefined);
-      }
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-
   }, []);
 
   const loadAccidents = async () => {
@@ -105,203 +87,45 @@ export function Acidentes() {
     setNewAccident(prev => ({ ...prev, country: value }));
   };
 
-  const handleDeleteAccident = async (id: string) => {
-    try {
-      if (!hasDeletePermission) {
-        toast.error('Você não tem permissão para excluir acidentes');
-        return;
-      }
-
-      await deleteAccident(id);
-      toast.success('Acidente removido com sucesso');
-      loadAccidents();
-    } catch (error) {
-      console.error("Erro ao remover acidente:", error);
-      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-        toast.error('Sem permissão para excluir este acidente');
-      } else {
-        toast.error('Erro ao remover acidente');
-      }
-    }
-  };
-
-  const openPdfModal = (url: string, title: string) => {
-    setPdfUrlInModal(url);
-    setPdfTitleInModal(title);
-    setModalOpen(true);
-  };
-
-  const PdfPreview = ({ url }: { url: string }) => {
-    const [previewError, setPreviewError] = useState<string | null>(null);
-    const [numPagesPreview, setNumPagesPreview] = useState<number | null>(null);
-
-    const onPreviewLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
-      setNumPagesPreview(numPages);
-      setPreviewError(null);
-    }, []);
-
-    const onPreviewLoadError = useCallback((error: Error) => {
-      console.error("Erro ao carregar pré-visualização do PDF:", error);
-      setPreviewError("Não foi possível carregar a pré-visualização.");
-    }, []);
-
-    return (
-      <div className="border rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto w-full">
-        {previewError ? (
-          <p className="text-red-500 text-xs p-2 text-center">{previewError}</p>
-        ) : (
-          <Document
-            file={url}
-            onLoadSuccess={onPreviewLoadSuccess}
-            onLoadError={onPreviewLoadError}
-            loading={<div className="text-xs text-gray-500">A carregar pré-visualização...</div>}
-            error={<div className="text-xs text-red-500 p-2">Erro ao carregar</div>}
-            className="max-w-full max-h-full flex justify-center items-center"
-          >
-            {numPagesPreview ? (
-              <Page
-                pageNumber={1}
-                width={450}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-                className="max-w-full max-h-full"
-                loading={null}
-                error={null}
-              />
-            ) : (
-              !previewError && <div className="text-xs text-gray-500">A carregar...</div>
-            )}
-          </Document>
-        )}
-      </div>
-    );
-  };
-
   const handleAddAccident = async () => {
     try {
       if (!selectedFile) {
         toast.error('Por favor, selecione um arquivo PDF');
         return;
       }
-
       if (!newAccident.name || newAccident.name.trim() === '') {
         toast.error('Por favor, insira um nome para o acidente');
         return;
       }
-
       const formData = new FormData();
       formData.append('name', newAccident.name || '');
       formData.append('country', newAccident.country || 'Portugal');
       const dateToSend = newAccident.date instanceof Date ? newAccident.date.toISOString() : new Date().toISOString();
       formData.append('date', dateToSend);
       formData.append('document', selectedFile);
-
       toast("A processar o upload e a criar o acidente...");
       await createAccident(formData);
       setShowAddModal(false);
-      setNewAccident({
-        name: '',
-        country: 'Portugal',
-        date: new Date(),
-      });
+      setNewAccident({ name: '', country: 'Portugal', date: new Date() });
       setSelectedFile(null);
       loadAccidents();
       toast.success('Acidente adicionado com sucesso');
     } catch (error) {
       toast.error('Erro ao adicionar acidente');
-      console.error("Erro detalhado ao adicionar acidente:", error);
     }
   };
 
-  const handleLikeClick = async (accidentId: string) => {
-    if (!user) {
-      toast.info("Precisa de fazer login para dar gosto.");
-      return;
-    }
-    const docIndex = accidents.findIndex(d => d._id === accidentId);
-    if (docIndex === -1) return;
-
-    const doc = accidents[docIndex];
-    const originalLiked = doc.userHasLiked || false;
-    const originalCount = doc.likeCount || 0;
-
-    const updatedAccidents = [...accidents];
-    updatedAccidents[docIndex] = {
-      ...doc,
-      userHasLiked: !originalLiked,
-      likeCount: Math.max(0, originalLiked ? originalCount - 1 : originalCount + 1)
-    };
-    setAccidents(updatedAccidents);
-
+  const handleDeleteAccident = async (id: string) => {
     try {
-      if (originalLiked) {
-        await removeInteractionLike(accidentId, 'accident');
-      } else {
-        await addInteractionLike(accidentId, 'accident');
-      }
-    } catch (error) {
-      toast.error("Erro ao atualizar gosto.");
-      const revertedAccidents = [...accidents];
-      revertedAccidents[docIndex] = {
-        ...doc,
-        userHasLiked: originalLiked,
-        likeCount: originalCount
-      };
-       setAccidents(revertedAccidents); 
-    }
-  };
-
-  const openCommentsModal = (accident: Accident) => {
-    setSelectedAccidentForComments(accident);
-    setCommentInputText('');
-    setShowCommentsModal(true);
-  };
-
-  const handleCommentSubmit = async () => {
-    if (!selectedAccidentForComments || !selectedAccidentForComments._id) return;
-    const docId = selectedAccidentForComments._id;
-    const text = commentInputText;
-
-    if (!user) {
-      toast.info("Precisa de fazer login para comentar.");
+      if (!hasDeletePermission) {
+        toast.error('Você não tem permissão para excluir acidentes');
       return;
     }
-
-    if (!text || text.trim() === '') {
-      toast.warning("O comentário não pode estar vazio.");
-      return;
-    }
-
-    try {
-      const newCommentData = await addInteractionComment(docId, 'accident', text.trim());
-
-      setComments(prev => {
-        const newMap = new Map(prev);
-        const currentComments = newMap.get(docId) || [];
-        newMap.set(docId, [...currentComments, newCommentData]);
-        return newMap;
-      });
-      
-      const docIndex = accidents.findIndex(d => d._id === docId);
-       if (docIndex !== -1) {
-          const updatedAccidents = [...accidents];
-          updatedAccidents[docIndex] = {
-             ...updatedAccidents[docIndex],
-             commentCount: (updatedAccidents[docIndex].commentCount || 0) + 1
-          };
-          setAccidents(updatedAccidents);
-       }
-
-      setCommentInputText('');
-      toast.success("Comentário adicionado!");
-      setShowCommentsModal(false);
-
-      if (isMobile) {
-        navigate('/acidentes');
-      }
-
+      await deleteAccident(id);
+      toast.success('Acidente removido com sucesso');
+      loadAccidents();
     } catch (error) {
-      toast.error("Erro ao adicionar comentário.");
+      toast.error('Erro ao remover acidente');
     }
   };
 
@@ -314,146 +138,214 @@ export function Acidentes() {
     }
   }, [accidents, docIdFromUrl]);
 
-  useEffect(() => {
-    if (docIdFromUrl && !modalOpen) {
-      handleOpenComments(docIdFromUrl);
+  const openPdfModal = (url: string, title: string) => {
+    setPdfUrlInModal(url);
+    setPdfTitleInModal(title);
+    setPdfModalOpen(true);
+  };
+
+  const handleLikeClick = async (id: string) => {
+    const idx = accidents.findIndex(a => a._id === id);
+    if (idx === -1) return;
+    const accident = accidents[idx];
+    const originalLiked = accident.userHasLiked || false;
+    const originalCount = accident.likeCount || 0;
+    // Atualização otimista
+    const updatedAccidents = [...accidents];
+    updatedAccidents[idx] = {
+      ...accident,
+      userHasLiked: !originalLiked,
+      likeCount: Math.max(0, originalLiked ? originalCount - 1 : originalCount + 1)
+    };
+    setAccidents(updatedAccidents);
+    try {
+      await addInteractionLike(id, 'accident');
+    } catch (error) {
+      // Reverter se der erro
+      const reverted = [...accidents];
+      reverted[idx] = accident;
+      setAccidents(reverted);
+      toast.error('Erro ao gostar do acidente');
     }
-  }, [docIdFromUrl, modalOpen]);
+  };
+
+  // Callback para atualizar comentários após adicionar um novo comentário na modal
+  const handleCommentAdded = (accidentId: string) => {
+    const idx = accidents.findIndex(a => a._id === accidentId);
+    if (idx === -1) return;
+    const updatedAccidents = [...accidents];
+    updatedAccidents[idx] = {
+      ...accidents[idx],
+      commentCount: (accidents[idx].commentCount || 0) + 1
+    };
+    setAccidents(updatedAccidents);
+  };
+
+  const openCommentsModal = (accident: Accident) => {
+    setSelectedAccidentId(accident._id!);
+    setOpenCommentsOnModal(true);
+  };
+
+  const openDetailModal = (accident: Accident) => {
+    setSelectedAccidentId(accident._id!);
+    setOpenCommentsOnModal(false);
+  };
 
   return (
     <Layout>
-      <div className="h-full flex flex-col">
-        <div className="flex justify-between items-center mb-2 p-2 border-b flex-shrink-0">
-          {docIdFromUrl && (
-            <Button variant="outline" size="icon" onClick={() => navigate('/acidentes')} className="mr-2">
-               <FaChevronLeft />
-            </Button>
-          )}
-          <div className={`flex-1 ${docIdFromUrl ? '' : 'text-center'}`}> 
-            <h1 className="text-xl font-semibold">Acidentes</h1>
-          </div>
-          {!docIdFromUrl && hasAddPermission && (
+      <div className="min-h-screen h-full w-full bg-[#f7faff] p-3 sm:p-6 overflow-y-auto">
+        <div className="p-4 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-800">
+              Acidentes
+            </h1>
+            {hasAddPermission && (
             <Button
               onClick={() => setShowAddModal(true)}
-              className="bg-robbialac hover:bg-robbialac-dark text-white"
-              size="sm"
+                className="bg-[#1E90FF] hover:bg-[#1877cc] text-white font-semibold rounded-full px-6 py-2 shadow-lg"
             >
-              <FaPlus className="mr-1" /> Adicionar Acidente
+                <FaPlus className="mr-2" />
+                Novo Acidente
             </Button>
           )}
+          </div>
         </div>
-
-        <div className="flex-grow overflow-y-auto px-1 py-2">
+        <div className="mt-6 flex justify-center items-start min-h-[60vh]">
           {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-robbialac"></div>
+            <div className="flex justify-center items-center py-10 w-full">
+              <p>Carregando...</p>
             </div>
           ) : displayedAccidents.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-gray-500">
-                {docIdFromUrl ? 'Acidente não encontrado.' : 'Nenhum acidente encontrado.'}
-              </p>
+            <div className="text-center py-10 w-full">
+              <p className="text-gray-500">Nenhum acidente registrado.</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-4 md:gap-6 lg:w-3/4 xl:w-2/3 mx-auto py-4">
-              {displayedAccidents.map((doc) => (
-                <div key={doc._id} className="bg-card border rounded-lg shadow-sm flex flex-col overflow-hidden">
-                  <div className="p-3 sm:p-4 border-b bg-card-foreground/5">
-                    <div className="flex justify-between items-start gap-2 mb-1">
-                      <h2 className="flex-1 text-base sm:text-lg font-semibold leading-tight text-center truncate pr-2">{doc.name}</h2>
-                      {hasDeletePermission && (
+            displayedAccidents.length === 1 ? (
+              <div className="w-full max-w-2xl">
+                <div className="bg-white rounded-2xl shadow-xl transition-all overflow-hidden flex flex-col">
+                  <div className="p-6 pb-2 border-b">
+                    <h3 className="text-2xl font-bold text-gray-800 mb-1">{displayedAccidents[0].name}</h3>
+                    <div className="flex items-center text-base text-gray-500 mb-4">
+                      <span className="mr-4 font-medium">País: {displayedAccidents[0].country}</span>
+                      <span>Data: {format(new Date(displayedAccidents[0].date), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                    </div>
+                  </div>
+                  <div className="w-full flex flex-col items-center justify-center cursor-pointer hover:ring-2 hover:ring-[#1E90FF]"
+                    onClick={() => displayedAccidents[0].pdfUrl && window.open(displayedAccidents[0].pdfUrl, '_blank')}
+                    style={{ minHeight: 320 }}
+                  >
+                    {displayedAccidents[0].pdfUrl ? (
+                      <Document file={displayedAccidents[0].pdfUrl} loading={<FaFilePdf className='h-40 w-40 text-gray-300' />} error={<FaFilePdf className='h-40 w-40 text-red-400' />} className="w-full h-full">
+                        <Page pageNumber={1} width={undefined} height={undefined} className="w-full h-full object-contain" renderTextLayer={false} renderAnnotationLayer={false} />
+                      </Document>
+                    ) : (
+                      <FaFilePdf className="h-40 w-40 text-gray-300" />
+                    )}
+                  </div>
+                  <div className="p-6 flex flex-col gap-4 border-t">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDeleteAccident(doc._id!)}
-                          className="text-destructive hover:text-destructive/80 h-7 w-7 p-0 flex-shrink-0"
-                          aria-label="Remover Acidente"
+                          className={`rounded-full hover:bg-blue-50 ${displayedAccidents[0].userHasLiked ? 'text-blue-600' : 'text-gray-400'}`}
+                          onClick={e => { e.stopPropagation(); handleLikeClick(displayedAccidents[0]._id!); }}
+                          aria-label="Gosto"
                         >
-                          <FaTrash className="h-4 w-4" />
+                          <FaThumbsUp />
+                          <span className="ml-1 text-base">{displayedAccidents[0].likeCount || 0}</span>
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="rounded-full hover:bg-blue-50"
+                          onClick={e => { e.stopPropagation(); openCommentsModal(displayedAccidents[0]); }}
+                          aria-label="Comentários"
+                        >
+                          <FaComment />
+                          <span className="ml-1 text-base">{displayedAccidents[0].commentCount || 0}</span>
+                        </Button>
+                      </div>
+                      <Button
+                        className="rounded-full bg-[#1E90FF] hover:bg-[#1877cc] text-white font-semibold px-6 py-2 shadow-lg flex items-center gap-2"
+                        onClick={() => window.open(displayedAccidents[0].pdfUrl, '_blank')}
+                      >
+                        <FaExternalLinkAlt className="h-5 w-5" />
+                        Ver Documento Completo
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+                {displayedAccidents.map((accident) => (
+                  <div
+                    key={accident._id}
+                    className={"bg-white rounded-2xl shadow-md hover:shadow-lg transition-all overflow-hidden flex flex-col cursor-pointer hover:ring-2 hover:ring-[#1E90FF]"}
+                    onClick={() => accident.pdfUrl && openDetailModal(accident)}
+                    style={{ minHeight: 320 }}
+                  >
+                    <div className="w-full aspect-[4/3] bg-gray-100 flex items-center justify-center overflow-hidden">
+                      {accident.pdfUrl ? (
+                        <Document file={accident.pdfUrl} loading={<FaFilePdf className='h-16 w-16 text-gray-300' />} error={<FaFilePdf className='h-16 w-16 text-red-400' />} className="w-full h-full">
+                          <Page pageNumber={1} width={undefined} height={undefined} className="w-full h-full object-contain" renderTextLayer={false} renderAnnotationLayer={false} />
+                        </Document>
+                      ) : (
+                        <FaFilePdf className="h-16 w-16 text-gray-300" />
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground mt-1">
-                      <p><span className="font-medium">País:</span> {doc.country}</p>
-                      <p><span className="font-medium">Data:</span> {format(new Date(doc.date), 'dd/MM/yyyy', { locale: ptBR })}</p>
+                    <div className="p-4 flex-1 flex flex-col">
+                      <h3 className="text-lg font-bold text-gray-800 mb-2">{accident.name}</h3>
+                      <div className="flex items-center text-sm text-gray-500 mb-4">
+                        <span className="mr-4">{accident.country}</span>
+                        <span>{format(new Date(accident.date), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                      </div>
+                      <div className="flex items-center justify-end mt-auto space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`rounded-full hover:bg-blue-50 ${accident.userHasLiked ? 'text-blue-600' : 'text-gray-400'}`}
+                          onClick={e => { e.stopPropagation(); handleLikeClick(accident._id!); }}
+                          aria-label="Gosto"
+                        >
+                          <FaThumbsUp />
+                          <span className="ml-1 text-base">{accident.likeCount || 0}</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="rounded-full hover:bg-blue-50"
+                          onClick={e => { e.stopPropagation(); openCommentsModal(accident); }}
+                          aria-label="Comentários"
+                        >
+                          <FaComment />
+                          <span className="ml-1 text-base">{accident.commentCount || 0}</span>
+                        </Button>
+                        {hasDeletePermission && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full hover:bg-red-50"
+                            onClick={e => { e.stopPropagation(); handleDeleteAccident(accident._id!); }}
+                          >
+                            <FaTrash className="h-5 w-5 text-red-400" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
-
-                  <div className={`px-3 sm:px-4 py-2 flex-grow ${isMobile ? 'min-h-[60vh]' : ''}`}>
-                    {doc.pdfUrl ? (
-                       isMobile ? (
-                           <PDFViewer url={doc.pdfUrl} className="w-full h-full" containerWidth={mobilePdfWidth} />
-                       ) : (
-                           <PdfPreview url={doc.pdfUrl} />
-                       )
-                    ) : (
-                      <div className="text-center text-muted-foreground text-sm p-4">Documento PDF não disponível.</div>
-                    )}
-                  </div>
-
-                  <div className="p-3 sm:p-4 border-t flex flex-col sm:flex-row justify-between items-center gap-3 bg-card-foreground/5">
-                    <div className="flex items-center gap-4">
-                      <Button
-                         variant="ghost" 
-                         size="sm" 
-                         className={`text-muted-foreground hover:text-primary ${doc.userHasLiked ? 'text-blue-600 hover:text-blue-700' : ''}`}
-                         onClick={() => handleLikeClick(doc._id!)}
-                         disabled={!user}
-                      >
-                        <FaThumbsUp className="h-4 w-4 mr-1" />
-                        <span className="text-sm mr-1">Gosto</span>
-                        <span className="text-sm font-medium">({doc.likeCount || 0})</span> 
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-muted-foreground hover:text-primary"
-                        onClick={() => openCommentsModal(doc)}
-                      >
-                        <FaComment className="h-4 w-4 mr-1" />
-                        <span className="text-sm">Comentar</span>
-                        <span className="text-sm font-medium ml-1">({doc.commentCount || 0})</span>
-                      </Button>
-                    </div>
-                    {!isMobile && doc.pdfUrl && (
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm"
-                        onClick={() => openPdfModal(doc.pdfUrl!, doc.name)}
-                        disabled={!doc.pdfUrl}
-                      >
-                        <FaExternalLinkAlt className="h-3 w-3" /> Ver Documento Completo
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )
           )}
         </div>
-
-        {!isMobile && (
-            <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-              <DialogContent className="max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-[90vh] p-0 flex flex-col">
-                <DialogHeader className="p-4 border-b flex-shrink-0 relative">
-                  <DialogTitle className="text-lg truncate text-center">{pdfTitleInModal || 'Documento PDF'}</DialogTitle>
-                </DialogHeader>
-                <div className="flex-grow min-h-0">
-                   {pdfUrlInModal && (
-                       <PDFViewer url={pdfUrlInModal} className="h-full" />
-                   )}
-                </div>
-              </DialogContent>
-            </Dialog>
-        )}
-
         <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-           <DialogContent className="max-w-[98vw] sm:max-w-lg h-auto max-h-[95vh] p-3 sm:p-4 overflow-y-auto">
+          <DialogContent className="max-w-2xl">
              <DialogHeader>
-               <DialogTitle>Adicionar Novo Acidente</DialogTitle>
+              <DialogTitle className="text-xl font-bold">Adicionar Acidente</DialogTitle>
              </DialogHeader>
-             <div className="space-y-4">
+            <div className="space-y-4 py-4">
                <div>
                  <Label htmlFor="name">Nome do Acidente</Label>
                  <Input
@@ -470,10 +362,10 @@ export function Acidentes() {
                    onValueChange={handleCountryChange}
                  >
                    <SelectTrigger id="country" className="mt-1">
-                     <SelectValue placeholder="Selecione um país" />
+                    <SelectValue placeholder="Selecione o país" />
                    </SelectTrigger>
                    <SelectContent>
-                     {COUNTRIES.map(country => (
+                    {COUNTRIES.map((country) => (
                        <SelectItem key={country.value} value={country.value}>
                          {country.label}
                        </SelectItem>
@@ -482,91 +374,52 @@ export function Acidentes() {
                  </Select>
                </div>
                <div>
-                 <Label htmlFor="date">Data</Label>
+                <Label htmlFor="document">Arquivo PDF</Label>
                  <Input
-                   id="date"
-                   type="date"
-                   value={newAccident.date ? format(newAccident.date, 'yyyy-MM-dd') : ''}
-                   onChange={(e) => setNewAccident(prev => ({ ...prev, date: new Date(e.target.value) }))}
-                   className="mt-1"
-                 />
-               </div>
-               <div>
-                 <Label htmlFor="pdf">Arquivo PDF</Label>
-                 <Input
-                   id="pdf"
+                  id="document"
                    type="file"
-                   accept="application/pdf"
+                  accept=".pdf"
                    onChange={handleFileChange}
                    className="mt-1"
                  />
-                 {selectedFile && (
-                   <p className="text-sm text-gray-500 mt-1">
-                     Arquivo selecionado: {selectedFile.name}
-                   </p>
-                 )}
+              </div>
                </div>
-               <div className="mt-6 flex justify-end gap-4">
+            <div className="flex justify-end space-x-2">
                  <Button
-                   variant="ghost"
+                variant="outline"
                    onClick={() => setShowAddModal(false)}
+                className="rounded-full"
                  >
                    Cancelar
                  </Button>
-                 <Button onClick={handleAddAccident} className="bg-robbialac hover:bg-robbialac-dark text-white">
-                   Salvar
-                 </Button>
-               </div>
-             </div>
-           </DialogContent>
-        </Dialog>
-
-        <Dialog open={showCommentsModal} onOpenChange={setShowCommentsModal}>
-          <DialogContent className="max-w-lg h-[70vh] flex flex-col">
-            <DialogHeader className="p-4 border-b flex-shrink-0 relative">
-              <DialogTitle className="text-lg truncate text-center">Comentários sobre: {selectedAccidentForComments?.name || 'Acidente'}</DialogTitle>
-            </DialogHeader>
-            <div className="flex-grow overflow-y-auto p-4 space-y-3">
-              {(comments.get(selectedAccidentForComments?._id || '') || []).length > 0 ? (
-                (comments.get(selectedAccidentForComments?._id || '') || []).map((comment, index) => (
-                  <div key={comment._id || index} className="text-sm bg-background p-2 rounded shadow-sm border">
-                    <div className="flex justify-between items-center mb-1">
-                       <span className="font-semibold text-primary mr-2">{comment.user?.name || 'Utilizador Anónimo'}</span>
-                       {comment.createdAt && (
-                          <span className="text-xs text-muted-foreground">{format(new Date(comment.createdAt), 'dd/MM/yy HH:mm', { locale: ptBR })}</span>
-                       )}
-                    </div>
-                    <p className="text-foreground/90 whitespace-pre-wrap break-words">{comment.text}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground italic text-center py-4">Ainda não há comentários.</p>
-              )}
-            </div>
-            <div className="p-4 border-t mt-auto flex-shrink-0">
-              {user ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    placeholder="Adicione um comentário..."
-                    className="flex-grow text-sm"
-                    value={commentInputText}
-                    onChange={(e) => setCommentInputText(e.target.value)}
-                  />
                   <Button
-                    size="sm"
-                    onClick={handleCommentSubmit}
-                    className="text-xs"
-                    disabled={!commentInputText.trim()}
+                onClick={handleAddAccident}
+                className="bg-[#1E90FF] hover:bg-[#1877cc] text-white font-semibold rounded-full"
                   >
-                    Enviar
+                Adicionar
                   </Button>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center">Faça login para comentar.</p>
-              )}
             </div>
           </DialogContent>
         </Dialog>
+        <Dialog open={pdfModalOpen} onOpenChange={setPdfModalOpen}>
+          <DialogContent className="max-w-6xl w-[95vw] h-[90vh]">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold">{pdfTitleInModal}</DialogTitle>
+            </DialogHeader>
+            {pdfUrlInModal && (
+              <div className="flex-1 overflow-auto">
+                <PDFViewer url={pdfUrlInModal} />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+        <AcidenteViewModal
+          isOpen={!!selectedAccidentId}
+          onClose={() => setSelectedAccidentId(null)}
+          accidentId={selectedAccidentId || ''}
+          openComments={openCommentsOnModal}
+          onCommentAdded={handleCommentAdded}
+        />
       </div>
     </Layout>
   );

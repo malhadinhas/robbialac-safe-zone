@@ -20,6 +20,7 @@ import { pdfjs, Document, Page } from 'react-pdf';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
+import { SensibilizacaoViewModal } from './SensibilizacaoViewModal';
 
 // Configure pdfjs worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
@@ -70,6 +71,9 @@ export function SensibilizacaoComponent() {
   const [isMobile, setIsMobile] = useState(false);
   // NEW: State to store calculated width for mobile PDF viewer
   const [mobilePdfWidth, setMobilePdfWidth] = useState<number | undefined>();
+
+  // NEW: State for selected document ID
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
 
   // Verificar se o usuário tem permissão para adicionar documentos
   const hasAddPermission = user?.role === 'admin_qa' || user?.role === 'admin_app';
@@ -275,13 +279,8 @@ export function SensibilizacaoComponent() {
     }
   };
 
-  const openCommentsModal = (doc: SensibilizacaoTypeFromAPI) => {
-    setSelectedDocForComments(doc);
-    setCommentInputText('');
-    setShowCommentsModal(true);
-    // TODO: Idealmente, buscar comentários aqui via API em vez de depender do estado?
-    // const commentsForItem = await getInteractionComments(doc._id, 'sensibilizacao');
-    // setComments(prev => new Map(prev).set(doc._id!, commentsForItem));
+  const openDetailModal = (doc: SensibilizacaoTypeFromAPI) => {
+    setSelectedDocId(doc._id!);
   };
 
   const handleCommentSubmit = async () => {
@@ -350,7 +349,7 @@ export function SensibilizacaoComponent() {
         const docToOpen = displayedSensibilizacoes[0]; // Já sabemos que é o único
         if (docToOpen) {
             console.log(`Tentando abrir comentários para ${docIdFromUrl} devido ao state da navegação.`);
-            openCommentsModal(docToOpen);
+            openDetailModal(docToOpen);
             // Limpar o state para não reabrir ao navegar internamente
             navigate(location.pathname, { replace: true, state: {} }); 
         }
@@ -360,190 +359,104 @@ export function SensibilizacaoComponent() {
 
   return (
     <Layout>
-      <div className="h-full flex flex-col">
-        <div className="flex justify-between items-center mb-2 p-2 border-b flex-shrink-0">
-          {docIdFromUrl && (
-             <Button variant="outline" size="icon" onClick={() => navigate('/sensibilizacao')} className="mr-2">
-                <FaChevronLeft />
-             </Button>
-          )}
-          <div className={`flex-1 ${docIdFromUrl ? '' : 'text-center'}`}>
-            <h1 className="text-xl font-semibold">Sensibilização</h1>
-          </div>
-          {!docIdFromUrl && hasAddPermission && (
+      <div className="h-full bg-[#f7faff] p-3 sm:p-6 overflow-y-auto">
+        <div className="container mx-auto">
+          {/* Header Section */}
+          <div className="p-4 space-y-4">
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
+              <h1 className="text-lg sm:text-2xl font-bold text-gray-800">
+                Sensibilização
+              </h1>
+              {hasAddPermission && (
             <Button
               onClick={() => setShowAddModal(true)}
-              className="bg-robbialac hover:bg-robbialac-dark text-white"
-              size="sm"
+                  className="bg-[#1E90FF] hover:bg-[#1877cc] text-white font-semibold rounded-full px-6 py-2 shadow-lg"
             >
-              <FaPlus className="mr-1" /> Adicionar Documento
+                  <FaPlus className="mr-2" />
+                  Novo Documento
             </Button>
           )}
+            </div>
         </div>
 
-        <div className="flex-grow overflow-y-auto px-1 py-2">
+          {/* Content Section */}
+          <div className="mt-6">
           {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-robbialac"></div>
+              <div className="flex justify-center items-center py-10">
+                <p>Carregando...</p>
             </div>
-          ) : displayedSensibilizacoes.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-gray-500">
-                {docIdFromUrl ? 'Documento não encontrado.' : 'Nenhum documento de sensibilização encontrado.'}
-              </p>
+            ) : sensibilizacoes.length === 0 ? (
+              <div className="text-center py-10">
+                <p className="text-gray-500">Nenhum documento de sensibilização encontrado.</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-4 md:gap-6 lg:w-3/4 xl:w-2/3 mx-auto py-4">
-              {displayedSensibilizacoes.map((doc) => (
-                <div key={doc._id} className="bg-card border rounded-lg shadow-sm flex flex-col overflow-hidden">
-                  <div className="p-3 sm:p-4 border-b bg-card-foreground/5">
-                    <div className="flex justify-between items-start gap-2 mb-1">
-                      <h2 className="flex-1 text-base sm:text-lg font-semibold leading-tight text-center truncate pr-2">{doc.name}</h2>
-                      {hasDeletePermission && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {sensibilizacoes.map((doc) => (
+                  <div
+                    key={doc._id}
+                    className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all overflow-hidden flex flex-col cursor-pointer hover:ring-2 hover:ring-[#1E90FF]"
+                    onClick={() => openDetailModal(doc)}
+                  >
+                    {/* PDF Preview */}
+                    <div className="w-full aspect-[4/3] bg-gray-100">
+                      <PdfPreview url={doc.pdfUrl} />
+                    </div>
+                    {/* Content */}
+                    <div className="p-4 flex-1 flex flex-col">
+                      <h3 className="text-lg font-bold text-gray-800 mb-2">{doc.name}</h3>
+                      <div className="flex items-center text-sm text-gray-500 mb-4">
+                        <span className="mr-4">{doc.country}</span>
+                        <span>{format(new Date(doc.date), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                      </div>
+                      <div className="flex items-center justify-end mt-auto space-x-2">
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDeleteSensibilizacao(doc._id!)}
-                          className="text-destructive hover:text-destructive/80 h-7 w-7 p-0 flex-shrink-0"
-                          aria-label="Remover Documento"
+                          className={`rounded-full hover:bg-blue-50 ${doc.userHasLiked ? 'text-blue-600' : 'text-gray-400'}`}
+                          onClick={e => { e.stopPropagation(); handleLikeClick(doc._id!); }}
+                          aria-label="Gosto"
                         >
-                          <FaTrash className="h-4 w-4" />
+                          <FaThumbsUp />
+                          <span className="ml-1 text-base">{doc.likeCount || 0}</span>
                         </Button>
-                      )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="rounded-full hover:bg-blue-50"
+                          onClick={e => { e.stopPropagation(); openDetailModal(doc); }}
+                          aria-label="Comentários"
+                        >
+                          <FaComment />
+                          <span className="ml-1 text-base">{doc.commentCount || 0}</span>
+                        </Button>
+                        {hasDeletePermission && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full hover:bg-red-50"
+                            onClick={e => { e.stopPropagation(); handleDeleteSensibilizacao(doc._id!); }}
+                          >
+                            <FaTrash className="h-5 w-5 text-red-400" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground mt-1">
-                      <p><span className="font-medium">País:</span> {doc.country}</p>
-                      <p><span className="font-medium">Data:</span> {format(new Date(doc.date), 'dd/MM/yyyy', { locale: ptBR })}</p>
-                    </div>
                   </div>
-
-                  <div className={`px-3 sm:px-4 py-2 flex-grow ${isMobile ? 'min-h-[60vh]' : ''}`}>
-                     {doc.pdfUrl ? (
-                       isMobile ? (
-                           // Render full PDF viewer directly on mobile, passing calculated width
-                           <PDFViewer url={doc.pdfUrl} className="w-full h-full" containerWidth={mobilePdfWidth} />
-                       ) : (
-                           // Render preview on desktop/tablet
-                           <PdfPreview url={doc.pdfUrl} />
-                       )
-                     ) : (
-                       <div className="text-center text-muted-foreground text-sm p-4">Documento PDF não disponível.</div>
-                     )}
-                  </div>
-
-                  <div className="p-3 sm:p-4 border-t flex flex-col sm:flex-row justify-between items-center gap-3 bg-card-foreground/5">
-                    <div className="flex items-center gap-4">
-                      <Button
-                         variant="ghost"
-                         size="sm"
-                         className={`text-muted-foreground hover:text-primary ${doc.userHasLiked ? 'text-blue-600 hover:text-blue-700' : ''}`}
-                         onClick={() => handleLikeClick(doc._id!)}
-                         disabled={!user}
-                      >
-                        <FaThumbsUp className="h-4 w-4 mr-1" />
-                        <span className="text-sm mr-1">Gosto</span>
-                        <span className="text-sm font-medium">({doc.likeCount || 0})</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-muted-foreground hover:text-primary"
-                        onClick={() => openCommentsModal(doc)}
-                      >
-                        <FaComment className="h-4 w-4 mr-1" />
-                        <span className="text-sm">Comentar</span>
-                        <span className="text-sm font-medium ml-1">({doc.commentCount || 0})</span>
-                      </Button>
-                    </div>
-                    {!isMobile && doc.pdfUrl && (
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm"
-                        onClick={() => openPdfModal(doc.pdfUrl!, doc.name)}
-                        disabled={!doc.pdfUrl}
-                      >
-                        <FaExternalLinkAlt className="h-3 w-3" /> Ver Documento Completo
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* PDF Viewer Modal (only used on non-mobile) */}
-        {!isMobile && (
-            <Dialog open={pdfModalOpen} onOpenChange={setPdfModalOpen}>
-                <DialogContent className="max-w-[95vw] md:max-w-4xl lg:max-w-6xl h-[90vh] p-0 flex flex-col">
-                  <DialogHeader className="p-4 border-b flex-shrink-0 relative">
-                    <DialogTitle className="text-lg truncate text-center">{pdfTitleInModal || 'Documento PDF'}</DialogTitle>
-                  </DialogHeader>
-                  <div className="flex-grow min-h-0">
-                    {pdfUrlInModal && (
-                      <PDFViewer url={pdfUrlInModal} className="h-full" />
-                    )}
-                  </div>
-                </DialogContent>
-            </Dialog>
-        )}
-
-        <Dialog open={showCommentsModal} onOpenChange={setShowCommentsModal}>
-          <DialogContent className="max-w-lg h-[70vh] flex flex-col">
-            <DialogHeader className="p-4 border-b flex-shrink-0 relative">
-              <DialogTitle className="text-lg truncate text-center">Comentários sobre: {selectedDocForComments?.name || 'Documento'}</DialogTitle>
-            </DialogHeader>
-            <div className="flex-grow overflow-y-auto p-4 space-y-3">
-              {(comments.get(selectedDocForComments?._id || '') || []).length > 0 ? (
-                (comments.get(selectedDocForComments?._id || '') || []).map((comment, index) => (
-                  <div key={comment._id || index} className="text-sm bg-background p-2 rounded shadow-sm border">
-                    <div className="flex justify-between items-center mb-1">
-                       <span className="font-semibold text-primary mr-2">{comment.user?.name || 'Utilizador Anónimo'}</span>
-                       {comment.createdAt && (
-                          <span className="text-xs text-muted-foreground">{format(new Date(comment.createdAt), 'dd/MM/yy HH:mm', { locale: ptBR })}</span>
-                       )}
-                    </div>
-                    <p className="text-foreground/90 whitespace-pre-wrap break-words">{comment.text}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground italic text-center py-4">Ainda não há comentários.</p>
+                ))}
+              </div>
               )}
             </div>
-            <div className="p-4 border-t mt-auto flex-shrink-0">
-              {user ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    placeholder="Adicione um comentário..."
-                    className="flex-grow text-sm"
-                    value={commentInputText}
-                    onChange={(e) => setCommentInputText(e.target.value)}
-                  />
-                  <Button
-                    size="sm"
-                    onClick={handleCommentSubmit}
-                    className="text-xs"
-                    disabled={!commentInputText.trim()}
-                  >
-                    Enviar
-                  </Button>
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center">Faça login para comentar.</p>
-              )}
             </div>
-          </DialogContent>
-        </Dialog>
 
+        {/* Add Modal */}
         <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-          <DialogContent className="max-w-[98vw] sm:max-w-lg h-auto max-h-[95vh] p-3 sm:p-4 overflow-y-auto">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Adicionar Documento de Sensibilização</DialogTitle>
+              <DialogTitle className="text-xl font-bold">Adicionar Documento de Sensibilização</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 py-4">
               <div>
-                <Label htmlFor="name">Nome</Label>
+                <Label htmlFor="name">Nome do Documento</Label>
                 <Input
                   id="name"
                   value={newSensibilizacao.name}
@@ -558,7 +471,7 @@ export function SensibilizacaoComponent() {
                   onValueChange={handleCountryChange}
                 >
                   <SelectTrigger id="country" className="mt-1">
-                    <SelectValue placeholder="Selecione um país" />
+                    <SelectValue placeholder="Selecione o país" />
                   </SelectTrigger>
                   <SelectContent>
                     {COUNTRIES.map((country) => (
@@ -570,47 +483,96 @@ export function SensibilizacaoComponent() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="date">Data</Label>
+                <Label htmlFor="document">Arquivo PDF</Label>
                 <Input
-                  id="date"
-                  type="date"
-                  value={newSensibilizacao.date ? format(new Date(newSensibilizacao.date), 'yyyy-MM-dd') : ''}
-                  onChange={(e) => setNewSensibilizacao(prev => ({ ...prev, date: new Date(e.target.value) }))}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="pdf">Arquivo PDF</Label>
-                <Input
-                  id="pdf"
+                  id="document"
                   type="file"
-                  accept="application/pdf"
+                  accept=".pdf"
                   onChange={handleFileChange}
                   className="mt-1"
                 />
-                {selectedFile && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    Arquivo selecionado: {selectedFile.name}
-                  </p>
-                )}
               </div>
-              <div className="mt-6 flex justify-end gap-4">
+            </div>
+            <div className="flex justify-end space-x-2">
                 <Button
-                  variant="ghost"
+                variant="outline"
                   onClick={() => setShowAddModal(false)}
+                className="rounded-full"
                 >
                   Cancelar
                 </Button>
                 <Button
                   onClick={handleAddSensibilizacao}
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                className="bg-[#1E90FF] hover:bg-[#1877cc] text-white font-semibold rounded-full"
+              >
+                Adicionar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* PDF Modal */}
+        <Dialog open={pdfModalOpen} onOpenChange={setPdfModalOpen}>
+          <DialogContent className="max-w-6xl w-[95vw] h-[90vh]">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold">{pdfTitleInModal}</DialogTitle>
+            </DialogHeader>
+            {pdfUrlInModal && (
+              <div className="flex-1 overflow-auto">
+                <PDFViewer url={pdfUrlInModal} />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Comments Modal */}
+        <Dialog open={showCommentsModal} onOpenChange={setShowCommentsModal}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold">
+                Comentários - {selectedDocForComments?.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {/* Comments List */}
+              <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                {selectedDocForComments && comments.get(selectedDocForComments._id)?.map((comment, index) => (
+                  <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium">{comment.user.name}</span>
+                      <span className="text-sm text-gray-500">
+                        {format(new Date(comment.createdAt || ''), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                      </span>
+                    </div>
+                    <p className="text-gray-700">{comment.text}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Comment Input */}
+              <div className="flex space-x-2">
+                <Input
+                  value={commentInputText}
+                  onChange={(e) => setCommentInputText(e.target.value)}
+                  placeholder="Adicione um comentário..."
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleCommentSubmit}
+                  className="bg-[#1E90FF] hover:bg-[#1877cc] text-white font-semibold rounded-full"
                 >
-                  Salvar
+                  Enviar
                 </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
+
+        <SensibilizacaoViewModal
+          isOpen={!!selectedDocId}
+          onClose={() => setSelectedDocId(null)}
+          docId={selectedDocId || ''}
+        />
       </div>
     </Layout>
   );

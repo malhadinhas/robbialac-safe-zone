@@ -29,6 +29,7 @@ import TestApi from './pages/TestApi';
 import AcidenteForm from "./pages/AcidenteForm";
 import FeedPage from "./pages/Feed";
 import QuaseAcidentesVisualizar from "./pages/QuaseAcidentesVisualizar";
+import PDFViewerPage from "./pages/PDFViewerPage";
 
 // Configure QueryClient with retry settings
 const queryClient = new QueryClient({
@@ -82,6 +83,7 @@ const App = () => {
                     <Route path="/acidentes/:id" element={<Acidentes />} />
                     <Route path="/acidentes/novo" element={<AcidenteForm />} />
                     <Route path="/acidentes/:id/editar" element={<AcidenteForm />} />
+                    <Route path="/acidentes/pdf/:id" element={<PDFViewerPage />} />
                     <Route path="/sensibilizacao" element={<Sensibilizacao />} />
                     <Route path="/sensibilizacao/:id" element={<Sensibilizacao />} />
                   </Route>

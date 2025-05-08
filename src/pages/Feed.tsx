@@ -113,12 +113,31 @@ export default function FeedPage() {
       }
     };
     loadFeedData();
+
+    // Listener para refresh automático do feed
+    const refreshListener = () => loadFeedData();
+    window.addEventListener('feedShouldRefresh', refreshListener);
+    return () => {
+      window.removeEventListener('feedShouldRefresh', refreshListener);
+    };
   }, []);
 
   // Navigation Handler - Modificado para aceitar openComments
   const handleItemClick = (item: FeedItem, openComments: boolean = false) => {
     let path = '';
-    if (item.type === 'qa') {
+    if (item.type === 'activity') {
+      // Se for uma atividade de like ou comentário, navega para o item associado
+      if (item.documentType === 'Quase Acidente') {
+        path = `/quase-acidentes/${item._id}`;
+      } else if (item.documentType === 'Acidente') {
+        path = `/acidentes/${item._id}`;
+      } else if (item.documentType === 'Sensibilizacao') {
+        path = `/sensibilizacao/${item._id}`;
+      } else {
+        console.warn("Document type unknown for navigation:", item.documentType);
+        return; // Não navegar se tipo desconhecido
+      }
+    } else if (item.type === 'qa') {
       path = `/quase-acidentes/${item._id}`; 
     } else if (item.type === 'document' && item.documentType) {
       if (item.documentType === 'Acidente') {

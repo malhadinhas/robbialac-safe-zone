@@ -53,21 +53,6 @@ const validateOrigin = (origin: string | undefined): boolean => {
   return allOrigins.includes(origin);
 };
 
-// Middleware de validação de headers (apenas bloqueia headers realmente perigosos)
-const validateHeaders = (req: Request, res: Response, next: NextFunction) => {
-  // Permitir todos os headers padrão do browser e customizados definidos acima
-  const invalidHeaders = Object.keys(req.headers).filter(
-    header => !ALLOWED_HEADERS.map(h => h.toLowerCase()).includes(header.toLowerCase())
-  );
-  // Só bloquear headers que sejam realmente suspeitos
-  if (invalidHeaders.length > 0) {
-    logger.warn('Headers inválidos detectados', { invalidHeaders });
-    // Em vez de bloquear, apenas logar e permitir para evitar problemas em produção
-    // return res.status(403).json({ error: 'Headers não permitidos' });
-  }
-  next();
-};
-
 // Configuração do CORS
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
@@ -87,9 +72,6 @@ const corsOptions: cors.CorsOptions = {
 };
 
 // Middleware CORS configurado
-export const corsMiddleware = [
-  cors(corsOptions),
-  validateHeaders
-];
+export const corsMiddleware = [cors(corsOptions)];
 
 export default corsMiddleware; 

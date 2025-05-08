@@ -51,6 +51,7 @@ enum ChatStep {
   INCIDENT_LOCATION,
   DESCRIPTION,
   SUGGESTION,
+  PHOTOS,
   CONFIRMATION,
   HELP
 }
@@ -70,6 +71,7 @@ export default function ChatbotModal({
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   
   useEffect(() => {
     if (isOpen) {
@@ -107,7 +109,6 @@ export default function ChatbotModal({
   const showHelpInformation = () => {
     setPreviousStep(currentStep);
     setCurrentStep(ChatStep.HELP);
-    
     setChatMessages(prev => [...prev, { 
       text: "Aqui estão algumas informações úteis sobre os parâmetros dos Quase Acidentes (QA):\n\n" +
             "📊 **Parâmetros de Quase Acidentes**\n\n" +
@@ -133,19 +134,20 @@ export default function ChatbotModal({
             "- Título, Descrição, Local, Data, Status, Departamento e Sugestão de Correção\n\n" +
             "O que mais posso ajudar?", 
       isBot: true,
-      options: ["Continuar", "Recomeçar"]
+      options: ["Digite o seu nome"]
     }]);
   };
   
   const processUserInput = (message: string) => {
     if (currentStep === ChatStep.HELP) {
-      if (message.toLowerCase().includes("recomeçar")) {
-        resetChat();
+      setCurrentStep(ChatStep.NAME);
+      setTimeout(() => {
+        setChatMessages(prev => [...prev, {
+          text: "Por favor, digite o seu nome para começarmos o registo do quase acidente.",
+          isBot: true
+        }]);
+      }, 300);
         return;
-      } else {
-        setCurrentStep(previousStep);
-        return;
-      }
     }
     
     switch (currentStep) {
@@ -226,61 +228,64 @@ export default function ChatbotModal({
           }, 500);
           return;
         }
-        
         setCurrentIncident(prev => ({ ...prev, suggestionToFix: message }));
-
-        const incidentDescription = currentIncident.description || "Sem descrição";
-        const incidentLocation = currentIncident.location || "Local não especificado";
-        const departmentName = currentIncident.department || departments[0].label;
-        const suggestionToFix = message;
-
-        const finalIncident: Partial<Incident> = {
-          ...currentIncident as Partial<Incident>,
-          title: incidentDescription?.substring(0, 50) + "...",
-          description: incidentDescription,
-          location: incidentLocation,
-          department: departmentName,
-          date: date || new Date(),
-          reportedBy: user?.email || "",
-          reporterName: currentIncident.reporterName,
-          factoryArea: currentIncident.factoryArea,
-          suggestionToFix: suggestionToFix,
-          status: "Reportado",
-          severity: "Não Definido",
-          images: []
-        };
-
-        setCurrentIncident(finalIncident);
-        
         setTimeout(() => {
           setChatMessages(prev => [...prev, { 
-            text: "Obrigado pelo seu relato! Aqui está um resumo do quase acidente reportado:\n\n" +
-                  `Nome: ${finalIncident.reporterName || 'N/A'}\n` +
-                  `Data: ${format(finalIncident.date!, 'dd/MM/yyyy')}\n` +
-                  `Departamento: ${finalIncident.department}\n` +
-                  `Área da fábrica: ${finalIncident.factoryArea || 'N/A'}\n` +
-                  `Local específico: ${finalIncident.location}\n` +
-                  `Descrição: ${finalIncident.description}\n` +
-                  `Sugestão: ${finalIncident.suggestionToFix}\n\n` +
-                  "A gravidade será avaliada posteriormente pela equipa de segurança.\n\n" +
-                  "Deseja confirmar este relato?", 
+            text: "Se quiser, pode juntar fotos ao seu relato. Carregue as imagens abaixo (opcional) e clique em 'Avançar' para continuar.",
             isBot: true,
-            options: ["Confirmar", "Cancelar"]
+            options: ["Avançar"]
           }]);
-          setCurrentStep(ChatStep.CONFIRMATION);
+          setCurrentStep(ChatStep.PHOTOS);
         }, 500);
         break;
-        
+      case ChatStep.PHOTOS:
+        if (uploadedImages.length > 0) {
+          const files: File[] = [];
+          uploadedImages.forEach((base64, idx) => {
+            const arr = base64.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while (n--) u8arr[n] = bstr.charCodeAt(n);
+            files.push(new File([u8arr], `imagem-${Date.now()}-${idx}.jpg`, { type: mime }));
+          });
+          Promise.all(files.map(f => uploadIncidentImage(f))).then(urls => {
+            setCurrentIncident(prev => {
+              const updated = { ...prev, images: urls };
+              avancarParaResumo(updated, urls);
+              return updated;
+            });
+          }).catch(() => {
+            setChatMessages(prev => [...prev, { text: 'Erro ao fazer upload das imagens. Tente novamente.', isBot: true }]);
+          });
+          return;
+        } else {
+          avancarParaResumo(currentIncident, []);
+          return;
+        }
       case ChatStep.CONFIRMATION:
         if (message.toLowerCase().includes("confirmar")) {
           setTimeout(() => {
+            // Garantir todos os campos obrigatórios
+            const incidentToSend = {
+              ...currentIncident,
+              title: currentIncident.description ? currentIncident.description.substring(0, 50) + '...' : 'Quase Acidente',
+              status: currentIncident.status || 'Reportado',
+              severity: currentIncident.severity || 'Não Definido',
+              date: currentIncident.date || new Date(),
+              department: currentIncident.department || 'Não Definido',
+              suggestionToFix: currentIncident.suggestionToFix || 'Não definido',
+              description: currentIncident.description || 'Sem descrição',
+              location: currentIncident.location || 'Local não especificado',
+              images: currentIncident.images || [],
+            };
             setChatMessages(prev => [...prev, { 
               text: "Quase acidente registrado com sucesso! Obrigado por contribuir para a segurança de todos.", 
               isBot: true 
             }]);
-            
-            if (Object.keys(currentIncident).length > 0) {
-              onSubmitIncident(currentIncident as Incident);
+            if (Object.keys(incidentToSend).length > 0) {
+              onSubmitIncident(incidentToSend as Incident);
               setTimeout(() => onClose(), 2000);
             }
           }, 500);
@@ -291,7 +296,6 @@ export default function ChatbotModal({
               isBot: true,
               options: ["Sim", "Não"]
             }]);
-            
             setCurrentStep(ChatStep.NAME);
           }, 500);
         }
@@ -413,6 +417,28 @@ export default function ChatbotModal({
     });
   };
   
+  const avancarParaResumo = (incidentObj: any, urls: string[]) => {
+    setTimeout(() => {
+      const finalIncident = { ...incidentObj, images: urls };
+      setChatMessages(prev => [...prev, {
+        text: "Obrigado pelo seu relato! Aqui está um resumo do quase acidente reportado:\n\n" +
+          `Nome: ${finalIncident.reporterName || 'N/A'}\n` +
+          `Data: ${finalIncident.date ? format(finalIncident.date, 'dd/MM/yyyy') : 'N/A'}\n` +
+          `Departamento: ${finalIncident.department}\n` +
+          `Área da fábrica: ${finalIncident.factoryArea || 'N/A'}\n` +
+          `Local específico: ${finalIncident.location}\n` +
+          `Descrição: ${finalIncident.description}\n` +
+          `Sugestão: ${finalIncident.suggestionToFix}\n` +
+          (urls.length > 0 ? `Fotos: ${urls.length} anexada(s)\n` : "") +
+          "A gravidade será avaliada posteriormente pela equipa de segurança.\n\n" +
+          "Deseja confirmar este relato?",
+        isBot: true,
+        options: ["Confirmar", "Cancelar"]
+      }]);
+      setCurrentStep(ChatStep.CONFIRMATION);
+    }, 500);
+  };
+  
   if (!isOpen) return null;
   
   return (
@@ -430,6 +456,34 @@ export default function ChatbotModal({
         
         <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: '60vh' }}>
           {renderMessages()}
+          {currentStep === ChatStep.PHOTOS && (
+            <div className="flex flex-col items-start gap-2 mb-4 ml-10">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={e => {
+                  const files = Array.from(e.target.files || []);
+                  const readers = files.map(file => {
+                    return new Promise<string>((resolve, reject) => {
+                      const reader = new FileReader();
+                      reader.onload = () => resolve(reader.result as string);
+                      reader.onerror = reject;
+                      reader.readAsDataURL(file);
+                    });
+                  });
+                  Promise.all(readers).then(imgs => setUploadedImages(imgs));
+                }}
+              />
+              {uploadedImages.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {uploadedImages.map((img, idx) => (
+                    <img key={idx} src={img} alt="preview" className="w-16 h-16 object-cover rounded" />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <div ref={chatEndRef} />
         </div>
         
@@ -478,4 +532,17 @@ export default function ChatbotModal({
       </div>
     </div>
   );
+}
+
+// Função para upload de imagem para o endpoint /api/uploads/image
+async function uploadIncidentImage(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append('image', file);
+  const response = await fetch('/api/uploads/image', {
+    method: 'POST',
+    body: formData
+  });
+  if (!response.ok) throw new Error('Erro ao fazer upload da imagem');
+  const data = await response.json();
+  return data.url;
 }

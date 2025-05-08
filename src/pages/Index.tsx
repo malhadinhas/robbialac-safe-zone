@@ -13,7 +13,8 @@ import {
   Tooltip, 
   Legend, 
   Cell, 
-  ResponsiveContainer
+  ResponsiveContainer,
+  CartesianGrid
 } from "recharts";
 import { Eye, AlertTriangle, Film, Clock, BookOpen, TrendingUp, ChevronLeft, ChevronRight, User, Video as VideoIcon, AlertCircle } from "lucide-react";
 import { useIsMobile, useIsTablet, useIsCompactView } from "@/hooks/use-mobile";
@@ -261,14 +262,14 @@ export default function Dashboard() {
           pointsToNextLevel={pointsToNextLevel}
         />
       ) : (
-        <div className="h-full p-4 space-y-4 overflow-y-auto">
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <p className="text-gray-500">Bem-vindo de volta, {user?.name}!</p>
+        <div className="h-full p-6 space-y-8 overflow-y-auto bg-[#f7faff]">
+          <h1 className="text-3xl font-bold text-gray-800 mb-1">Dashboard</h1>
+          <p className="text-gray-500 mb-6">Bem-vindo de volta, {user?.name}!</p>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Coluna 1: Cards de progresso do usuário */}
-            <div className="md:col-span-1 grid grid-cols-1 gap-4">
-              <Card className="h-auto flex flex-col items-center p-4 rounded-2xl shadow-lg">
+            <div className="md:col-span-1 grid grid-cols-1 gap-8">
+              <Card className="h-auto flex flex-col items-center p-6 rounded-xl shadow-lg bg-white">
                 {/* Avatar editável */}
                 <AvatarUploader
                   avatarUrl={avatar}
@@ -276,7 +277,7 @@ export default function Dashboard() {
                   onAvatarChange={handleAvatarChange}
                 />
                 <CardHeader className="pb-2 space-y-0 w-full text-center">
-                  <CardTitle className="text-base font-bold">Seu Progresso</CardTitle>
+                  <CardTitle className="text-lg font-bold text-gray-800">Seu Progresso</CardTitle>
                 </CardHeader>
                 <CardContent className="pb-4 w-full">
                   <div className="space-y-2">
@@ -299,30 +300,23 @@ export default function Dashboard() {
                   </div>
                 </CardContent>
               </Card>
-              
-              <Card className="h-auto">
-                <CardHeader className="pb-2 space-y-0">
-                  <CardTitle className="text-sm font-medium">Pontuação Total</CardTitle>
+              <Card className="h-auto p-6 rounded-xl shadow-lg bg-white flex flex-col items-center justify-center">
+                <CardHeader className="pb-2 space-y-0 w-full text-center">
+                  <CardTitle className="text-base font-semibold text-gray-800">Pontuação Total</CardTitle>
                 </CardHeader>
-                <CardContent className="pb-4">
-                  <div className="text-center">
-                    <p className="text-3xl font-bold mb-1">{user?.points || 0}</p>
-                  <div className="flex items-center justify-center">
-                        <p className="text-xs text-gray-500">Pontos acumulados</p>
+                <CardContent className="pb-4 w-full flex flex-col items-center justify-center">
+                  <p className="text-3xl font-bold mb-3 text-blue-600">{user?.points || 0}</p>
                         <Button
                           variant="outline"
-                          size="sm"
-                          className="ml-2"
+                    size="lg"
+                    className="rounded-full bg-blue-500 text-white hover:bg-blue-600 shadow text-base px-6 py-2 mt-2"
                           onClick={() => navigate('/ranking')}
                         >
                           Ver Ranking
                         </Button>
-                      </div>
-                  </div>
                 </CardContent>
               </Card>
             </div>
-
             {/* Coluna 2-4: Feed expandido */}
             <div className="md:col-span-3">
               <FeedCard />
@@ -331,15 +325,16 @@ export default function Dashboard() {
 
           <CategoryVideosCard videos={videos} />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+            <div className="md:col-span-1">
+              <Card className="rounded-xl shadow-lg bg-white p-6 h-full flex flex-col justify-center">
               <CardHeader>
-                <CardTitle>Estatísticas por Categoria</CardTitle>
-                <CardDescription>Distribuição de vídeos visualizados por categoria</CardDescription>
+                  <CardTitle className="text-lg font-bold text-gray-800">Estatísticas por Categoria</CardTitle>
+                  <CardDescription className="text-sm text-gray-500">Distribuição de vídeos visualizados por categoria</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+                  <div className="flex justify-center items-center h-[220px] w-full">
+                    <ResponsiveContainer width={180} height={180}>
                   <PieChart>
                     <Pie
                       data={statsByCategory}
@@ -347,47 +342,46 @@ export default function Dashboard() {
                         nameKey="category"
                       cx="50%"
                       cy="50%"
+                          innerRadius={60}
                         outerRadius={80}
-                        label={renderCustomPieChartLabel}
-                      labelLine={false}
+                          startAngle={90}
+                          endAngle={-270}
+                          paddingAngle={2}
+                          stroke="none"
                     >
                       {statsByCategory.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                            <Cell key={`cell-${index}`} fill={index === 0 ? '#0286e0' : index === 1 ? '#ff9b87' : '#e9eef3'} />
                       ))}
                     </Pie>
-                      <Legend />
-                    <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
-            
-            <Card>
+            </div>
+            <div className="md:col-span-2">
+              <Card className="rounded-xl shadow-lg bg-white p-6 h-full flex flex-col justify-center">
               <CardHeader>
-                <CardTitle>Estatísticas de Quase Acidentes</CardTitle>
-                <CardDescription>Análise por gravidade, risco e frequência</CardDescription>
+                  <CardTitle className="text-lg font-bold text-gray-800">Estatísticas de Quase Acidentes</CardTitle>
+                  <CardDescription className="text-sm text-gray-500">Análise por gravidade, risco e frequência</CardDescription>
               </CardHeader>
               <CardContent>
                 <Tabs value={qAChartTab} onValueChange={(value: any) => setQAChartTab(value)}>
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="severity">Gravidade</TabsTrigger>
-                    <TabsTrigger value="risk">Risco</TabsTrigger>
-                    <TabsTrigger value="frequency">Frequência</TabsTrigger>
-                    <TabsTrigger value="quality">Qualidade</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-4 mb-4 bg-gray-100 rounded-full p-1">
+                      <TabsTrigger value="severity" className="rounded-full">Gravidade</TabsTrigger>
+                      <TabsTrigger value="risk" className="rounded-full">Risco</TabsTrigger>
+                      <TabsTrigger value="frequency" className="rounded-full">Frequência</TabsTrigger>
+                      <TabsTrigger value="quality" className="rounded-full">Qualidade</TabsTrigger>
                   </TabsList>
                   <TabsContent value="severity">
                     <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={statsBySeverity}>
-                      <XAxis dataKey="severity" />
-                      <YAxis />
+                          <BarChart data={statsBySeverity} barSize={24}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e9eef3" />
+                            <XAxis dataKey="severity" axisLine={false} tickLine={false} tick={{ fill: "#b0b7c3", fontSize: 14 }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fill: "#b0b7c3", fontSize: 14 }} />
                       <Tooltip />
-                          <Bar dataKey="count">
-                        {statsBySeverity.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Bar>
+                            <Bar dataKey="count" radius={[10, 10, 0, 0]} fill="#0286e0" />
                     </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -395,15 +389,12 @@ export default function Dashboard() {
                   <TabsContent value="risk">
                     <div className="h-[250px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={statsByRisk}>
-                      <XAxis dataKey="risk" />
-                      <YAxis />
+                          <BarChart data={statsByRisk} barSize={24}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e9eef3" />
+                            <XAxis dataKey="risk" axisLine={false} tickLine={false} tick={{ fill: "#b0b7c3", fontSize: 14 }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fill: "#b0b7c3", fontSize: 14 }} />
                       <Tooltip />
-                          <Bar dataKey="count">
-                        {statsByRisk.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Bar>
+                            <Bar dataKey="count" radius={[10, 10, 0, 0]} fill="#ff9b87" />
                     </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -411,15 +402,12 @@ export default function Dashboard() {
                   <TabsContent value="frequency">
                     <div className="h-[250px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={statsByFrequency}>
-                      <XAxis dataKey="frequency" />
-                      <YAxis />
+                          <BarChart data={statsByFrequency} barSize={24}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e9eef3" />
+                            <XAxis dataKey="frequency" axisLine={false} tickLine={false} tick={{ fill: "#b0b7c3", fontSize: 14 }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fill: "#b0b7c3", fontSize: 14 }} />
                       <Tooltip />
-                          <Bar dataKey="count">
-                        {statsByFrequency.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Bar>
+                            <Bar dataKey="count" radius={[10, 10, 0, 0]} fill="#0286e0" />
                     </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -427,15 +415,12 @@ export default function Dashboard() {
                   <TabsContent value="quality">
                     <div className="h-[250px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={statsByQAQuality}>
-                      <XAxis dataKey="quality" />
-                      <YAxis />
+                          <BarChart data={statsByQAQuality} barSize={24}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e9eef3" />
+                            <XAxis dataKey="quality" axisLine={false} tickLine={false} tick={{ fill: "#b0b7c3", fontSize: 14 }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fill: "#b0b7c3", fontSize: 14 }} />
                       <Tooltip />
-                          <Bar dataKey="count">
-                        {statsByQAQuality.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Bar>
+                            <Bar dataKey="count" radius={[10, 10, 0, 0]} fill="#ff9b87" />
                     </BarChart>
                 </ResponsiveContainer>
                     </div>
@@ -443,6 +428,7 @@ export default function Dashboard() {
                 </Tabs>
               </CardContent>
             </Card>
+            </div>
           </div>
           </div>
       )}

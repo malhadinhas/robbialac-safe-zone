@@ -29,6 +29,7 @@ import { hashPassword } from './services/auth';
 import interactionRoutes from './routes/interactionRoutes';
 import corsMiddleware from './config/cors';
 import fileAccessMiddleware from './middleware/fileAccessMiddleware';
+import uploadsRoutes from './routes/uploads';
 
 /**
  * Verificação das variáveis de ambiente necessárias para o Cloudflare R2
@@ -121,6 +122,7 @@ app.use('/api/system', systemRoutes);         // Configurações do sistema
 app.use('/api/sensibilizacao', sensibilizacaoRoutes); // Gestão de sensibilização
 app.use('/api/analytics', analyticsRoutes); // Adiciona as rotas de analytics
 app.use('/api/interactions', interactionRoutes);
+app.use('/api/uploads', uploadsRoutes);
 
 /**
  * Rota de diagnóstico para verificar status do banco de dados
@@ -136,7 +138,7 @@ app.get('/api/database/status', (req, res) => {
  */
 connectToDatabase().then(() => {
   app.listen(port, () => {
-    console.info(`Servidor rodando em http://localhost:${port}`);
+    logger.info(`Servidor rodando em http://localhost:${port}`);
   });
 }).catch(error => {
   throw new Error(`Erro ao iniciar o servidor: ${error.message}`);

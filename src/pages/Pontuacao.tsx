@@ -347,8 +347,129 @@ export default function Pontuacao() {
   
   return (
     <Layout>
-      <div className="h-full overflow-y-auto p-4 sm:p-6">
-      {pageContent}
+      <div className="h-full bg-[#f7faff] p-3 sm:p-6 overflow-y-auto">
+        <div className="container mx-auto">
+          {/* Header Section */}
+          <div className="p-4 space-y-4">
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
+              <div>
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-800">
+                  Sua Pontuação
+                </h1>
+                <p className="text-gray-500 text-sm mt-1">
+                  Progresso e conquistas
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Content Section */}
+          <div className="mt-6 space-y-6">
+            {/* Progress Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <Card className="sm:col-span-2 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all">
+                <CardHeader className="p-6">
+                  <CardTitle className="text-xl font-bold text-gray-800">Nível {currentLevel}</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 pt-0">
+                  <div className="space-y-4">
+                    <Progress value={progressToNextLevel} className="h-3 bg-gray-100" />
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 font-medium">{user?.points || 0} pts</span>
+                      <span className="text-gray-600 font-medium">Falta: {pointsToNextLevel}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all">
+                <CardHeader className="p-6">
+                  <CardTitle className="text-xl font-bold text-gray-800">Total</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 pt-0">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="text-3xl font-bold text-[#1E90FF]">{user?.points || 0}</div>
+                    <div className="flex flex-col items-center gap-2 w-full">
+                      <p className="text-sm text-gray-600 font-medium">
+                        #{userRanking.position} de {userRanking.totalUsers}
+                      </p>
+                      <Button 
+                        variant="default"
+                        className="w-full bg-[#1E90FF] hover:bg-[#1877cc] text-white font-semibold rounded-full px-6 py-2 shadow-lg"
+                        onClick={() => navigate('/ranking')}
+                      >
+                        Ver Ranking
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Medals Section */}
+            <div className="space-y-6">
+              <h2 className="text-xl font-bold text-gray-800">Medalhas</h2>
+              {isLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="animate-pulse">
+                      <div className="bg-gray-200 rounded-2xl h-40"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : medals.length === 0 ? (
+                <div className="text-center py-10">
+                  <p className="text-gray-500">Nenhuma medalha conquistada ainda.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {medals.map((medal) => (
+                    <MedalCard key={medal._id} medal={medal} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Activities Section */}
+            <div className="space-y-6">
+              <h2 className="text-xl font-bold text-gray-800">Atividades Recentes</h2>
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="animate-pulse">
+                      <div className="bg-gray-200 rounded-2xl h-16"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : activities.length === 0 ? (
+                <div className="text-center py-10">
+                  <p className="text-gray-500">Nenhuma atividade registrada.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {activities.map((activity) => (
+                    <Card key={activity._id} className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-4">
+                          {getTypeIcon(activity.type)}
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-800">{activity.description}</p>
+                            <p className="text-xs text-gray-500">
+                              {format(parseISO(activity.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                            </p>
+                          </div>
+                          <div className="text-sm font-bold text-[#1E90FF]">
+                            +{activity.points} pts
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </Layout>
   );

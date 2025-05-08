@@ -152,15 +152,19 @@ export default function VideosVisualizar() {
 
   return (
     <Layout>
-      <div className="container max-w-6xl py-6">
-        <div className="flex items-center mb-6">
-          <Button variant="ghost" onClick={handleGoBack} className="mr-4">
-            <ArrowLeft className="h-5 w-5" />
+      <div className="bg-[#f7faff] min-h-screen py-6 flex flex-col items-center justify-start">
+        <div className="w-full max-w-4xl mx-auto">
+          <div className="flex items-center mb-6 px-2 sm:px-0">
+            <Button 
+              variant="default"
+              className="bg-[#1E90FF] hover:bg-[#1877cc] text-white font-semibold rounded-full px-6 py-2 shadow-lg mr-4"
+              onClick={handleGoBack}
+            >
+              <ArrowLeft className="h-5 w-5 mr-2" />
           </Button>
-          <h1 className="text-2xl font-semibold">{video?.title || 'A carregar vídeo...'}</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">{video?.title || 'A carregar vídeo...'}</h1>
         </div>
-        
-        <div className="bg-black relative rounded-lg overflow-hidden aspect-video max-h-[70vh]">
+          <div className="bg-black relative rounded-2xl overflow-hidden aspect-video max-h-[60vh] shadow-xl border border-gray-100">
           {isLoadingUrls ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-robbialac"></div>
@@ -192,8 +196,7 @@ export default function VideosVisualizar() {
              </div>
           )}
         </div>
-        
-        <div className="mt-6">
+          <div className="mt-6 bg-white rounded-2xl shadow-md border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               {video?.category && (
@@ -207,21 +210,17 @@ export default function VideosVisualizar() {
                 </span>
               )}
             </div>
-            <Button variant="outline" size="sm" onClick={handleShare}>
-              <Share2 className="h-4 w-4 mr-2" /> Partilhar
-            </Button>
           </div>
-          
           <h2 className="text-xl font-semibold mb-2">Descrição</h2>
           <p className="text-gray-700 mb-6 whitespace-pre-line">
             {video?.description || 'Descrição não disponível.'}
           </p>
-          
           <h3 className="text-md font-medium mb-2">Progresso</h3>
           <Progress value={progressPercent} className="h-2" />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>{Math.round(duration * (progressPercent / 100))}s</span>
             <span>{Math.round(duration)}s</span>
+            </div>
           </div>
         </div>
       </div>

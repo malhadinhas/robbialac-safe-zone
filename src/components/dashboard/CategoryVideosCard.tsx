@@ -80,12 +80,7 @@ export function CategoryVideosCard({ videos }: CategoryVideosCardProps) {
   const categories = ['Segurança', 'Qualidade', 'Procedimentos e Regras'];
 
   return (
-    <Card className="h-fit col-span-2">
-      <CardHeader className="pb-2 space-y-0">
-        <CardTitle className="text-sm font-medium">Vídeos por Categoria</CardTitle>
-      </CardHeader>
-      <CardContent className="pb-4">
-        <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
           {categories.map(category => {
             const video = getLatestVideoByCategory(category);
             const Icon = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS];
@@ -94,42 +89,42 @@ export function CategoryVideosCard({ videos }: CategoryVideosCardProps) {
             return (
               <div
                 key={category}
-                className={`group relative flex flex-col overflow-hidden rounded-lg border border-gray-100 hover:border-gray-200 transition-all ${video ? '' : 'opacity-50'}`}
+            className={`group relative flex flex-col bg-white rounded-2xl shadow-md overflow-hidden transition-all min-h-[320px] ${video ? 'hover:shadow-lg cursor-pointer' : 'opacity-60'}`}
                 onClick={() => video && handleVideoClick(video.id)}
               >
-                <div className={`flex items-center p-3 ${colorClass}`}>
+            {/* Header da categoria */}
+            <div className={`flex items-center px-5 py-3 ${colorClass} rounded-t-2xl`}> 
                   <Icon className="w-5 h-5 mr-2" />
-                  <p className="text-sm font-medium truncate">
+              <p className="text-base font-semibold truncate">
                     {category}
                   </p>
                 </div>
-                
-                {video && (
+            {video ? (
                   <>
-                    <div className="relative w-full aspect-video">
+                <div className="relative w-full aspect-video bg-gray-100">
                       <VideoThumbnail video={video} />
-                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Play className="w-8 h-8 text-white" />
+                  <button
+                    className="absolute bottom-3 right-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg p-3 flex items-center justify-center opacity-90 group-hover:opacity-100 transition"
+                    onClick={e => { e.stopPropagation(); handleVideoClick(video.id); }}
+                    title="Ver vídeo"
+                  >
+                    <Play className="w-5 h-5" />
+                  </button>
                       </div>
-                    </div>
-                    <div className="p-3">
-                      <p className="text-sm font-medium text-gray-900 line-clamp-2">
+                <div className="px-5 py-4 flex-1 flex items-end">
+                  <p className="text-base font-semibold text-gray-800 truncate w-full">
                         {video.title}
                       </p>
                     </div>
                   </>
-                )}
-                
-                {!video && (
-                  <div className="p-3 text-center text-sm text-gray-500">
-                    Nenhum vídeo disponível
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center bg-gray-50 h-full min-h-[180px] px-5 py-8">
+                <p className="text-gray-400 text-base font-medium">Nenhum vídeo disponível</p>
                   </div>
                 )}
               </div>
             );
           })}
         </div>
-      </CardContent>
-    </Card>
   );
 } 

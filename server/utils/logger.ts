@@ -21,7 +21,7 @@ const logRotationConfig = {
   zippedArchive: true
 };
 
-// Configuração avançada do logger
+// Configuração do logger
 const logger = winston.createLogger({
   // Nível de log configurável via variável de ambiente
   level: process.env.LOG_LEVEL || 'info',
@@ -35,20 +35,22 @@ const logger = winston.createLogger({
 
   // Transports (destinos dos logs)
   transports: [
-    // Rotação de logs de erro
+    // Logs de erro
     new winston.transports.DailyRotateFile({
       ...logRotationConfig,
       filename: path.join('logs', 'error-%DATE%.log'),
-      level: 'error'
+      level: 'error' 
     }),
     
-    // Rotação de logs combinados
-    new winston.transports.DailyRotateFile({
-      ...logRotationConfig,
-      filename: path.join('logs', 'combined-%DATE%.log')
-    }),
+    // Logs combinados (apenas em produção)
+    ...(process.env.NODE_ENV === 'production' ? [
+      new winston.transports.DailyRotateFile({
+        ...logRotationConfig,
+        filename: path.join('logs', 'combined-%DATE%.log')
+      })
+    ] : []),
     
-    // Rotação de logs de segurança
+    // Logs de segurança
     new winston.transports.DailyRotateFile({
       ...logRotationConfig,
       filename: path.join('logs', 'security-%DATE%.log'),
@@ -76,7 +78,7 @@ const logger = winston.createLogger({
 // Adicionar transporte MongoDB apenas em produção e se a URI estiver definida
 if (process.env.NODE_ENV === 'production' && mongoUri) {
   logger.add(new winston.transports.MongoDB({
-    level: 'warn',
+    level: 'error', // Apenas erros no MongoDB
     db: mongoUri,
     options: { 
       useNewUrlParser: true, 
@@ -94,10 +96,10 @@ if (process.env.NODE_ENV === 'production' && mongoUri) {
   logger.warn('MongoDB URI não definida para logging em produção');
 }
 
-// Configuração adicional para ambiente de desenvolvimento
+// Configuração para ambiente de desenvolvimento
 if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
-    level: 'debug', // Mostra logs de debug no console
+    level: 'info', // Apenas info e acima no console
     format: winston.format.combine(
       winston.format.colorize(), // Adiciona cores
       winston.format.simple() // Formato simplificado para console

@@ -243,7 +243,7 @@ export default function Formacoes() {
   ];
   
   const categoriesSection = (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       {videoCategories.map((category) => (
         <VideosCategoryCard 
           key={category.title}
@@ -264,41 +264,41 @@ export default function Formacoes() {
   
   return (
     <Layout>
-      <div className={`p-4 flex flex-col ${isMobile ? 'min-h-screen overflow-y-auto' : 'h-full'}`}>
-        <div className="flex justify-between items-center mb-4 flex-shrink-0">
-          <h1 className="text-2xl font-bold">Formações</h1>
+      <div className={`p-8 flex flex-col bg-[#f7faff] min-h-screen`}>
+        <div className="flex justify-between items-center mb-8 flex-shrink-0">
+          <h1 className="text-3xl font-bold text-gray-800">Formações</h1>
           <div className="flex space-x-2">
             {isAdmin && (
-              <Button onClick={showImportModal} variant="default">Importar Vídeo</Button>
+              <Button onClick={showImportModal} variant="default" className="rounded-full bg-[#1E90FF] hover:bg-[#1877cc] text-white font-bold px-6 py-2 shadow text-base">Importar Vídeo</Button>
             )}
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col space-y-4 overflow-hidden">
-          <Card className={`${isMobile ? 'border flex flex-col' : 'border flex-1 min-h-0 flex flex-col'}`}>
+        <div className="flex-1 flex flex-col space-y-8 overflow-hidden">
+          <Card className="rounded-2xl shadow-lg bg-white border-0 flex-1 min-h-0 flex flex-col">
             <CardHeader className="flex-shrink-0 flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Mapa da Fábrica</CardTitle>
-                <CardDescription>Selecione uma área da fábrica para ver os vídeos relacionados</CardDescription>
+                <CardTitle className="text-xl font-bold text-gray-800">Mapa da Fábrica</CardTitle>
+                <CardDescription className="text-base text-gray-500">Selecione uma área da fábrica para ver os vídeos relacionados</CardDescription>
               </div>
-              <Button variant="outline" onClick={() => setShowZoneList((v) => !v)}>
+              <Button variant="outline" className="rounded-full px-5 py-2 font-semibold text-base border-gray-200" onClick={() => setShowZoneList((v) => !v)}>
                 {showZoneList ? 'Ver Objeto 3D' : 'Ver Lista'}
               </Button>
             </CardHeader>
-            <CardContent className="flex-1 p-2 relative overflow-hidden">
+            <CardContent className="flex-1 p-4 relative overflow-hidden">
               {showZoneList ? (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 rounded-lg p-4">
-                  <p className="text-gray-500 text-center mb-4">Selecione uma das áreas abaixo:</p>
-                  <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="w-full h-full flex flex-col items-center justify-center bg-[#f7faff] rounded-2xl p-8">
+                  <p className="text-gray-600 text-center mb-6 text-lg font-medium">Selecione uma das áreas abaixo:</p>
+                  <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     {factoryZones.map((z) => (
-                      <Button
+                      <button
                         key={z.zone}
-                        style={{ backgroundColor: z.color, color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}
-                        className="w-full py-6 rounded-lg shadow text-lg"
+                        style={{ backgroundColor: z.color, color: 'white', fontWeight: 'bold', fontSize: '1.25rem', boxShadow: '0 4px 24px 0 rgba(30,144,255,0.10)' }}
+                        className="w-full py-8 rounded-2xl shadow-xl transition-all duration-200 transform hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-[#1E90FF]/30 text-lg flex items-center justify-center text-center"
                         onClick={() => handleZoneClick(z.zone)}
                       >
                         Área de {z.zone}
-                      </Button>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -320,8 +320,24 @@ export default function Formacoes() {
             </CardContent>
           </Card>
 
-          <div className="flex-shrink-0">
-            {categoriesSection}
+          <div className="flex-shrink-0 mt-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {videoCategories.map((category) => (
+                <VideosCategoryCard 
+                  key={category.title}
+                  category={category.title} 
+                  displayTitle={category.displayTitle}
+                  description={category.description}
+                  videos={categoryVideos[category.title] || []}
+                  count={(categoryVideos[category.title] || []).length}
+                  color={
+                    category.title === 'Segurança' ? '#FF4444' :
+                    category.title === 'Qualidade' ? '#4444FF' :
+                    '#44AA44' // Procedimentos e Regras
+                  }
+                />
+              ))}
+            </div>
           </div>
         </div>
         
