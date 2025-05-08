@@ -20,7 +20,6 @@ import { pdfjs, Document, Page } from 'react-pdf';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
-import { SensibilizacaoViewModal } from './SensibilizacaoViewModal';
 
 // Configure pdfjs worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
@@ -280,7 +279,7 @@ export function SensibilizacaoComponent() {
   };
 
   const openDetailModal = (doc: SensibilizacaoTypeFromAPI) => {
-    setSelectedDocId(doc._id!);
+    navigate(`/sensibilizacao/${doc._id}`);
   };
 
   const handleCommentSubmit = async () => {
@@ -567,12 +566,6 @@ export function SensibilizacaoComponent() {
             </div>
           </DialogContent>
         </Dialog>
-
-        <SensibilizacaoViewModal
-          isOpen={!!selectedDocId}
-          onClose={() => setSelectedDocId(null)}
-          docId={selectedDocId || ''}
-        />
       </div>
     </Layout>
   );

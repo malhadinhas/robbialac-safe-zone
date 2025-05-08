@@ -30,6 +30,9 @@ import AcidenteForm from "./pages/AcidenteForm";
 import FeedPage from "./pages/Feed";
 import QuaseAcidentesVisualizar from "./pages/QuaseAcidentesVisualizar";
 import PDFViewerPage from "./pages/PDFViewerPage";
+import QuaseAcidentesView from "@/pages/QuaseAcidentesView";
+import AcidentesView from "@/pages/AcidentesView";
+import SensibilizacaoView from "@/pages/SensibilizacaoView";
 
 // Configure QueryClient with retry settings
 const queryClient = new QueryClient({
@@ -75,17 +78,17 @@ const App = () => {
                     <Route path="/quase-acidentes/editar/:id" element={<QuaseAcidentesEditar />} />
                     <Route path="/quase-acidentes/novo" element={<QuaseAcidentesNovo />} />
                     <Route path="/quase-acidentes/estatisticas" element={<QuaseAcidentesEstatisticas />} />
-                    <Route path="/quase-acidentes/visualizar/:id" element={<QuaseAcidentesVisualizar />} />
+                    <Route path="/quase-acidentes/:id" element={<QuaseAcidentesView />} />
                     <Route path="/pontuacao" element={<Pontuacao />} />
                     <Route path="/definicoes" element={<Definicoes />} />
                     <Route path="/ranking" element={<Ranking />} />
                     <Route path="/acidentes" element={<Acidentes />} />
-                    <Route path="/acidentes/:id" element={<Acidentes />} />
+                    <Route path="/acidentes/:id" element={<AcidentesView />} />
                     <Route path="/acidentes/novo" element={<AcidenteForm />} />
                     <Route path="/acidentes/:id/editar" element={<AcidenteForm />} />
                     <Route path="/acidentes/pdf/:id" element={<PDFViewerPage />} />
                     <Route path="/sensibilizacao" element={<Sensibilizacao />} />
-                    <Route path="/sensibilizacao/:id" element={<Sensibilizacao />} />
+                    <Route path="/sensibilizacao/:id" element={<SensibilizacaoView />} />
                   </Route>
 
                   {/* Admin Routes */}

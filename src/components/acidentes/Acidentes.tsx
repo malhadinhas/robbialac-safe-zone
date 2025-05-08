@@ -20,7 +20,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { PDFViewer } from '@/components/PDFViewer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { AcidenteViewModal } from './AcidenteViewModal';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
@@ -181,14 +180,12 @@ export function Acidentes() {
     setAccidents(updatedAccidents);
   };
 
-  const openCommentsModal = (accident: Accident) => {
-    setSelectedAccidentId(accident._id!);
-    setOpenCommentsOnModal(true);
+  const openDetailModal = (accident: Accident) => {
+    navigate(`/acidentes/${accident._id}`);
   };
 
-  const openDetailModal = (accident: Accident) => {
-    setSelectedAccidentId(accident._id!);
-    setOpenCommentsOnModal(false);
+  const openCommentsModal = (accident: Accident) => {
+    navigate(`/acidentes/${accident._id}`);
   };
 
   return (
@@ -413,13 +410,6 @@ export function Acidentes() {
             )}
           </DialogContent>
         </Dialog>
-        <AcidenteViewModal
-          isOpen={!!selectedAccidentId}
-          onClose={() => setSelectedAccidentId(null)}
-          accidentId={selectedAccidentId || ''}
-          openComments={openCommentsOnModal}
-          onCommentAdded={handleCommentAdded}
-        />
       </div>
     </Layout>
   );

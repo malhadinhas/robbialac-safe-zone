@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 // Importar modais
 import { QuaseAcidentesViewModal } from '@/components/incidents/QuaseAcidentesViewModal';
 import { AcidenteViewModal } from '@/components/acidentes/AcidenteViewModal';
-import { SensibilizacaoViewModal } from '@/components/sensibilizacao/SensibilizacaoViewModal';
 
 // Componente para exibir um item do feed
 const FeedItemCard: React.FC<{
@@ -109,7 +108,7 @@ export function FeedCard() {
       if (item.documentType === 'Acidente') {
         setAcidenteModalId(item._id);
       } else if (item.documentType === 'Sensibilizacao') {
-        setSensibilizacaoModalId(item._id);
+        navigate(`/sensibilizacao/${item._id}`);
       }
     } else if (item.type === 'video') {
       navigate(`/videos/visualizar/${item._id}`);
@@ -184,19 +183,6 @@ export function FeedCard() {
               isOpen={!!acidenteModalId}
               onClose={closeAllModals}
               accidentId={acidenteModalId}
-              openComments={openComments}
-            />
-          </div>
-        </div>
-      )}
-      {/* Modais Sensibilização */}
-      {sensibilizacaoModalId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end">
-          <div className="w-1/2 h-full bg-white shadow-lg">
-            <SensibilizacaoViewModal
-              isOpen={!!sensibilizacaoModalId}
-              onClose={closeAllModals}
-              docId={sensibilizacaoModalId}
               openComments={openComments}
             />
           </div>

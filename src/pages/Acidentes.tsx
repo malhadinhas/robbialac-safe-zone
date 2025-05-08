@@ -171,9 +171,7 @@ const Acidentes: React.FC = () => {
   };
 
   const handleCardClick = (accident: Accident) => {
-    setSelectedAccident(accident);
-    setOpenComments(false);
-    setIsViewModalOpen(true);
+    router.push(`/acidentes/${accident._id || accident.id}`);
   };
 
   return (
@@ -395,18 +393,6 @@ const Acidentes: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
-
-      {isViewModalOpen && selectedAccident && (
-        <AcidenteViewModal
-          isOpen={isViewModalOpen}
-          onClose={() => {
-            setIsViewModalOpen(false);
-            setOpenComments(false);
-          }}
-          accidentId={selectedAccident._id}
-          openComments={openComments}
-        />
-      )}
       </div>
     </Layout>
   );

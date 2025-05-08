@@ -124,9 +124,7 @@ const QuaseAcidentes = () => {
   }, [refetch]);
 
   const handleIncidentClick = (incident: Incident) => {
-    setSelectedIncident(incident);
-    setOpenComments(false);
-    setIsViewModalOpen(true);
+    navigate(`/quase-acidentes/${incident._id || incident.id}`);
   };
 
   const handleEditIncident = (event: React.MouseEvent, incident: Incident) => {
