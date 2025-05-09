@@ -58,5 +58,22 @@
   "logging_in": "A entrar...",
   "login_success": "Login bem-sucedido!",
   "login_failed": "Falha no login",
-  "check_credentials": "Verifique as suas credenciais."
+  "check_credentials": "Verifique as suas credenciais.",
+  "register_title": "Criar Conta",
+  "register_subtitle": "Preencha os dados para criar sua conta",
+  "register_button": "Registrar",
+  "register_success": "Conta criada com sucesso!",
+  "register_failed": "Erro ao criar conta",
+  "verification_title": "Verificar Email",
+  "verification_subtitle": "Digite o código de verificação enviado para seu email",
+  "verification_button": "Verificar",
+  "verification_success": "Email verificado com sucesso!",
+  "verification_failed": "Erro ao verificar email",
+  "full_name": "Nome Completo",
+  "full_name_placeholder": "Seu nome completo",
+  "verification_code": "Código de Verificação",
+  "already_have_account": "Já tem uma conta?",
+  "login_link": "Faça login",
+  "dont_have_account": "Não tem conta?",
+  "register_link": "Registe-se"
 } 

@@ -14,6 +14,8 @@ export interface User {
   medals: string[];          // Lista de medalhas/conquistas
   viewedVideos: string[];    // IDs dos vídeos já vistos
   reportedIncidents: string[]; // IDs dos incidentes reportados
+  verificationCode?: string; // Código de verificação de email
+  isVerified?: boolean;      // Status de verificação de email
 }
 
 export interface Video {

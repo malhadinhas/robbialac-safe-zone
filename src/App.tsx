@@ -33,6 +33,7 @@ import PDFViewerPage from "./pages/PDFViewerPage";
 import QuaseAcidentesView from "@/pages/QuaseAcidentesView";
 import AcidentesView from "@/pages/AcidentesView";
 import SensibilizacaoView from "@/pages/SensibilizacaoView";
+import Register from "./pages/Register";
 
 // Configure QueryClient with retry settings
 const queryClient = new QueryClient({
@@ -65,6 +66,7 @@ const App = () => {
                   {/* Public Routes */}
                   <Route element={<PublicOnlyRoute />}>
                     <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
                   </Route>
                   
                   {/* Private Routes */}

@@ -109,7 +109,7 @@ export default function AcidentesView() {
                       <div className="flex items-center justify-center h-40 text-lg">A carregar...</div>
                     ) : accident && accident.pdfUrl ? (
                       <iframe
-                        src={accident.pdfUrl + '#zoom=55'}
+                        src={accident.pdfUrl + '#zoom=50'}
                         title="PDF do Acidente"
                         className="w-full rounded-lg border"
                         style={{ minHeight: 600, height: '70vh', background: '#f7faff' }}

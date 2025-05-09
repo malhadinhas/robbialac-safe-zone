@@ -1,5 +1,5 @@
 import { User, UserRole } from "@/types";
-import { getUserByEmail, validateUser } from "./userService";
+import { getUserByEmail, validateUser, createUser } from "./userService";
 
 // Remover usuários mockados
 /*
@@ -46,11 +46,6 @@ const mockUsers = [
 export async function loginUser(email: string, password: string): Promise<User | null> {
   // Simular atraso de rede
   await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // Verificar se o email tem o domínio @robbialac.pt
-  if (!email.endsWith('@robbialac.pt')) {
-    throw new Error('Apenas emails @robbialac.pt são permitidos');
-  }
   
   // Chamar validateUser que agora retorna { user, token } ou null
   const validationResult = await validateUser(email, password);
@@ -100,4 +95,43 @@ export function hasRole(role: UserRole | UserRole[]): boolean {
   }
   
   return user.role === role;
+}
+
+export async function registerUser(email: string, password: string, name: string): Promise<void> {
+  // Validar força da senha
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  if (!passwordRegex.test(password)) {
+    throw new Error('A senha deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e caracteres especiais');
+  }
+
+  // Chamar o endpoint correto do backend para enviar o código
+  const response = await fetch('http://localhost:3000/api/auth/send-code', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password, name }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || error.message || 'Erro ao enviar código de verificação');
+  }
+}
+
+export async function verifyCodeAndRegister(email: string, code: string): Promise<{ user: User, token: string }> {
+  const response = await fetch('http://localhost:3000/api/auth/register', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, code }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || error.message || 'Erro ao verificar código');
+  }
+
+  return response.json();
 }

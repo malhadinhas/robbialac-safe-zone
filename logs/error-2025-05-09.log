@@ -1,0 +1,7 @@
+{"error":{},"filePath":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\temp\\","level":"error","message":"Erro ao validar tipo de arquivo","timestamp":"2025-05-09T07:58:34.679Z"}
+{"error":{},"filePath":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\temp\\","level":"error","message":"Erro ao validar tipo de arquivo","timestamp":"2025-05-09T07:58:39.083Z"}
+{"error":{},"filePath":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\temp\\","level":"error","message":"Erro ao validar tipo de arquivo","timestamp":"2025-05-09T07:58:45.127Z"}
+{"error":{},"filePath":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\temp\\","level":"error","message":"Erro ao validar tipo de arquivo","timestamp":"2025-05-09T07:59:08.438Z"}
+{"error":{},"filePath":"C:\\Users\\malha\\Documents\\projeto\\robbialac-safe-zone\\robbialac-safe-zone\\temp\\","level":"error","message":"Erro ao validar tipo de arquivo","timestamp":"2025-05-09T07:59:09.351Z"}
+{"error":"connect ECONNREFUSED ::1:587","level":"error","message":"Erro ao criar utilizador","stack":"Error: connect ECONNREFUSED ::1:587\n    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1634:16)","timestamp":"2025-05-09T09:44:56.240Z"}
+{"error":"connect ECONNREFUSED ::1:587","level":"error","message":"Erro ao criar utilizador","stack":"Error: connect ECONNREFUSED ::1:587\n    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1634:16)","timestamp":"2025-05-09T09:47:38.815Z"}

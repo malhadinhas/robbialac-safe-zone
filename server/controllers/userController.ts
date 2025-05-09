@@ -4,6 +4,7 @@ import { User } from '../types'; // Tipo User definido na aplicação
 import { hashPassword } from '../services/auth'; // Função para fazer hash da password
 import logger from '../utils/logger'; // Logger para registar informações e erros
 import { ObjectId } from 'mongodb';
+import { sendVerificationEmail } from '../services/email';
 
 // Função para obter todos os utilizadores
 export async function getUsers(req: Request, res: Response) {
@@ -82,8 +83,11 @@ export async function createUser(req: Request, res: Response) {
 
     // Faz hash da password antes de guardar
     const hashedPassword = await hashPassword(password);
-    
-    // Cria o novo utilizador com valores padrão
+
+    // Gerar código de verificação de 6 dígitos
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Cria o novo utilizador com valores padrão e campos de verificação
     const newUser: User = {
       email,
       password: hashedPassword,
@@ -93,15 +97,21 @@ export async function createUser(req: Request, res: Response) {
       level: 1, // Nível inicial
       medals: [],
       viewedVideos: [],
-      reportedIncidents: []
+      reportedIncidents: [],
+      verificationCode,
+      isVerified: false
     };
     
     await collection.insertOne(newUser); // Insere o novo utilizador na base de dados
     logger.info('Novo utilizador criado com sucesso', { email });
-    
-    // Remove a password do objeto antes de devolver ao frontend
-    const { password: _, ...userToReturn } = newUser;
-    res.status(201).json(userToReturn); // Retorna o utilizador criado (sem password)
+
+    // Enviar email de verificação
+    await sendVerificationEmail(email, verificationCode);
+    logger.info('Email de verificação enviado', { email });
+
+    // Remove a password e o código do objeto antes de devolver ao frontend
+    const { password: _, verificationCode: __, ...userToReturn } = newUser;
+    res.status(201).json(userToReturn); // Retorna o utilizador criado (sem password/código)
 
   } catch (error: any) {
     logger.error('Erro ao criar utilizador', { error: error.message, stack: error.stack }); // Log de erro

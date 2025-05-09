@@ -30,6 +30,7 @@ import interactionRoutes from './routes/interactionRoutes';
 import corsMiddleware from './config/cors';
 import fileAccessMiddleware from './middleware/fileAccessMiddleware';
 import uploadsRoutes from './routes/uploads';
+import usersRoutes from './routes/users';
 
 /**
  * Verificação das variáveis de ambiente necessárias para o Cloudflare R2
@@ -123,6 +124,7 @@ app.use('/api/sensibilizacao', sensibilizacaoRoutes); // Gestão de sensibiliza�
 app.use('/api/analytics', analyticsRoutes); // Adiciona as rotas de analytics
 app.use('/api/interactions', interactionRoutes);
 app.use('/api/uploads', uploadsRoutes);
+app.use('/api/users', usersRoutes);
 
 /**
  * Rota de diagnóstico para verificar status do banco de dados
@@ -137,8 +139,8 @@ app.get('/api/database/status', (req, res) => {
  * Conecta ao banco de dados antes de iniciar o servidor
  */
 connectToDatabase().then(() => {
-  app.listen(port, () => {
-    logger.info(`Servidor rodando em http://localhost:${port}`);
+  app.listen(port, '0.0.0.0', () => {
+    logger.info(`Servidor rodando em http://0.0.0.0:${port}`);
   });
 }).catch(error => {
   throw new Error(`Erro ao iniciar o servidor: ${error.message}`);

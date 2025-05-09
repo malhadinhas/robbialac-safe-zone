@@ -106,12 +106,12 @@ export default function Login() {
             )}
           </Button>
         </form>
-        {/* <p className="text-sm text-center text-gray-600">
+        <p className="text-sm text-center text-gray-600">
           Não tem conta?{' '}
           <Link to="/register" className="font-medium text-primary hover:underline">
             Registe-se
           </Link>
-        </p> */}
+        </p>
       </div>
     </div>
   );

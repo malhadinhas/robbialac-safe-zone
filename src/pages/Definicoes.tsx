@@ -37,6 +37,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { getAllUsers, updateUserRole } from '@/services/userService';
 
 export default function Definicoes() {
   const { t, i18n } = useTranslation();
@@ -54,6 +55,12 @@ export default function Definicoes() {
   // MongoDB config
   const [mongoUri, setMongoUri] = useState("");
   const [mongoDbName, setMongoDbName] = useState("workplace-safety");
+
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [errorUsers, setErrorUsers] = useState<string | null>(null);
+
+  const [activeTab, setActiveTab] = useState('interface');
 
   // Carregar valores iniciais das variáveis de ambiente
   useEffect(() => {
@@ -124,6 +131,33 @@ export default function Definicoes() {
     i18n.changeLanguage(lng);
   };
 
+  const fetchUsers = async () => {
+    setLoadingUsers(true);
+    setErrorUsers(null);
+    try {
+      const data = await getAllUsers();
+      setUsers(data);
+    } catch (err: any) {
+      setErrorUsers(err.message);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const handleRoleChange = async (id: string, role: string) => {
+    try {
+      await updateUserRole(id, role);
+      toast.success('Role atualizado com sucesso!');
+      fetchUsers();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  useEffect(() => {
+    if (isAdminApp) fetchUsers();
+  }, [isAdminApp]);
+
   // Interface Card Component
   const InterfaceCard = () => (
     <Card className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-all">
@@ -171,66 +205,89 @@ export default function Definicoes() {
     </Card>
   );
 
-  // Mobile/Tablet Layout - Using Accordion for Admin section
+  // Mobile/Tablet Layout - Usar Select para tabs
   const MobileLayout = () => (
     <div className="container py-4 h-full flex flex-col">
       <h1 className="text-xl font-bold mb-4 flex-shrink-0">{t('settings')}</h1>
-      
-      <Tabs defaultValue="interface" className="w-full flex-grow flex flex-col min-h-0">
-        <TabsList className="w-full grid grid-cols-2 mb-4 flex-shrink-0">
-          <TabsTrigger value="interface">{t('interface')}</TabsTrigger>
-          {/* Keep Admin tab trigger if user is admin */}
-          {isAdminApp && <TabsTrigger value="admin">Admin</TabsTrigger>}
-        </TabsList>
-
-        {/* Interface Tab Content (remains the same) */}
-        <TabsContent value="interface" className="mt-0 flex-grow overflow-y-auto">
-          <InterfaceCard />
-        </TabsContent>
-
-        {/* Admin Tab Content - Using Accordion */}
-        {isAdminApp && (
-          <TabsContent value="admin" className="mt-0 flex-grow overflow-y-auto"> {/* Keep overflow here */}
-            <Accordion type="single" collapsible className="w-full space-y-4"> {/* Added space-y */} 
-              
-              {/* Section for WhatsApp */}
-              <AccordionItem value="whatsapp">
-                <AccordionTrigger className="text-base font-semibold">WhatsApp</AccordionTrigger>
+      <div className="mb-4">
+        <Select value={activeTab} onValueChange={setActiveTab}>
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="interface">{t('interface')}</SelectItem>
+            {isAdminApp && <SelectItem value="admin">Admin</SelectItem>}
+            {isAdminApp && <SelectItem value="users">{t('users')}</SelectItem>}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex-grow overflow-y-auto">
+        {activeTab === 'interface' && <InterfaceCard />}
+        {isAdminApp && activeTab === 'admin' && (
+          <Accordion type="single" collapsible className="w-full space-y-4">
+            <AccordionItem value="whatsapp">
+              <AccordionTrigger className="text-base font-semibold">WhatsApp</AccordionTrigger>
+              <AccordionContent>
+                <WhatsAppIntegration />
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="medals">
+              <AccordionTrigger className="text-base font-semibold">{t('medals')}</AccordionTrigger>
+              <AccordionContent>
+                <MedalManagement />
+              </AccordionContent>
+            </AccordionItem>
+            {hasIncidentPermission && (
+              <AccordionItem value="incidents">
+                <AccordionTrigger className="text-base font-semibold">{t('near_misses')}</AccordionTrigger>
                 <AccordionContent>
-                  <WhatsAppIntegration />
+                  <IncidentTargetEditor />
                 </AccordionContent>
               </AccordionItem>
-
-              {/* Section for Medals */}
-              <AccordionItem value="medals">
-                 <AccordionTrigger className="text-base font-semibold">{t('medals')}</AccordionTrigger>
-                 <AccordionContent>
-                    <MedalManagement />
-                 </AccordionContent>
-              </AccordionItem>
-
-              {/* Section for Incidents */}
-              {hasIncidentPermission && ( // Keep permission check
-                <AccordionItem value="incidents">
-                    <AccordionTrigger className="text-base font-semibold">{t('near_misses')}</AccordionTrigger>
-                    <AccordionContent>
-                       <IncidentTargetEditor />
-                    </AccordionContent>
-                </AccordionItem>
-              )}
-
-              {/* Section for Analytics */}
-              <AccordionItem value="analytics">
-                 <AccordionTrigger className="text-base font-semibold">{t('analytics')}</AccordionTrigger>
-                 <AccordionContent>
-                    <AnalyticsPage />
-                 </AccordionContent>
-              </AccordionItem>
-
-            </Accordion>
-          </TabsContent>
+            )}
+            <AccordionItem value="analytics">
+              <AccordionTrigger className="text-base font-semibold">{t('analytics')}</AccordionTrigger>
+              <AccordionContent>
+                <AnalyticsPage />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         )}
-      </Tabs>
+        {isAdminApp && activeTab === 'users' && (
+          <div className="mt-0 flex-grow overflow-y-auto">
+            {loadingUsers ? (
+              <p>A carregar utilizadores...</p>
+            ) : errorUsers ? (
+              <p className="text-red-500">{errorUsers}</p>
+            ) : (
+              <table className="min-w-full border text-sm">
+                <thead>
+                  <tr>
+                    <th className="border px-2 py-1">Nome</th>
+                    <th className="border px-2 py-1">Email</th>
+                    <th className="border px-2 py-1">Role</th>
+                    <th className="border px-2 py-1">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user._id}>
+                      <td className="border px-2 py-1">{user.name}</td>
+                      <td className="border px-2 py-1">{user.email}</td>
+                      <td className="border px-2 py-1">{user.role}</td>
+                      <td className="border px-2 py-1 space-x-2">
+                        <Button size="sm" variant="outline" onClick={() => handleRoleChange(user._id, 'admin_app')} disabled={user.role === 'admin_app'}>Admin App</Button>
+                        <Button size="sm" variant="outline" onClick={() => handleRoleChange(user._id, 'admin_qa')} disabled={user.role === 'admin_qa'}>Admin QA</Button>
+                        <Button size="sm" variant="outline" onClick={() => handleRoleChange(user._id, 'user')} disabled={user.role === 'user'}>Despromover</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 
@@ -259,6 +316,8 @@ export default function Definicoes() {
               <BarChartHorizontal className="mr-2 h-4 w-4" />{t('analytics')}
             </TabsTrigger>
           )}
+
+          {isAdminApp && <TabsTrigger value="users">{t('users')}</TabsTrigger>}
         </TabsList>
         
         <TabsContent value="interface" className="mt-0 flex-grow overflow-y-auto">
@@ -288,6 +347,41 @@ export default function Definicoes() {
         {isAdminApp && (
           <TabsContent value="analytics" className="mt-0 flex-grow overflow-y-auto">
             <AnalyticsPage />
+          </TabsContent>
+        )}
+
+        {isAdminApp && (
+          <TabsContent value="users" className="mt-0 flex-grow overflow-y-auto">
+            {loadingUsers ? (
+              <p>A carregar utilizadores...</p>
+            ) : errorUsers ? (
+              <p className="text-red-500">{errorUsers}</p>
+            ) : (
+              <table className="min-w-full border text-sm">
+                <thead>
+                  <tr>
+                    <th className="border px-2 py-1">Nome</th>
+                    <th className="border px-2 py-1">Email</th>
+                    <th className="border px-2 py-1">Role</th>
+                    <th className="border px-2 py-1">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user._id}>
+                      <td className="border px-2 py-1">{user.name}</td>
+                      <td className="border px-2 py-1">{user.email}</td>
+                      <td className="border px-2 py-1">{user.role}</td>
+                      <td className="border px-2 py-1 space-x-2">
+                        <Button size="sm" variant="outline" onClick={() => handleRoleChange(user._id, 'admin_app')} disabled={user.role === 'admin_app'}>Admin App</Button>
+                        <Button size="sm" variant="outline" onClick={() => handleRoleChange(user._id, 'admin_qa')} disabled={user.role === 'admin_qa'}>Admin QA</Button>
+                        <Button size="sm" variant="outline" onClick={() => handleRoleChange(user._id, 'user')} disabled={user.role === 'user'}>Despromover</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </TabsContent>
         )}
       </Tabs>

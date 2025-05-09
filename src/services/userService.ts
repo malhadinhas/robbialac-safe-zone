@@ -114,3 +114,25 @@ export async function createAdminUser(): Promise<void> {
     throw error;
   }
 }
+
+export async function getAllUsers(): Promise<User[]> {
+  const response = await fetch('http://localhost:3000/api/users');
+  if (!response.ok) throw new Error('Erro ao buscar utilizadores');
+  return response.json();
+}
+
+export async function updateUserRole(id: string, role: string): Promise<void> {
+  const token = localStorage.getItem('token');
+  const response = await fetch(`http://localhost:3000/api/users/${id}/role`, {
+    method: 'PATCH',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ role })
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Erro ao atualizar role');
+  }
+}
