@@ -25,3 +25,5 @@
 {"email":"ines.lopes@robbialac.pt","level":"warn","message":"Falha na autenticação (validateCredentials retornou null)","timestamp":"2025-05-09T13:19:00.781Z"}
 {"email":"user@robbialac.pt","level":"warn","message":"Tentativa de login falhou: Senha inválida (bcryptjs compare returned false)","timestamp":"2025-05-09T13:19:24.477Z"}
 {"email":"user@robbialac.pt","level":"warn","message":"Falha na autenticação (validateCredentials retornou null)","timestamp":"2025-05-09T13:19:24.477Z"}
+{"email":"user@robbialac.pt","level":"warn","message":"Tentativa de login falhou: Senha inválida (bcryptjs compare returned false)","timestamp":"2025-05-09T13:20:35.389Z"}
+{"email":"user@robbialac.pt","level":"warn","message":"Falha na autenticação (validateCredentials retornou null)","timestamp":"2025-05-09T13:20:35.389Z"}
