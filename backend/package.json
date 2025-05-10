@@ -11,7 +11,8 @@
     "seed:zone-stats": "tsx scripts/seedZoneStats.ts",
     "seed:all": "npm run seed:departments && npm run seed:medals && npm run seed:zone-stats",
     "fix:video-model": "tsx scripts/fixVideoModel.ts",
-    "move:uploads": "tsx scripts/moveUploadsToStorage.ts"
+    "move:uploads": "tsx scripts/moveUploadsToStorage.ts",
+    "prebuild": "npm install -g typescript"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.787.0",
