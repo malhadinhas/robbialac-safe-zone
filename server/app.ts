@@ -8,6 +8,8 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import accidentRoutes from './routes/accidentRoutes';
 import activityRoutes from './routes/activityRoutes';
+import videoRoutes from './routes/videos';
+import incidentRoutes from './routes/incidents';
 import { getDatabaseConfig, validateDatabaseConfig } from './config/database';
 
 const app = express();
@@ -70,7 +72,9 @@ app.get('/api/test', async (req, res) => {
  * Cada módulo de rota é responsável por um conjunto específico de funcionalidades
  */
 app.use('/api/accidents', accidentRoutes);
-app.use('/api/activity', activityRoutes);
+app.use('/api/videos', videoRoutes);
+app.use('/api/incidents', incidentRoutes);
+app.use('/api/activities', activityRoutes);
 
 /**
  * Middleware de Tratamento de Erros Global

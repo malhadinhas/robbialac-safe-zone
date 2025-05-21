@@ -6,6 +6,7 @@ let connectionError: string | null = null;
 
 export async function connectToDatabase(): Promise<void> {
   console.log('=== Iniciando conexão com o banco de dados ===');
+  console.log('MONGODB_URI do process.env:', process.env.MONGODB_URI);
   
   // Se já estiver conectado, não faz nada
   if (isConnected && mongoose.connection.readyState === 1) {
@@ -15,6 +16,8 @@ export async function connectToDatabase(): Promise<void> {
 
   try {
     const uri = MongoDBConfig.uri;
+    console.log('URI usada na conexão:', uri);
+    console.log('DB usado na conexão:', MongoDBConfig.dbName);
     
     console.log('Configuração carregada:', {
       dbName: MongoDBConfig.dbName,

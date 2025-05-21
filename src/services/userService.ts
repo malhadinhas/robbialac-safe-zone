@@ -1,6 +1,6 @@
 import { User, Medal } from "@/types";
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL + '/api';
 
 export async function getUserByEmail(email: string): Promise<User | null> {
   try {
@@ -116,14 +116,14 @@ export async function createAdminUser(): Promise<void> {
 }
 
 export async function getAllUsers(): Promise<User[]> {
-  const response = await fetch('http://localhost:3000/api/users');
+  const response = await fetch(`${API_URL}/users`);
   if (!response.ok) throw new Error('Erro ao buscar utilizadores');
   return response.json();
 }
 
 export async function updateUserRole(id: string, role: string): Promise<void> {
   const token = localStorage.getItem('token');
-  const response = await fetch(`http://localhost:3000/api/users/${id}/role`, {
+  const response = await fetch(`${API_URL}/users/${id}/role`, {
     method: 'PATCH',
     headers: { 
       'Content-Type': 'application/json',

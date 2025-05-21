@@ -4,7 +4,6 @@ import App from './App';
 import './index.css';
 import './i18n'; // Importa a configuração do i18next
 import ErrorBoundary from './components/ErrorBoundary.tsx';
-import { initializeDatabase, getDatabaseConnectionStatus } from './config/database';
 
 // Initialize the application
 async function startApp() {
@@ -14,20 +13,6 @@ async function startApp() {
     if (!rootElement) {
       document.body.innerHTML = "<div style='color:red;padding:20px;'>Error: Root element not found</div>";
       return;
-    }
-    
-    // Try to initialize the database connection
-    try {
-      await initializeDatabase();
-      
-      // Double-check connection status
-      const status = getDatabaseConnectionStatus();
-      
-      if (!status.connected && status.error) {
-        // The DatabaseContext will handle this error and display it to the user
-      }
-    } catch (dbError) {
-      // The DatabaseContext will handle this error and display it to the user
     }
     
     ReactDOM.createRoot(rootElement).render(

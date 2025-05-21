@@ -1,0 +1,9 @@
+{"level":"warn","message":"Token inválido ou expirado","method":"GET","path":"/","timestamp":"2025-05-21T08:55:42.725Z"}
+{"level":"warn","message":"Token inválido ou expirado","method":"GET","path":"/","timestamp":"2025-05-21T08:55:42.728Z"}
+{"level":"warn","message":"Tentativa de acesso sem token de autenticação","method":"GET","path":"/feed","timestamp":"2025-05-21T08:55:43.356Z"}
+{"level":"warn","message":"Tentativa de acesso sem token de autenticação","method":"GET","path":"/","timestamp":"2025-05-21T09:00:21.433Z"}
+{"level":"warn","message":"Tentativa de acesso sem token de autenticação","method":"GET","path":"/","timestamp":"2025-05-21T09:00:21.435Z"}
+{"level":"warn","message":"Tentativa de acesso sem token de autenticação","method":"GET","path":"/feed","timestamp":"2025-05-21T09:00:21.495Z"}
+{"level":"warn","message":"Tentativa de acesso sem token de autenticação","method":"GET","path":"/","timestamp":"2025-05-21T09:00:34.097Z"}
+{"level":"warn","message":"Tentativa de acesso sem token de autenticação","method":"GET","path":"/","timestamp":"2025-05-21T09:00:34.098Z"}
+{"level":"warn","message":"Tentativa de acesso sem token de autenticação","method":"GET","path":"/feed","timestamp":"2025-05-21T09:00:34.162Z"}

@@ -12,6 +12,11 @@ import { isAuthenticated, isAdmin, hasRole } from '../middleware/authMiddleware'
 
 const router = express.Router();
 
+router.use((req, res, next) => {
+  console.log(`[ROUTE LOG] ${req.method} ${req.originalUrl} chegou em /api/incidents`);
+  next();
+});
+
 // Nova rota para incidentes recentes (DEVE VIR ANTES de /:incidentId)
 router.get('/recent', isAuthenticated, getRecentIncidents);
 

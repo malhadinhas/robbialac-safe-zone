@@ -8,8 +8,8 @@ export interface MongoDBConfigType {
 }
 
 export const MongoDBConfig: MongoDBConfigType = {
-  uri: 'mongodb+srv://RobbialacSeguranca:L4QZLeo7U0EwsKw8@workplace-safety.j7o51.mongodb.net/workplace-safety',
-  dbName: 'workplace-safety'
+  uri: process.env.MONGODB_URI || '',
+  dbName: process.env.MONGODB_DB_NAME || 'workplace-safety'
 };
 
 // Validate configuration
@@ -49,15 +49,6 @@ export function getMongoConfig(): MongoDBConfigType {
   }
   return { ...mongoConfig };
 }
-
-// Initialize configuration
-(() => {
-  try {
-    validateConfig(mongoConfig);
-  } catch (error) {
-    throw error;
-  }
-})();
 
 // Funções para inicialização e verificação do banco de dados
 export async function initializeDatabase(): Promise<void> {

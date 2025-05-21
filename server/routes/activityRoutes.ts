@@ -19,4 +19,9 @@ router.get('/user/:userId', isAuthenticated, getUserActivities);
 // GET /api/activities/feed - Obter feed de atividades recentes unificado
 router.get('/feed', isAuthenticated, getFeed);
 
+router.use((req, res, next) => {
+  console.log(`[ROUTE LOG] ${req.method} ${req.originalUrl} chegou em /api/activities`);
+  next();
+});
+
 export default router; 

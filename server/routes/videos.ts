@@ -11,6 +11,12 @@ import { uploadVideo } from '../middleware/uploadMiddleware';
 
 const router = Router();
 
+// Middleware de log
+router.use((req, res, next) => {
+  console.log(`[ROUTE LOG] ${req.method} ${req.originalUrl} chegou em /api/videos`);
+  next();
+});
+
 // Upload de vídeo
 router.post('/upload', isAuthenticated, uploadVideo, createVideo);
 

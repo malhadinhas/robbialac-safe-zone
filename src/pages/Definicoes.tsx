@@ -20,7 +20,6 @@ import { WhatsAppIntegration } from "@/components/whatsapp/WhatsAppIntegration";
 import { useState, useEffect } from "react";
 import { Check, BarChartHorizontal } from "lucide-react";
 import { initializeR2Config } from "@/config/storage";
-import { initializeMongoConfig } from "@/config/database";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import MedalManagement from "@/components/medal-management/MedalManagement";
@@ -111,14 +110,8 @@ export default function Definicoes() {
         toast.error("Preencha todos os campos da configuração MongoDB");
         return;
       }
-      
-      initializeMongoConfig({
-        uri: mongoUri,
-        dbName: mongoDbName
-      });
-      
-      toast.success("Configuração do MongoDB Atlas salva com sucesso!");
-      
+      // Apenas simula o salvamento local
+      toast.success("Configuração do MongoDB Atlas salva localmente (apenas visual). No frontend não há conexão direta!");
     } catch (error) {
       toast.error("Erro ao salvar configuração MongoDB: " + (error instanceof Error ? error.message : "Erro desconhecido"));
     }
