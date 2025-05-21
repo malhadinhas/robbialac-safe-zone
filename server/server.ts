@@ -60,7 +60,7 @@ logger.info('Variáveis de ambiente carregadas:', {
 });
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 /**
  * Configuração de diretórios e middlewares
@@ -132,6 +132,10 @@ app.use('/api/users', usersRoutes);
 app.get('/api/database/status', (req, res) => {
   const status = getDatabaseStatus();
   res.json(status);
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
 });
 
 /**
