@@ -39,7 +39,7 @@ graph TD
     K --> K3[Gerenciar Perfil]
 ```
 
-## 2. Fluxograma da Arquitetura da Aplicação
+## 2. Fluxograma da Arquitetura da Aplicação ------------------------------
 
 ```mermaid
 graph TD
