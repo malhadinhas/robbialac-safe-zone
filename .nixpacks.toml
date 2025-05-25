@@ -5,4 +5,4 @@ nixPkgs = ["nodejs_18"]
 cmds = ["npm install", "npm run build"]
 
 [phases.start]
-cmd = "node --loader tsx server/server.ts" 
+cmd = "node --import tsx server/server.ts" 
