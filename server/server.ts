@@ -135,6 +135,7 @@ app.get('/api/database/status', (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
+  console.log('Health check called');
   res.json({ status: 'ok' });
 });
 
@@ -148,4 +149,7 @@ connectToDatabase().then(() => {
   });
 }).catch(error => {
   throw new Error(`Erro ao iniciar o servidor: ${error.message}`);
-}); 
+});
+
+// Mantém o processo vivo para debug no Railway (remover depois)
+setInterval(() => {}, 1000 * 60 * 60); 
