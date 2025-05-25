@@ -6,9 +6,28 @@ import path from 'path';
 import { promises as fs } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { isValidObjectId } from 'mongoose';
-import { getCollection } from '../services/database';
 import { UploadLog } from '../types';
 import UploadLogModel from '../models/UploadLog';
+
+interface VideoResponse {
+  _id: string;
+  title: string;
+  description: string;
+  category: string;
+  zone: string;
+  duration: number;
+  r2VideoKey: string;
+  r2ThumbnailKey: string;
+  views: number;
+  uploadDate: Date;
+  r2Qualities: {
+    high: string;
+    medium: string;
+    low: string;
+  };
+  status: 'processing' | 'ready' | 'error';
+  processingError?: string;
+}
 
 const videoProcessor = new VideoProcessor();
 const TEMP_DIR = path.join(process.cwd(), 'temp');
@@ -21,12 +40,14 @@ export async function getVideos(req: Request, res: Response): Promise<void> {
     logger.info(`Vídeos recuperados do DB para GET /api/videos: ${videosFromDb.length}`);
 
     // Retorna os dados como estão (com as chaves R2, não URLs assinadas)
-    // ** LOG ANTES DE ENVIAR RESPOSTA **
     logger.info('Dados dos vídeos a serem enviados na resposta GET /api/videos:', videosFromDb);
     res.json(videosFromDb); 
 
-  } catch (error) {
-    logger.error('Erro ao recuperar vídeos em GET /api/videos', { error: error instanceof Error ? error.message : String(error) });
+  } catch (error: unknown) {
+    logger.error('Erro ao recuperar vídeos em GET /api/videos', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     res.status(500).json({ message: 'Erro ao recuperar vídeos' });
   }
 }
@@ -51,26 +72,20 @@ export async function getVideoById(req: Request, res: Response): Promise<void> {
       return;
     }
     
-    // Não incrementa mais visualizações aqui, deve ser feito no frontend se necessário após carregar
-    /* 
-    if (req.query.view === 'true' && video.status === 'ready') {
-      // A lógica de incremento precisa ser reavaliada, 
-      // pois lean() retorna objeto plano, não documento Mongoose
-      // Poderia fazer um findByIdAndUpdate separado se necessário.
-      // await Video.findByIdAndUpdate(id, { $inc: { views: 1 } });
-      // logger.info('Visualização incrementada', { id });
-    }
-    */
-    
-    // Retorna o vídeo como está (com as chaves R2, sem URLs assinadas)
     logger.info(`Vídeo encontrado em GET /api/videos/:id : ${id}`, { videoStatus: video.status });
-    // ** LOG ANTES DE ENVIAR RESPOSTA **
     logger.info(`Dados do vídeo a serem enviados na resposta GET /api/videos/${id}:`, video);
     res.json(video); 
 
-  } catch (error) {
-    logger.error('Erro ao obter vídeo por ID em GET /api/videos/:id', { error: error instanceof Error ? error.message : String(error), id: req.params.id });
-    res.status(500).json({ message: 'Erro interno ao obter vídeo', error: error instanceof Error ? error.message : String(error) });
+  } catch (error: unknown) {
+    logger.error('Erro ao obter vídeo por ID em GET /api/videos/:id', { 
+      error: error instanceof Error ? error.message : String(error), 
+      id: req.params.id,
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    res.status(500).json({ 
+      message: 'Erro interno ao obter vídeo', 
+      details: error instanceof Error ? error.message : String(error) 
+    });
   }
 }
 
@@ -267,8 +282,8 @@ export async function createVideo(req: Request, res: Response): Promise<void> {
                 timestamp: new Date()
               });
               logger.info('Evento de upload registado com sucesso', { videoId: videoId!.toString(), fileKey: newUploadLog.fileKey });
-            } catch (logError: any) {
-              logger.error('Falha ao registar evento de upload', { videoId: videoId!.toString(), error: logError.message });
+            } catch (logError: unknown) {
+              logger.error('Falha ao registar evento de upload', { videoId: videoId!.toString(), error: logError instanceof Error ? logError.message : String(logError) });
             }
           }
           // <<< FIM: Registar Upload Log >>>
@@ -320,54 +335,34 @@ export async function createVideo(req: Request, res: Response): Promise<void> {
         }
       });
 
-    } catch (validationError) {
-      logger.error('Erro na validação ou criação do vídeo', { validationError });
-      
-      // Limpar arquivo temporário
+    } catch (validationError: unknown) {
+      logger.error('Erro na validação ou criação do vídeo', { validationError: validationError instanceof Error ? validationError.message : String(validationError) });
       if (req.file) {
         try {
           await fs.unlink(req.file.path);
-          logger.info('Arquivo temporário removido após erro de validação', { 
-            path: req.file.path 
-          });
+          logger.info('Arquivo temporário removido após erro de validação', { path: req.file.path });
         } catch (cleanupError) {
-          logger.error('Erro ao remover arquivo temporário', { 
-            error: cleanupError,
-            path: req.file.path
-          });
+          logger.error('Erro ao remover arquivo temporário', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError), path: req.file.path });
         }
       }
-      
-      res.status(400).json({ 
-        message: validationError instanceof Error ? validationError.message : 'Erro na validação ou criação do vídeo' 
-      });
+      res.status(400).json({ message: validationError instanceof Error ? validationError.message : 'Erro na validação ou criação do vídeo' });
       return;
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Erro GERAL ao criar vídeo', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-    
-    // Limpar arquivo temporário original em caso de erro inicial
     if (originalFilePath) {
       try {
         await fs.unlink(originalFilePath);
         logger.info('Arquivo temporário original removido após erro inicial', { path: originalFilePath });
       } catch (cleanupError) {
-        logger.error('Erro ao remover arquivo temporário original após erro inicial', { error: cleanupError });
+        logger.error('Erro ao remover arquivo temporário original após erro inicial', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
       }
     }
-
     if (error instanceof Error && error.name === 'ValidationError') {
-      res.status(400).json({ 
-        message: 'Erro de validação',
-        errors: (error as any).errors 
-      });
+      res.status(400).json({ message: 'Erro de validação', errors: (error as { errors: unknown }).errors });
       return;
     }
-
-    res.status(500).json({ 
-      message: 'Erro ao criar vídeo',
-      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
-    });
+    res.status(500).json({ message: 'Erro ao criar vídeo', error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined });
   }
 }
 

@@ -92,21 +92,16 @@ export const createAccident = async (req: Request, res: Response): Promise<void>
     // Responde à requisição com o documento do acidente que foi salvo e status 201 (Created).
     res.status(201).json(savedAccident);
 
-  } catch (error: any) {
-    // Captura qualquer erro ocorrido no bloco try.
-    // Log detalhado do erro no servidor para depuração.
+  } catch (error: unknown) {
     logger.error('Erro detalhado ao criar acidente:', {
-      errorMessage: error.message, // Mensagem do erro
-      stack: error.stack, // Stack trace do erro
-      requestBody: req.body, // Corpo da requisição original
-      fileName: req.file?.originalname // Nome do arquivo original (se houver)
+      errorMessage: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      requestBody: req.body,
+      fileName: req.file?.originalname
     });
-    // Responde com um erro genérico para o cliente e detalhes do erro (status 400 Bad Request).
-    // 400 é usado aqui assumindo que a maioria dos erros seria por dados inválidos.
-    // Poderia ser 500 se o erro for claramente interno do servidor.
     res.status(400).json({
       error: 'Erro ao criar registro de acidente',
-      details: error.message // Inclui a mensagem original do erro nos detalhes
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 };
@@ -135,7 +130,7 @@ export const getAccidents = async (req: Request, res: Response): Promise<void> =
     // Extrai possíveis parâmetros de filtro da query string da URL.
     const { country, startDate, endDate } = req.query;
     // Objeto que conterá os critérios para o estágio $match da agregação.
-    const matchQuery: any = {};
+    const matchQuery: Record<string, unknown> = {};
 
     // Constrói o objeto matchQuery dinamicamente baseado nos filtros fornecidos.
     if (country) {
@@ -228,10 +223,8 @@ export const getAccidents = async (req: Request, res: Response): Promise<void> =
         logger.debug('URL assinada gerada.', { accidentId: accident._id, hasUrl: !!signedUrl });
         // Retorna uma cópia do objeto do acidente com a propriedade pdfUrl adicionada.
         return { ...accident, pdfUrl: signedUrl };
-      } catch (urlError: any) {
-        // Captura erros que podem ocorrer durante a geração da URL para um PDF específico.
-        logger.error('Erro ao gerar URL assinada para PDF específico.', { accidentId: accident._id, key: accident.pdfFile?.key, error: urlError.message });
-        // Retorna o acidente mesmo assim, mas com pdfUrl como null para indicar a falha.
+      } catch (urlError: unknown) {
+        logger.error('Erro ao gerar URL assinada para PDF específico.', { accidentId: accident._id, key: accident.pdfFile?.key, error: urlError instanceof Error ? urlError.message : String(urlError) });
         return { ...accident, pdfUrl: null };
       }
     }));
@@ -240,17 +233,15 @@ export const getAccidents = async (req: Request, res: Response): Promise<void> =
     // Responde à requisição com o array final de acidentes, incluindo os dados agregados e as URLs.
     res.json(accidentsWithUrls);
 
-  } catch (error: any) {
-    // Captura erros gerais que podem ocorrer no controlador.
+  } catch (error: unknown) {
     logger.error('Erro geral no controlador getAccidents:', {
-      errorMessage: error.message,
-      stack: error.stack,
-      query: req.query // Loga os parâmetros da query que causaram o erro
+      errorMessage: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      query: req.query
     });
-    // Responde com erro 500 Internal Server Error.
     res.status(500).json({
       error: 'Erro ao buscar documentos de acidentes',
-      details: error.message
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 };
@@ -328,24 +319,24 @@ export const getAccidentById = async (req: Request, res: Response): Promise<void
         // Responde com os dados do acidente e a URL gerada.
         res.json({ ...accident, pdfUrl: signedUrl });
       }
-    } catch (urlError: any) {
+    } catch (urlError: unknown) {
       // Captura erros específicos da geração da URL.
-      logger.error('Erro ao gerar URL assinada para PDF (get by ID).', { accidentId: accident._id, key: accident.pdfFile?.key, error: urlError.message });
+      logger.error('Erro ao gerar URL assinada para PDF (get by ID).', { accidentId: accident._id, key: accident.pdfFile?.key, error: urlError instanceof Error ? urlError.message : String(urlError) });
       // Responde com os dados do acidente, mas indica que a URL não pôde ser gerada.
       res.json({ ...accident, pdfUrl: null });
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Captura erros gerais no processo.
     logger.error('Erro geral no controlador getAccidentById:', {
-      errorMessage: error.message,
+      errorMessage: error instanceof Error ? error.message : String(error),
       id: req.params.id, // Loga o ID que causou o erro
-      stack: error.stack
+      stack: error instanceof Error ? error.stack : undefined
     });
     // Responde com erro 500 Internal Server Error.
     res.status(500).json({
       error: 'Erro ao buscar documento de acidente',
-      details: error.message
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 };
@@ -368,7 +359,7 @@ export const updateAccident = async (req: Request, res: Response): Promise<void>
     logger.info('Requisição para atualizar acidente recebida.', { id, body: req.body, file: req.file?.originalname });
 
     // Objeto para armazenar os dados que serão efetivamente enviados para atualização no MongoDB.
-    let updateData: any = { name, country, date: new Date(date) };
+    let updateData: Record<string, unknown> = { name, country, date: new Date(date) };
 
     // Verifica se um novo arquivo foi enviado na requisição para substituir o existente.
     if (req.file) {
@@ -450,9 +441,9 @@ export const updateAccident = async (req: Request, res: Response): Promise<void>
         logger.debug('Gerando URL assinada para PDF do acidente atualizado.', { id, key: updatedAccident.pdfFile.key });
         signedUrl = await getSignedUrl(updatedAccident.pdfFile.key);
         logger.debug('URL assinada gerada.', { id });
-      } catch (urlError: any) {
+      } catch (urlError: unknown) {
         // Loga o erro mas não impede a resposta, apenas a URL ficará null.
-        logger.error('Erro ao gerar URL assinada para PDF após atualização.', { id, key: updatedAccident.pdfFile.key, error: urlError.message });
+        logger.error('Erro ao gerar URL assinada para PDF após atualização.', { id, key: updatedAccident.pdfFile.key, error: urlError instanceof Error ? urlError.message : String(urlError) });
       }
     } else {
        logger.warn('Acidente atualizado não possui chave PDF para gerar URL.', { id });
@@ -468,19 +459,17 @@ export const updateAccident = async (req: Request, res: Response): Promise<void>
     // Responde com o documento atualizado.
     res.json(accidentWithUrl);
 
-  } catch (error: any) {
-    // Captura erros gerais, como falhas de validação ou problemas de rede/banco.
+  } catch (error: unknown) {
     logger.error('Erro geral no controlador updateAccident:', {
-      errorMessage: error.message,
-      id: req.params.id, // Loga o ID que estava sendo atualizado
-      requestBody: req.body, // Loga o corpo da requisição
-      fileName: req.file?.originalname, // Loga o nome do arquivo (se houver)
-      stack: error.stack
+      errorMessage: error instanceof Error ? error.message : String(error),
+      id: req.params.id,
+      requestBody: req.body,
+      fileName: req.file?.originalname,
+      stack: error instanceof Error ? error.stack : undefined
     });
-    // Responde com erro 400 Bad Request (comum para erros de validação).
     res.status(400).json({
       error: 'Erro ao atualizar registro de acidente',
-      details: error.message
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 };
@@ -532,17 +521,17 @@ export const deleteAccident = async (req: Request, res: Response): Promise<void>
     // e não há corpo na resposta. É o padrão para operações DELETE bem-sucedidas.
     res.status(204).send();
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Captura erros gerais que possam ocorrer durante a busca ou deleção.
     logger.error('Erro geral no controlador deleteAccident:', {
-      errorMessage: error.message,
+      errorMessage: error instanceof Error ? error.message : String(error),
       id: req.params.id, // Loga o ID que estava sendo deletado
-      stack: error.stack
+      stack: error instanceof Error ? error.stack : undefined
     });
     // Responde com erro 500 Internal Server Error.
     res.status(500).json({
       error: 'Erro ao deletar registro de acidente',
-      details: error.message
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 }; 

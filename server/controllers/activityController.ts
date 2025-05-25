@@ -7,7 +7,7 @@
  * Acidentes e Sensibilizações) com contagem de interações (likes/comentários).
  */
 import { Request, Response } from 'express';
-import { getCollection } from '../services/database'; // Função para obter uma coleção MongoDB
+import UserActivity from '../models/UserActivity';
 import logger from '../utils/logger'; // Utilitário de logging
 import { ObjectId } from 'mongodb'; // Tipo ObjectId do MongoDB
 import { checkActionBasedMedals } from './medalController'; // Função para verificar conquistas de medalhas baseadas em ações
@@ -20,6 +20,7 @@ import { Incident } from '../types';
 import Like from '../models/Like';
 import Comment from '../models/Comment';
 import mongoose from 'mongoose'; // Importa mongoose para usar ObjectId
+import User from '../models/User'; // Importa o modelo User
 
 /**
  * @interface FeedItem
@@ -51,7 +52,7 @@ interface UserActivity {
   activityId: string; // ID do item específico relacionado à atividade (ID do vídeo, incidente, etc.)
   points: number; // Pontos ganhos por esta atividade
   timestamp: Date; // Data e hora em que a atividade ocorreu
-  details?: any; // Campo opcional para armazenar detalhes extras sobre a atividade
+  details?: Record<string, unknown>; // Campo opcional para armazenar detalhes extras sobre a atividade
 }
 
 /**
@@ -67,7 +68,7 @@ interface FormattedActivity {
   description: string; // Descrição textual gerada para a atividade
   points: number; // Pontos ganhos
   date: string; // Data da atividade em formato string ISO 8601
-  details?: any; // Detalhes extras
+  details?: Record<string, unknown>; // Detalhes extras
 }
 
 /**
@@ -76,7 +77,7 @@ interface FormattedActivity {
  * @param {Object} params - Objeto com os dados da atividade
  * @returns {Promise<void>} - Retorna uma Promise que resolve quando a atividade é registrada com sucesso
  */
-export async function registerActivityData({ userId, category, activityId, points, details }: { userId: string, category: 'video' | 'incident' | 'training' | 'medal', activityId: string, points: number, details?: any }) {
+export async function registerActivityData({ userId, category, activityId, points, details }: { userId: string, category: 'video' | 'incident' | 'training' | 'medal', activityId: string, points: number, details?: Record<string, unknown> }) {
   // Validação 1: Verifica se os campos obrigatórios foram fornecidos.
   if (!userId || !category || !activityId || points === undefined) {
     logger.warn('Tentativa de registrar atividade com dados incompletos', { userId, category, activityId, points });
@@ -95,15 +96,15 @@ export async function registerActivityData({ userId, category, activityId, point
     timestamp: new Date(),
     details
   };
-  const collection = await getCollection<UserActivity>('user_activities');
-  await collection.insertOne(activity);
+  await UserActivity.create(activity);
   // Atualizar pontos do utilizador
-  const usersCollection = await getCollection('users');
   const userObjectId = mongoose.Types.ObjectId.isValid(userId) ? new mongoose.Types.ObjectId(userId) : null;
   const userQuery = userObjectId ? { _id: userObjectId } : { id: userId };
-  await usersCollection.updateOne(userQuery, { $inc: { points: Number(points) } });
+  await User.updateOne(userQuery, { $inc: { points: Number(points) } });
   // Verificar medalhas
-  await checkActionBasedMedals(userId, category, details);
+  if (category === 'video' || category === 'incident' || category === 'training') {
+    await checkActionBasedMedals(userId, category, details);
+  }
 }
 
 /**
@@ -210,18 +211,17 @@ export const getUserActivities = async (req: Request, res: Response): Promise<vo
     // Validação: Verifica se o ID do usuário foi fornecido.
     if (!userId) {
       logger.warn('Requisição para buscar atividades sem userId.');
-      return res.status(400).json({ message: 'ID de usuário é obrigatório' });
+      res.status(400).json({ message: 'ID de usuário é obrigatório' });
+      return;
     }
 
     logger.info(`Buscando ${limit} atividades mais recentes do usuário ${userId}`);
 
     // Obtém a coleção 'user_activities'.
-    const collection = await getCollection<UserActivity>('user_activities');
-    // Busca as atividades do usuário especificado.
-    const activities = await collection.find({ userId })
+    const activities = await UserActivity.find({ userId })
       .sort({ timestamp: -1 }) // Ordena pela data/hora mais recente primeiro.
       .limit(limit) // Limita o número de resultados.
-      .toArray(); // Converte o cursor para um array.
+      .lean();
 
     // Formata as atividades antes de enviar para o frontend.
     const formattedActivities: FormattedActivity[] = activities.map(activity => {
@@ -281,12 +281,11 @@ export async function getFeed(req: Request, res: Response): Promise<void> {
     }
 
     // --- PASSO 1: Buscar os documentos base de cada tipo ---
-    const incidentsCollection = await getCollection<Incident>('incidents');
-    const recentQAs = await incidentsCollection.find({})
+    const recentQAs = await UserActivity.find({})
         .sort({ date: -1 })
         .limit(limit)
-        .project({ _id: 1, title: 1, date: 1 })
-        .toArray();
+        .select('_id title date')
+        .lean();
     logger.info(`Encontrados ${recentQAs.length} Quase Acidentes recentes.`);
 
     const recentAccidents = await Accident.find({})
@@ -364,14 +363,13 @@ export async function getFeed(req: Request, res: Response): Promise<void> {
     }));
 
     // --- PASSO 6: Buscar e Incluir Atividades de Like e Comentário ---
-    const activitiesCollection = await getCollection<UserActivity>('user_activities');
-    const recentActivities = await activitiesCollection.find({
-      category: { $in: ['incident', 'training'] }, // Filtra apenas atividades de incidente e treinamento
-      'details.action': { $in: ['like', 'comment'] } // Filtra apenas likes e comentários
+    const recentActivities = await UserActivity.find({
+      category: { $in: ['incident', 'training'] },
+      'details.action': { $in: ['like', 'comment'] }
     })
     .sort({ timestamp: -1 })
     .limit(limit)
-    .toArray();
+    .lean();
     logger.info(`Encontradas ${recentActivities.length} atividades de like/comentário recentes.`);
 
     // Formatar atividades de like e comentário como FeedItem
@@ -395,7 +393,7 @@ export async function getFeed(req: Request, res: Response): Promise<void> {
     logger.info(`Retornando ${allFeedItems.length} itens formatados para o feed com contagens de interações e atividades.`);
     res.json(allFeedItems);
 
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Erro ao buscar feed unificado:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,

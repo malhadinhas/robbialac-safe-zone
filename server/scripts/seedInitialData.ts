@@ -1,7 +1,9 @@
-import { connectToDatabase, getCollection } from '../services/database';
-import { ObjectId } from 'mongodb';
+import { connectToDatabase } from '../services/database';
+import User from '../models/User';
+import Medal from '../models/Medal';
+import UserMedal from '../models/UserMedal';
+import UserActivity from '../models/UserActivity';
 import logger from '../utils/logger';
-import { User } from '../types';
 
 /**
  * Este script adiciona medalhas e atividades iniciais para todos os usuários
@@ -9,21 +11,13 @@ import { User } from '../types';
  */
 async function seedInitialData() {
   try {
-    // Conectar ao banco de dados
     await connectToDatabase();
     logger.info('Conexão com o banco de dados estabelecida');
 
-    // Obter coleções
-    const usersCollection = await getCollection('users');
-    const userMedalsCollection = await getCollection('user_medals');
-    const activitiesCollection = await getCollection('user_activities');
-    const medalsCollection = await getCollection('medals');
-
     // Verificar se já existem medalhas no sistema
-    const medalsCount = await medalsCollection.countDocuments();
+    const medalsCount = await Medal.countDocuments();
     if (medalsCount === 0) {
       logger.info('Adicionando medalhas ao sistema...');
-      
       const medalData = [
         {
           id: "observador-iniciante",
@@ -77,41 +71,35 @@ async function seedInitialData() {
           updated_at: new Date()
         }
       ];
-      
-      // Inserir medalhas
-      await medalsCollection.insertMany(medalData);
+      await Medal.insertMany(medalData);
       logger.info(`${medalData.length} medalhas inseridas no sistema`);
     }
 
     // Buscar todos os usuários
-    const users = await usersCollection.find().toArray() as User[];
+    const users = await User.find();
     logger.info(`Encontrados ${users.length} usuários no sistema`);
 
     let totalActivitiesAdded = 0;
     let totalMedalsAssigned = 0;
 
-    // Para cada usuário, adicionar medalha básica e atividades iniciais se não tiver
     for (const user of users) {
       // Verificar se o usuário já tem medalhas
-      const userMedalsCount = await userMedalsCollection.countDocuments({ userId: user.id });
-      
+      const userMedalsCount = await UserMedal.countDocuments({ userId: user._id });
       if (userMedalsCount === 0) {
-        // Atribuir medalha inicial (Observador Iniciante)
         const initialMedal = {
-          userId: user.id,
-          medalId: "observador-iniciante", // ID descritivo
+          userId: user._id,
+          medalId: "observador-iniciante",
           dateEarned: new Date()
         };
-        
-        await userMedalsCollection.insertOne(initialMedal);
+        await UserMedal.create(initialMedal);
         totalMedalsAssigned++;
-        
+
         // Buscar dados completos da medalha
-        const medalData = await medalsCollection.findOne({ id: "observador-iniciante" });
-        
+        const medalData = await Medal.findOne({ id: "observador-iniciante" });
+
         // Registrar atividade da medalha
         const medalActivity = {
-          userId: user.id,
+          userId: user._id,
           category: 'medal',
           activityId: "observador-iniciante",
           points: 0,
@@ -123,22 +111,18 @@ async function seedInitialData() {
             manual: true
           }
         };
-        
-        await activitiesCollection.insertOne(medalActivity);
+        await UserActivity.create(medalActivity);
         totalActivitiesAdded++;
       }
-      
+
       // Verificar se o usuário já tem atividades
-      const userActivitiesCount = await activitiesCollection.countDocuments({ userId: user.id });
-      
-      if (userActivitiesCount <= 1) { // Pode ter apenas a atividade da medalha
-        // Criar atividades iniciais
+      const userActivitiesCount = await UserActivity.countDocuments({ userId: user._id });
+      if (userActivitiesCount <= 1) {
         const ontem = new Date();
         ontem.setDate(ontem.getDate() - 1);
-        
         const initialActivities = [
           {
-            userId: user.id,
+            userId: user._id,
             category: 'training',
             activityId: 'intro-training',
             points: 50,
@@ -150,7 +134,7 @@ async function seedInitialData() {
             }
           },
           {
-            userId: user.id,
+            userId: user._id,
             category: 'video',
             activityId: 'intro-video',
             points: 50,
@@ -161,22 +145,15 @@ async function seedInitialData() {
             }
           }
         ];
-        
-        // Adicionar atividades
-        await activitiesCollection.insertMany(initialActivities);
+        await UserActivity.insertMany(initialActivities);
         totalActivitiesAdded += initialActivities.length;
-        
-        // Atualizar pontos do usuário se necessário
         if (user.points === 0) {
-          await usersCollection.updateOne(
-            { id: user.id },
-            { $set: { points: 100 } }
-          );
-          logger.info(`Pontos do usuário ${user.name} (${user.id}) atualizados para 100`);
+          user.points = 100;
+          await user.save();
+          logger.info(`Pontos do usuário ${user.name} (${user._id}) atualizados para 100`);
         }
       }
     }
-
     logger.info(`Processo finalizado: ${totalMedalsAssigned} medalhas e ${totalActivitiesAdded} atividades adicionadas`);
   } catch (error) {
     logger.error('Erro ao inicializar dados:', error);

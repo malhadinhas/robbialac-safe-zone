@@ -2,10 +2,12 @@ import { Router, Request, Response } from 'express';
 import { validateCredentials, generateToken } from '../services/auth';
 import logger from '../utils/logger';
 import { createUser } from '../controllers/userController';
-import { getCollection } from '../services/database';
 import { sendVerificationEmail } from '../services/email';
 import { hashPassword } from '../utils/passwordUtils';
 import crypto from 'crypto';
+import User from '../models/User';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 const router = Router();
 
@@ -15,40 +17,21 @@ const router = Router();
  * Retorna dados do utilizador (sem password) e token JWT em caso de sucesso.
  */
 router.post('/login', async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    logger.warn('Tentativa de login sem email ou password');
-    return res.status(400).json({ message: 'Email e password são obrigatórios' });
-  }
-
   try {
-    // Validar credenciais
-    const user = await validateCredentials(email, password);
-
+  const { email, password } = req.body;
+    const user = await User.findOne({ email });
     if (!user) {
-      logger.warn('Falha na autenticação (validateCredentials retornou null)', { email });
       return res.status(401).json({ message: 'Credenciais inválidas' });
     }
-
-    // Gerar token JWT
-    const token = generateToken(user);
-    
-    logger.info('Login bem-sucedido e token gerado', { userId: user.id, email: user.email });
-
-    // Remover _id do utilizador antes de devolver
-    const { _id, ...userWithoutMongoId } = user;
-
-    // Retornar dados do utilizador e token
-    res.json({ user: userWithoutMongoId, token });
-
-  } catch (error: any) {
-    logger.error('Erro durante o processo de login na rota /api/auth/login', { 
-      email: email, 
-      error: error.message,
-      stack: error.stack
-    });
-    res.status(500).json({ message: 'Erro interno no servidor durante o login' });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Credenciais inválidas' });
+    }
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '24h' });
+    res.json({ token, user: { id: user._id, email: user.email, name: user.name, role: user.role } });
+  } catch (error) {
+    logger.error('Erro ao fazer login:', error);
+    res.status(500).json({ message: 'Erro ao fazer login' });
   }
 });
 
@@ -65,8 +48,8 @@ router.post('/send-code', async (req, res) => {
     return res.status(400).json({ error: 'Só são permitidos emails @robbialac.pt' });
   }
   // Verifica se já existe usuário com esse email
-  const collection = await getCollection('users');
-  const existingUser = await collection.findOne({ email });
+  const users = await User.find();
+  const existingUser = await User.findOne({ email });
   if (existingUser) {
     return res.status(400).json({ error: 'Email já cadastrado' });
   }
@@ -81,37 +64,22 @@ router.post('/send-code', async (req, res) => {
 
 // Endpoint para criar usuário após verificação
 router.post('/register', async (req, res) => {
-  const { email, code } = req.body;
-  if (!email || !code) {
-    return res.status(400).json({ error: 'Email e código são obrigatórios' });
+  try {
+    const { name, email, password } = req.body;
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email já cadastrado' });
   }
-  const pending = pendingVerifications.get(email);
-  if (!pending) {
-    return res.status(400).json({ error: 'Solicite um novo código de verificação' });
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const user = new User({ name, email, password: hashedPassword });
+    await user.save();
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '24h' });
+    res.status(201).json({ token, user: { id: user._id, email: user.email, name: user.name, role: user.role } });
+  } catch (error) {
+    logger.error('Erro ao registrar usuário:', error);
+    res.status(500).json({ message: 'Erro ao registrar usuário' });
   }
-  if (pending.verificationCode !== code) {
-    return res.status(400).json({ error: 'Código de verificação inválido' });
-  }
-  // Criar usuário
-  const collection = await getCollection('users');
-  const hashedPassword = await hashPassword(pending.password);
-  const newUser = {
-    email,
-    password: hashedPassword,
-    name: pending.name,
-    id: crypto.randomUUID(),
-    points: 100,
-    level: 1,
-    medals: [],
-    viewedVideos: [],
-    reportedIncidents: [],
-    isVerified: true
-  };
-  await collection.insertOne(newUser);
-  pendingVerifications.delete(email);
-  // Gerar token JWT
-  const token = generateToken(newUser);
-  res.status(201).json({ message: 'Usuário criado com sucesso', user: newUser, token });
 });
 
 // Endpoint para verificação de email
@@ -120,8 +88,8 @@ router.post('/verify-email', async (req, res) => {
   if (!email || !code) {
     return res.status(400).json({ error: 'Email e código são obrigatórios' });
   }
-  const collection = await getCollection('users');
-  const user = await collection.findOne({ email });
+  const users = await User.find();
+  const user = await User.findOne({ email });
   if (!user) {
     return res.status(404).json({ error: 'Usuário não encontrado' });
   }
@@ -131,7 +99,7 @@ router.post('/verify-email', async (req, res) => {
   if (user.verificationCode !== code) {
     return res.status(400).json({ error: 'Código de verificação inválido' });
   }
-  await collection.updateOne({ email }, { $set: { isVerified: true }, $unset: { verificationCode: '' } });
+  await User.updateOne({ email }, { $set: { isVerified: true }, $unset: { verificationCode: '' } });
   res.json({ message: 'Email verificado com sucesso!' });
 });
 

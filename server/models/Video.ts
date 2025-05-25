@@ -95,14 +95,14 @@ VideoSchema.index({ videoId: 1 }, { unique: true }); // Garante unicidade do vid
 VideoSchema.pre('save', function(next) {
   // Atualiza updatedAt
   if (this.isModified()) {
-    (this as any).updatedAt = new Date();
+    if ('updatedAt' in this) {
+      (this as { updatedAt?: Date }).updatedAt = new Date();
+    }
   }
-  
   // Garante que o id não seja nulo
   if (this.id === null || this.id === undefined) {
     this.id = this._id;
   }
-  
   next();
 });
 

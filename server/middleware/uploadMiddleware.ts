@@ -198,7 +198,7 @@ export const validateUploadedVideo = async (req: Request, res: Response, next: N
 };
 
 // Middleware para tratamento de erros do multer (ex: ficheiro muito grande)
-export const handleUploadError = (err: any, req: Request, res: Response, next: NextFunction) => {
+export const handleUploadError = (err: unknown, req: Request, res: Response, next: NextFunction) => {
   if (err instanceof multer.MulterError) {
     logger.error('Erro no upload', { error: err });
     if (err.code === 'LIMIT_FILE_SIZE') {
@@ -206,6 +206,10 @@ export const handleUploadError = (err: any, req: Request, res: Response, next: N
         message: 'Arquivo muito grande. O tamanho máximo permitido é 10GB.' 
       });
     }
+    return res.status(400).json({ message: err.message });
+  }
+  if (err instanceof Error) {
+    logger.error('Erro desconhecido no upload', { error: err.message, stack: err.stack });
     return res.status(400).json({ message: err.message });
   }
   next(err);

@@ -31,6 +31,7 @@ import corsMiddleware from './config/cors';
 import fileAccessMiddleware from './middleware/fileAccessMiddleware';
 import uploadsRoutes from './routes/uploads';
 import usersRoutes from './routes/users';
+import { Request, Response, NextFunction } from 'express';
 
 /**
  * Verificação das variáveis de ambiente necessárias para o Cloudflare R2
@@ -101,7 +102,7 @@ checkStorage().catch(error => {
  * Middleware global de tratamento de erros
  * Captura e formata todos os erros não tratados
  */
-app.use((err: any, req: any, res: any, next: any) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   res.status(500).json({ error: err.message });
 });
 

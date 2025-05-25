@@ -1,8 +1,9 @@
-import { connectToDatabase, getCollection } from '../services/database';
-import { ZoneStats, CategoryStats } from '../controllers/zoneController';
+import { connectToDatabase } from '../services/database';
+import ZoneStats from '../models/ZoneStats';
+import CategoryStats from '../models/CategoryStats';
 import logger from '../utils/logger';
 
-const zoneStats: ZoneStats[] = [
+const zoneStats = [
   {
     zoneId: 'zona1',
     zoneName: 'Zona 1',
@@ -55,7 +56,7 @@ const zoneStats: ZoneStats[] = [
   }
 ];
 
-const categoryStats: CategoryStats[] = [
+const categoryStats = [
   {
     categoryId: 'seguranca',
     title: 'Segurança',
@@ -85,32 +86,22 @@ const categoryStats: CategoryStats[] = [
 async function seedZoneStats() {
   try {
     logger.info('Iniciando população de estatísticas de zonas...');
-    
-    // Conectar ao banco de dados
     await connectToDatabase();
-    
-    // Obter a coleção de estatísticas de zona
-    const zoneStatsCollection = await getCollection<ZoneStats>('zone_stats');
-    
-    // Verificar se já existem estatísticas de zona
-    const existingZoneStatsCount = await zoneStatsCollection.countDocuments();
+
+    // Estatísticas de zonas
+    const existingZoneStatsCount = await ZoneStats.countDocuments();
     if (existingZoneStatsCount === 0) {
-      // Inserir estatísticas de zona
-      const zoneStatsResult = await zoneStatsCollection.insertMany(zoneStats);
-      logger.info(`${zoneStatsResult.insertedCount} estatísticas de zona inseridas com sucesso!`);
+      const zoneStatsResult = await ZoneStats.insertMany(zoneStats);
+      logger.info(`${zoneStatsResult.length} estatísticas de zona inseridas com sucesso!`);
     } else {
       logger.info(`Já existem ${existingZoneStatsCount} estatísticas de zona. Pulando inserção.`);
     }
-    
-    // Obter a coleção de estatísticas de categoria
-    const categoryStatsCollection = await getCollection<CategoryStats>('category_stats');
-    
-    // Verificar se já existem estatísticas de categoria
-    const existingCategoryStatsCount = await categoryStatsCollection.countDocuments();
+
+    // Estatísticas de categorias
+    const existingCategoryStatsCount = await CategoryStats.countDocuments();
     if (existingCategoryStatsCount === 0) {
-      // Inserir estatísticas de categoria
-      const categoryStatsResult = await categoryStatsCollection.insertMany(categoryStats);
-      logger.info(`${categoryStatsResult.insertedCount} estatísticas de categoria inseridas com sucesso!`);
+      const categoryStatsResult = await CategoryStats.insertMany(categoryStats);
+      logger.info(`${categoryStatsResult.length} estatísticas de categoria inseridas com sucesso!`);
     } else {
       logger.info(`Já existem ${existingCategoryStatsCount} estatísticas de categoria. Pulando inserção.`);
     }
@@ -119,7 +110,6 @@ async function seedZoneStats() {
   }
 }
 
-// Executar o script
 seedZoneStats().then(() => {
   logger.info('Script finalizado.');
   process.exit(0);

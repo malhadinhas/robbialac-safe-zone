@@ -3,12 +3,30 @@ import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import UserModel, { IUser } from '../models/User';
 import logger from '../utils/logger';
-import { User, LoginEvent } from '../types';
+import { User } from '../types';
+import { connectToDatabase } from './database';
+import LoginEvent from '../models/LoginEvent';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const SALT_ROUNDS = 10;
 
-export async function validateCredentials(email: string, password: string): Promise<IUser | null> {
+// Tipo seguro para retorno de autenticação
+export type AuthenticatedUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  points: number;
+  level: number;
+  medals: string[];
+  viewedVideos: string[];
+  reportedIncidents: string[];
+  verificationCode?: string;
+  isVerified?: boolean;
+  avatarUrl?: string;
+};
+
+export async function validateCredentials(email: string, password: string): Promise<AuthenticatedUser | null> {
   // ---- REMOVER DEBUG LOGS DIRETOS ---- 
   // console.log(`[validateCredentials - Direct Log] Received Email: ${email}`);
   // console.log(`[validateCredentials - Direct Log] Received Password: ${password}`); 
@@ -43,26 +61,24 @@ export async function validateCredentials(email: string, password: string): Prom
 
     // Login bem-sucedido, registar evento
     try {
-      const loginEventsCollection = await getCollection<LoginEvent>('loginEvents');
-      const newLoginEvent: Omit<LoginEvent, '_id'> = {
+      await LoginEvent.create({
         userId: user.id,
         userEmail: user.email,
         timestamp: new Date(),
         // ipAddress: req?.ip, // TODO: Passar req para obter IP
         // userAgent: req?.headers['user-agent'] // TODO: Passar req para obter User Agent
-      };
-      await loginEventsCollection.insertOne(newLoginEvent as LoginEvent);
+      });
       logger.info('Evento de login registado com sucesso', { userId: user.id, email: user.email });
-    } catch (logError: any) {
+    } catch (logError: unknown) {
       // Não impedir o login se o registo do evento falhar, apenas logar o erro
-      logger.error('Falha ao registar evento de login', { userId: user.id, email: user.email, error: logError.message });
+      logger.error('Falha ao registar evento de login', { userId: user.id, email: user.email, error: logError instanceof Error ? logError.message : String(logError) });
     }
 
     // Não retornar o hash da senha
     const { password: _, ...userWithoutPassword } = user.toObject();
-    return userWithoutPassword;
-  } catch (error: any) {
-    logger.error('Erro durante validação de credenciais', { email, error: error.message });
+    return userWithoutPassword as AuthenticatedUser;
+  } catch (error: unknown) {
+    logger.error('Erro durante validação de credenciais', { email, error: error instanceof Error ? error.message : String(error) });
     throw error; // Re-lança o erro para ser tratado pela rota
   }
 }

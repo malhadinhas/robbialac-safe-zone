@@ -10,7 +10,22 @@ import Like from '../models/Like';
 import Comment from '../models/Comment';
 import mongoose from 'mongoose';
 
-export const createSensibilizacao = async (req: Request, res: Response) => {
+interface SensibilizacaoWithUrls extends ISensibilizacao {
+  pdfUrl: string | null;
+  likeCount: number;
+  commentCount: number;
+  userHasLiked: boolean;
+}
+
+interface AggregationMatchQuery {
+  country?: string;
+  date?: {
+    $gte: Date;
+    $lte: Date;
+  };
+}
+
+export const createSensibilizacao = async (req: Request, res: Response): Promise<void> => {
   try {
     logger.info('Criando novo documento de sensibilização:', req.body);
     
@@ -54,30 +69,30 @@ export const createSensibilizacao = async (req: Request, res: Response) => {
     });
     
     res.status(201).json(savedSensibilizacao);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Erro no createSensibilizacao:', {
-      error: error.message,
-      stack: error.stack,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
       body: req.body
     });
     res.status(400).json({ 
       error: 'Erro ao criar documento de sensibilização',
-      details: error.message
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 };
 
-export const getSensibilizacoes = async (req: Request, res: Response) => {
+export const getSensibilizacoes = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id ? new mongoose.Types.ObjectId(req.user.id) : null;
     logger.info('Iniciando busca de documentos de sensibilização com agregação');
 
     const { country, startDate, endDate } = req.query;
-    const matchQuery: any = {};
+    const matchQuery: AggregationMatchQuery = {};
 
     logger.info(`Filtros: country=${country}, startDate=${startDate}, endDate=${endDate}`);
 
-    if (country) matchQuery.country = country;
+    if (country) matchQuery.country = country as string;
     if (startDate && endDate) {
       matchQuery.date = {
         $gte: new Date(startDate as string),
@@ -85,7 +100,7 @@ export const getSensibilizacoes = async (req: Request, res: Response) => {
       };
     }
 
-    const aggregationPipeline: any[] = [
+    const aggregationPipeline = [
       { $match: matchQuery },
       { $sort: { date: -1 } },
       {
@@ -140,7 +155,7 @@ export const getSensibilizacoes = async (req: Request, res: Response) => {
 
         if (!sensibilizacao.pdfFile?.key) {
           logger.warn('Documento sem chave PDF', { sensibilizacaoId: sensibilizacao._id });
-          return { ...sensibilizacao, pdfUrl: null };
+          return { ...sensibilizacao, pdfUrl: null } as SensibilizacaoWithUrls;
         }
 
         const signedUrl = await getSignedUrl(sensibilizacao.pdfFile.key);
@@ -149,32 +164,32 @@ export const getSensibilizacoes = async (req: Request, res: Response) => {
           hasUrl: !!signedUrl
         });
 
-        return { ...sensibilizacao, pdfUrl: signedUrl };
-      } catch (urlError) {
+        return { ...sensibilizacao, pdfUrl: signedUrl } as SensibilizacaoWithUrls;
+      } catch (urlError: unknown) {
         logger.error('Erro ao gerar URL para documento específico', {
           sensibilizacaoId: sensibilizacao._id,
-          error: urlError
+          error: urlError instanceof Error ? urlError.message : String(urlError)
         });
-        return { ...sensibilizacao, pdfUrl: null };
+        return { ...sensibilizacao, pdfUrl: null } as SensibilizacaoWithUrls;
       }
     }));
       
     logger.info(`URLs geradas para ${sensibilizacoesWithUrls.length} documentos`);
     res.json(sensibilizacoesWithUrls);
     
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Erro no getSensibilizacoes:', { 
-      error: error.message, 
-      stack: error.stack 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
     });
     res.status(500).json({ 
       error: 'Erro ao buscar documentos de sensibilização',
-      details: error.message
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 };
 
-export const getSensibilizacaoById = async (req: Request, res: Response) => {
+export const getSensibilizacaoById = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
        logger.warn('ID inválido fornecido para getSensibilizacaoById', { id: req.params.id });
@@ -184,7 +199,7 @@ export const getSensibilizacaoById = async (req: Request, res: Response) => {
     const userId = req.user?.id ? new mongoose.Types.ObjectId(req.user.id) : null;
     logger.info('Buscando documento por ID com agregação', { docId, userId });
 
-    const aggregationPipeline: any[] = [
+    const aggregationPipeline = [
       { $match: { _id: docId } },
       {
         $lookup: { from: 'likes', localField: '_id', foreignField: 'itemId', as: 'likesData' }
@@ -217,34 +232,37 @@ export const getSensibilizacaoById = async (req: Request, res: Response) => {
     try {
         if (!sensibilizacao.pdfFile?.key) {
            logger.warn('Documento sem chave PDF', { sensibilizacaoId: sensibilizacao._id });
-           res.json({ ...sensibilizacao, pdfUrl: null });
+           res.json({ ...sensibilizacao, pdfUrl: null } as SensibilizacaoWithUrls);
         } else {
           const signedUrl = await getSignedUrl(sensibilizacao.pdfFile.key);
            logger.info('URL assinada gerada com sucesso para ID específico', { sensibilizacaoId: sensibilizacao._id });
-           res.json({ ...sensibilizacao, pdfUrl: signedUrl });
+           res.json({ ...sensibilizacao, pdfUrl: signedUrl } as SensibilizacaoWithUrls);
         }   
-      } catch (urlError: any) {
-         logger.error('Erro ao gerar URL para documento específico (by ID)', { sensibilizacaoId: sensibilizacao._id, error: urlError.message });
-         res.json({ ...sensibilizacao, pdfUrl: null });
+      } catch (urlError: unknown) {
+         logger.error('Erro ao gerar URL para documento específico (by ID)', { 
+           sensibilizacaoId: sensibilizacao._id, 
+           error: urlError instanceof Error ? urlError.message : String(urlError) 
+         });
+         res.json({ ...sensibilizacao, pdfUrl: null } as SensibilizacaoWithUrls);
       }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Erro no getSensibilizacaoById com agregação:', { 
-      error: error.message, 
+      error: error instanceof Error ? error.message : String(error),
       id: req.params.id,
-      stack: error.stack
+      stack: error instanceof Error ? error.stack : undefined
     });
     res.status(500).json({ 
       error: 'Erro ao buscar documento de sensibilização',
-      details: error.message 
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 };
 
-export const updateSensibilizacao = async (req: Request, res: Response) => {
+export const updateSensibilizacao = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, country, date } = req.body;
-    let updateData: any = { name, country, date };
+    let updateData: Record<string, unknown> = { name, country, date };
 
     // Se um novo arquivo foi enviado
     if (req.file) {
@@ -283,23 +301,23 @@ export const updateSensibilizacao = async (req: Request, res: Response) => {
     const sensibilizacaoWithUrl = {
       ...sensibilizacao.toObject(),
       pdfUrl: signedUrl
-    };
+    } as SensibilizacaoWithUrls;
 
     res.json(sensibilizacaoWithUrl);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Erro no updateSensibilizacao:', {
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       id: req.params.id,
       body: req.body
     });
     res.status(400).json({ 
       error: 'Erro ao atualizar documento de sensibilização',
-      details: error.message
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 };
 
-export const deleteSensibilizacao = async (req: Request, res: Response) => {
+export const deleteSensibilizacao = async (req: Request, res: Response): Promise<void> => {
   try {
     const sensibilizacao = await Sensibilizacao.findById(req.params.id);
 
@@ -312,14 +330,14 @@ export const deleteSensibilizacao = async (req: Request, res: Response) => {
 
     await sensibilizacao.deleteOne();
     res.status(204).send();
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Erro no deleteSensibilizacao:', {
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       id: req.params.id
     });
     res.status(500).json({ 
       error: 'Erro ao deletar documento de sensibilização',
-      details: error.message
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 }; 

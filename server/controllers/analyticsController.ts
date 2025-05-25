@@ -13,6 +13,7 @@ import Incident from '../models/Incident';
 import LoginEvent from '../models/LoginEvent';
 import UploadLog from '../models/UploadLog';
 import { ObjectId } from 'mongodb'; // Tipo ObjectId do MongoDB
+import UserActivity from '../models/UserActivity';
 
 /**
  * @function getBasicAnalytics
@@ -40,10 +41,10 @@ export const getBasicAnalytics = async (req: Request, res: Response): Promise<vo
     };
     logger.info('Dados analíticos básicos coletados com sucesso.', analyticsData);
     res.status(200).json(analyticsData);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Erro ao obter dados analíticos básicos:', {
-      error: error.message,
-      stack: error.stack,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
     });
     res.status(500).json({ message: 'Erro ao buscar dados analíticos' });
   }
@@ -57,9 +58,9 @@ export const getBasicAnalytics = async (req: Request, res: Response): Promise<vo
  * @param {string} groupBy - O período de agrupamento ('day', 'week', 'month', 'year').
  * @returns {object} Um objeto contendo a estrutura do campo `_id` para o estágio `$group`.
  */
-const getGroupStage = (groupBy: string): { _id: any } => {
+const getGroupStage = (groupBy: string): { _id: Record<string, unknown> } => {
   // Variável para armazenar a estrutura do _id do grupo.
-  let idField: any;
+  let idField: Record<string, unknown>;
 
   // Define a estrutura do _id com base no parâmetro groupBy.
   // Utiliza operadores de data do MongoDB ($year, $month, $week, $dayOfMonth)
@@ -110,8 +111,8 @@ export const getLoginStats = async (req: Request, res: Response): Promise<void> 
     ]);
     logger.info(`Estatísticas de login por ${groupBy} coletadas com sucesso.`);
     res.status(200).json(stats);
-  } catch (error: any) {
-    logger.error('Erro ao obter estatísticas de login:', { error: error.message, stack: error.stack, groupBy });
+  } catch (error: unknown) {
+    logger.error('Erro ao obter estatísticas de login:', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined, groupBy });
     res.status(500).json({ message: 'Erro ao buscar estatísticas de login' });
   }
 };
@@ -136,8 +137,8 @@ export const getUploadStats = async (req: Request, res: Response): Promise<void>
     ]);
     logger.info(`Estatísticas de upload por ${groupBy} coletadas com sucesso.`);
     res.status(200).json(stats);
-  } catch (error: any) {
-    logger.error('Erro ao obter estatísticas de upload:', { error: error.message, stack: error.stack, groupBy });
+  } catch (error: unknown) {
+    logger.error('Erro ao obter estatísticas de upload:', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined, groupBy });
     res.status(500).json({ message: 'Erro ao buscar estatísticas de upload' });
   }
 };
@@ -152,49 +153,43 @@ export const getUploadStats = async (req: Request, res: Response): Promise<void>
  * @returns {Promise<void>} Responde com um objeto contendo os logs de erro paginados e informações de paginação, ou um erro (500).
  */
 export const getErrorLogs = async (req: Request, res: Response): Promise<void> => {
-  // Obtém parâmetros de paginação da query string, com padrões.
-  const limit = parseInt(req.query.limit as string) || 50; // Limite de itens por página.
-  const page = parseInt(req.query.page as string) || 1; // Número da página atual.
-  const skip = (page - 1) * limit; // Calcula quantos documentos pular.
+  const limit = parseInt(req.query.limit as string) || 50;
+  const page = parseInt(req.query.page as string) || 1;
+  const skip = (page - 1) * limit;
   logger.info(`Requisição para obter logs de erro`, { limit, page });
 
   try {
-    // Obtém a coleção onde os logs de erro são armazenados (ex: 'errorLogs').
-    // Usar 'any' como tipo genérico se não houver uma interface definida, mas o ideal seria ter uma.
-    const errorLogsCollection = await getCollection<any>('errorLogs');
+    const activities = await UserActivity.find();
 
-    // Busca os documentos de log.
-    const errors = await errorLogsCollection
-      .find() // Busca todos (sem filtro específico).
-      .sort({ timestamp: -1 }) // Ordena pelos mais recentes primeiro (baseado no campo 'timestamp' do log).
-      .skip(skip) // Pula os documentos das páginas anteriores.
-      .limit(limit) // Limita o número de documentos retornados para a página atual.
-      .toArray(); // Converte para array.
+    const errors = await UserActivity
+      .find()
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
-    // Conta o número total de documentos de erro na coleção para calcular a paginação.
-    const totalErrors = await errorLogsCollection.countDocuments();
+    const totalErrors = await UserActivity.countDocuments();
     logger.info(`Encontrados ${errors.length} logs de erro (página ${page}). Total: ${totalErrors}.`);
 
-    // Responde com os erros encontrados e informações de paginação.
     res.status(200).json({
-      errors, // Array com os documentos de erro da página atual.
-      totalErrors, // Número total de erros na coleção.
-      currentPage: page, // Número da página atual.
-      totalPages: Math.ceil(totalErrors / limit) // Número total de páginas.
+      errors,
+      totalErrors,
+      currentPage: page,
+      totalPages: Math.ceil(totalErrors / limit)
      });
 
-  } catch (error: any) {
-    // Tratamento específico para erro comum: coleção não encontrada.
-    // Isso pode acontecer se o logger Winston MongoDB ainda não criou a coleção.
-    if (error.message.includes('ns not found')) {
-        logger.warn('Coleção errorLogs não encontrada. Verifique a configuração do logger MongoDB. Retornando array vazio.');
-        // Responde com sucesso, mas com dados vazios, em vez de erro 500.
-        res.status(200).json({ errors: [], totalErrors: 0, currentPage: 1, totalPages: 0 });
-        return; // Para a execução.
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('ns not found')) {
+      logger.warn('Coleção errorLogs não encontrada. Verifique a configuração do logger MongoDB. Retornando array vazio.');
+      res.status(200).json({ errors: [], totalErrors: 0, currentPage: 1, totalPages: 0 });
+      return;
     }
-    // Captura e loga outros erros.
-    logger.error('Erro ao obter logs de erro:', { error: error.message, stack: error.stack, limit, page });
-    // Responde com erro 500.
+    logger.error('Erro ao obter logs de erro:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      limit,
+      page
+    });
     res.status(500).json({ message: 'Erro ao buscar logs de erro' });
   }
 }; 

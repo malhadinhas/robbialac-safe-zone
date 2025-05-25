@@ -15,6 +15,7 @@ import Comment from '../models/Comment';
 import IncidentModel from '../models/Incident';
 import DepartmentModel from '../models/Department';
 import { isValidObjectId } from 'mongoose';
+import { AuthenticatedRequest } from '../types/express';
 
 /**
  * @function getIncidents
@@ -339,7 +340,7 @@ export async function getRecentIncidents(req: Request, res: Response): Promise<v
   }
 }
 
-export async function likeIncident(req: Request, res: Response): Promise<void> {
+export async function likeIncident(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
@@ -383,7 +384,7 @@ export async function likeIncident(req: Request, res: Response): Promise<void> {
   }
 }
 
-export async function commentIncident(req: Request, res: Response): Promise<void> {
+export async function commentIncident(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const { id } = req.params;
     const { content } = req.body;
@@ -438,7 +439,7 @@ export async function commentIncident(req: Request, res: Response): Promise<void
   }
 }
 
-export async function getIncidentsByUser(req: Request, res: Response): Promise<void> {
+export async function getIncidentsByUser(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const userId = req.user?.id;
 

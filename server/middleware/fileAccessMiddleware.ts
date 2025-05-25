@@ -72,8 +72,8 @@ export const fileAccessMiddleware = async (req: Request, res: Response, next: Ne
     };
 
     next();
-  } catch (error) {
-    logger.error('Erro no middleware de acesso a arquivos', { error });
+  } catch (error: unknown) {
+    logger.error('Erro no middleware de acesso a arquivos', { error: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };

@@ -1,7 +1,7 @@
 import { Router } from 'express';
+import User from '../models/User';
+import logger from '../utils/logger';
 import {
-  getUsers,
-  getUserById,
   getUserByEmail,
   createUser,
   updateUser,
@@ -9,15 +9,33 @@ import {
 } from '../controllers/userController';
 import { hasRole } from '../middleware/authMiddleware';
 import { ObjectId } from 'mongodb';
-import { getCollection } from '../services/database';
 
 const router = Router();
 
 // Listar todos os usuários
-router.get('/', getUsers);
+router.get('/', async (req, res) => {
+  try {
+    const users = await User.find().select('-password');
+    res.json(users);
+  } catch (error) {
+    logger.error('Erro ao listar usuários:', error);
+    res.status(500).json({ message: 'Erro ao listar usuários' });
+  }
+});
 
-// Buscar um usuário específico por ID
-router.get('/:id', getUserById);
+// Obter usuário por ID
+router.get('/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+    res.json(user);
+  } catch (error) {
+    logger.error('Erro ao obter usuário:', error);
+    res.status(500).json({ message: 'Erro ao obter usuário' });
+  }
+});
 
 // Buscar um usuário por email
 router.get('/email/:email', getUserByEmail);
@@ -40,18 +58,12 @@ router.patch('/:id/role', hasRole(['admin_app']), async (req, res) => {
     return res.status(400).json({ error: 'Role inválido' });
   }
   try {
-    const collection = await getCollection('users');
-    let objectId;
-    try {
-      objectId = new ObjectId(id);
-    } catch (e) {
-      return res.status(400).json({ error: 'ID inválido' });
-    }
-    const result = await collection.updateOne({ _id: objectId }, { $set: { role } });
-    console.log('Resultado do updateOne:', result);
-    if (result.modifiedCount === 0) {
+    const user = await User.findById(id);
+    if (!user) {
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
+    user.role = role;
+    await user.save();
     res.json({ message: 'Role atualizado com sucesso' });
   } catch (error) {
     console.error('Erro ao atualizar role:', error);

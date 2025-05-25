@@ -10,6 +10,8 @@ import { Request, Response } from 'express';
 import Medal from '../models/Medal';
 import logger from '../utils/logger'; // Utilitário de logging
 import { ObjectId } from 'mongodb'; // Tipo ObjectId do MongoDB
+import UserActivity from '../models/UserActivity';
+import UserMedal from '../models/UserMedal';
 
 /**
  * @interface Medal
@@ -63,10 +65,8 @@ export const getMedals = async (req: Request, res: Response): Promise<void> => {
     logger.info('Medalhas recuperadas com sucesso', { count: medals.length });
     // Responde com o array de medalhas.
     res.json(medals);
-  } catch (error) {
-    // Captura e loga erros.
-    logger.error('Erro ao recuperar medalhas', { error });
-    // Responde com erro 500.
+  } catch (error: unknown) {
+    logger.error('Erro ao recuperar medalhas', { error: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ message: 'Erro ao recuperar medalhas' });
   }
 };
@@ -117,10 +117,8 @@ export const getUserMedals = async (req: Request, res: Response): Promise<void> 
     logger.info('Medalhas do usuário recuperadas com sucesso', { userId, count: medalsWithEarnedDate.length });
     // Responde com o array das medalhas conquistadas, incluindo a data.
     res.json(medalsWithEarnedDate);
-  } catch (error) {
-    // Captura e loga erros.
-    logger.error('Erro ao recuperar medalhas do usuário', { userId: req.params.userId, error });
-    // Responde com erro 500.
+  } catch (error: unknown) {
+    logger.error('Erro ao recuperar medalhas do usuário', { userId: req.params.userId, error: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ message: 'Erro ao recuperar medalhas do usuário' });
   }
 };
@@ -158,10 +156,8 @@ export const getUserUnacquiredMedals = async (req: Request, res: Response): Prom
     logger.info('Medalhas não conquistadas recuperadas com sucesso', { userId, count: unacquiredMedals.length });
     // Responde com o array das medalhas não conquistadas.
     res.json(unacquiredMedals);
-  } catch (error) {
-    // Captura e loga erros.
-    logger.error('Erro ao recuperar medalhas não conquistadas', { userId: req.params.userId, error });
-    // Responde com erro 500.
+  } catch (error: unknown) {
+    logger.error('Erro ao recuperar medalhas não conquistadas', { userId: req.params.userId, error: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ message: 'Erro ao recuperar medalhas não conquistadas' });
   }
 };
@@ -180,7 +176,7 @@ export const getUserUnacquiredMedals = async (req: Request, res: Response): Prom
 export const checkActionBasedMedals = async (
   userId: string,
   activityCategory: 'video' | 'incident' | 'training',
-  activityDetails?: any // Detalhes podem conter 'category' para vídeo/treino
+  activityDetails?: Record<string, unknown>
 ): Promise<Medal[]> => {
   try {
     logger.info(`Verificando medalhas baseadas em ação para ${userId} após atividade ${activityCategory}`);
@@ -225,18 +221,18 @@ export const checkActionBasedMedals = async (
     logger.debug(`Verificando ${medalsToCheck.length} medalhas que o usuário ${userId} ainda não possui para ${targetTriggerAction}.`);
 
     // 5. Contar quantas vezes o usuário realizou a ação relevante.
-    const activitiesCollection = await getCollection('user_activities');
+    const activities = await UserActivity.find();
     let userActionCount = 0; // Inicializa a contagem.
     let filterCategory: string | undefined = undefined; // Categoria específica para vídeo/treino
 
     // Lógica de contagem específica por tipo de ação:
     if (targetTriggerAction === 'incidentReported') {
       // Conta todas as atividades de incidente do usuário.
-      userActionCount = await activitiesCollection.countDocuments({ userId, category: 'incident' });
+      userActionCount = await activities.countDocuments({ userId, category: 'incident' });
     } else if (targetTriggerAction === 'videoWatched') {
       // Para vídeos, verifica se a medalha exige uma categoria específica.
       // Obtém a categoria do vídeo assistido a partir dos detalhes da atividade.
-      filterCategory = activityDetails?.category;
+      filterCategory = activityDetails?.category as string;
       if (!filterCategory) {
          // Se os detalhes não informam a categoria, não podemos verificar medalhas específicas de categoria.
          // Poderia contar todos os vídeos, mas a lógica atual foca em categorias.
@@ -245,7 +241,7 @@ export const checkActionBasedMedals = async (
          userActionCount = 0;
       } else {
           // Conta atividades da categoria 'video' E cuja propriedade 'details.category' corresponde.
-           userActionCount = await activitiesCollection.countDocuments({
+           userActionCount = await activities.countDocuments({
                 userId,
                 category: 'video',
                 'details.category': filterCategory // Filtra pela categoria dentro do objeto 'details'.
@@ -254,14 +250,14 @@ export const checkActionBasedMedals = async (
       }
     } else if (targetTriggerAction === 'trainingCompleted') {
        // Lógica similar para treinos, verifica se há categoria nos detalhes.
-       filterCategory = activityDetails?.category;
+       filterCategory = activityDetails?.category as string;
        if (filterCategory) {
             // Conta treinos da categoria específica.
-            userActionCount = await activitiesCollection.countDocuments({ userId, category: 'training', 'details.category': filterCategory });
+            userActionCount = await activities.countDocuments({ userId, category: 'training', 'details.category': filterCategory });
              logger.info(`Contagem de treinos da categoria '${filterCategory}' para ${userId}: ${userActionCount}`);
        } else {
             // Se não houver categoria nos detalhes, conta todos os treinos completados.
-             userActionCount = await activitiesCollection.countDocuments({ userId, category: 'training' });
+             userActionCount = await activities.countDocuments({ userId, category: 'training' });
              logger.info(`Contagem total de treinos para ${userId}: ${userActionCount}`);
        }
     }
@@ -302,10 +298,8 @@ export const checkActionBasedMedals = async (
     // Retorna o array de medalhas que foram recém-conquistadas e atribuídas nesta chamada.
     return newlyEarnedMedals;
 
-  } catch (error) {
-    // Captura e loga erros durante o processo de verificação.
-    logger.error(`Erro ao verificar medalhas baseadas em ação para ${userId}`, { error, activityCategory, activityDetails });
-    // Retorna um array vazio em caso de erro para não interromper o fluxo principal (registro da atividade).
+  } catch (error: unknown) {
+    logger.error('Erro ao verificar medalhas baseadas em ação', { userId, activityCategory, error: error instanceof Error ? error.message : String(error) });
     return [];
   }
 };
@@ -325,25 +319,27 @@ export const assignMedalToUser = async (req: Request, res: Response): Promise<vo
     // Validação básica dos IDs.
     if (!userId || !medalId) {
       logger.warn('Atribuição manual de medalha: IDs de usuário ou medalha ausentes.', { userId, medalId });
-      return res.status(400).json({ message: 'IDs de usuário e medalha são obrigatórios' });
+      res.status(400).json({ message: 'IDs de usuário e medalha são obrigatórios' });
+      return;
     }
 
     // 1. Verificar se a medalha existe no sistema.
     const medal = await Medal.findOne({ id: medalId });
     if (!medal) {
       logger.warn(`Atribuição manual: Medalha não encontrada com ID: ${medalId}`);
-      return res.status(404).json({ message: 'Medalha não encontrada' });
+      res.status(404).json({ message: 'Medalha não encontrada' });
+      return;
     }
 
     // 2. Verificar se o usuário já possui esta medalha para evitar duplicatas.
     const existingMedal = await UserMedal.findOne({ userId, medalId });
     if (existingMedal) {
       logger.info(`Usuário ${userId} já possui a medalha ${medalId} (atribuída em ${existingMedal.dateEarned}). Atribuição manual ignorada.`);
-      // Retorna 200 OK indicando que a operação não era necessária.
-      return res.status(200).json({
+      res.status(200).json({
         message: 'Usuário já possui esta medalha',
-        dateEarned: existingMedal.dateEarned // Informa a data original da conquista.
+        dateEarned: existingMedal.dateEarned
       });
+      return;
     }
 
     // 3. Se a medalha existe e o usuário não a possui, cria a relação em 'user_medals'.
@@ -356,18 +352,17 @@ export const assignMedalToUser = async (req: Request, res: Response): Promise<vo
     logger.info(`Medalha ${medalId} atribuída manualmente com sucesso ao usuário ${userId}`);
 
     // 4. Registrar a atribuição manual como uma atividade no histórico do usuário.
-    const activitiesCollection = await getCollection('user_activities');
-    await activitiesCollection.insertOne({
+    await UserActivity.create({
       userId,
-      category: 'medal', // Categoria 'medal'.
-      activityId: medalId, // ID da medalha.
-      points: 0, // Atribuição manual geralmente não dá pontos.
-      timestamp: new Date(), // Timestamp da atribuição.
-      details: { // Detalhes para exibição no histórico.
+      category: 'medal',
+      activityId: medalId,
+      points: 0,
+      timestamp: new Date(),
+      details: {
         name: medal.name,
         description: medal.description,
         imageSrc: medal.imageSrc,
-        manual: true // Flag indicando que foi uma atribuição manual.
+        manual: true
       }
     });
     logger.info(`Atividade registrada para atribuição manual da medalha ${medalId} ao usuário ${userId}`);
@@ -382,9 +377,9 @@ export const assignMedalToUser = async (req: Request, res: Response): Promise<vo
       }
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     // Captura e loga erros gerais.
-    logger.error('Erro ao atribuir medalha manualmente ao usuário', { error, params: req.params });
+    logger.error('Erro ao atribuir medalha manualmente ao usuário', { error: error instanceof Error ? error.message : String(error), params: req.params });
     // Responde com erro 500.
     res.status(500).json({ message: 'Erro ao atribuir medalha ao usuário' });
   }
@@ -435,9 +430,9 @@ export const createMedal = async (req: Request, res: Response): Promise<void> =>
     // Responde com 201 Created e o documento da medalha criada.
     res.status(201).json(medal);
 
-  } catch (error) {
+  } catch (error: unknown) {
     // Captura e loga erros gerais.
-    logger.error('Erro ao criar medalha', { error, body: req.body });
+    logger.error('Erro ao criar medalha', { error: error instanceof Error ? error.message : String(error), body: req.body });
     // Responde com erro 500.
     res.status(500).json({ message: 'Erro interno ao criar medalha' });
   }
@@ -460,16 +455,18 @@ export const updateMedal = async (req: Request, res: Response): Promise<void> =>
 
     if (Object.keys(updateData).length === 0) {
       logger.warn(`Nenhum dado fornecido para atualização da medalha ${medalId}`);
-      return res.status(400).json({ message: 'Nenhum dado fornecido para atualização' });
+      res.status(400).json({ message: 'Nenhum dado fornecido para atualização' });
+      return;
     }
     if (updateData.requiredCount !== undefined && updateData.requiredCount <= 0) {
       logger.warn(`Contagem inválida na atualização da medalha ${medalId}: ${updateData.requiredCount}`);
-      return res.status(400).json({ message: 'Contagem necessária deve ser maior que zero' });
+      res.status(400).json({ message: 'Contagem necessária deve ser maior que zero' });
+      return;
     }
     if ((updateData.triggerAction === 'videoWatched' || updateData.triggerAction === 'trainingCompleted') && updateData.triggerCategory === undefined) {
       logger.warn(`Atualização de medalha ${medalId} pode resultar em estado inválido (ação vídeo/treino sem categoria) - validação incompleta.`);
     }
-    delete (updateData as any).id;
+    delete (updateData as Partial<Omit<Medal, '_id' | 'id'>>).id;
     const updatedMedal = await Medal.findOneAndUpdate(
       { id: medalId },
       { $set: { ...updateData, updated_at: new Date() } },
@@ -477,14 +474,15 @@ export const updateMedal = async (req: Request, res: Response): Promise<void> =>
     );
     if (!updatedMedal) {
       logger.warn(`Tentativa de atualizar medalha não encontrada: ${medalId}`);
-      return res.status(404).json({ message: 'Medalha não encontrada' });
+      res.status(404).json({ message: 'Medalha não encontrada' });
+      return;
     }
     logger.info(`Medalha atualizada com sucesso: ${medalId}`);
     res.status(200).json(updatedMedal);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error(`Erro ao atualizar medalha ${req.params.medalId}`, {
-      error: error.message,
-      stack: error.stack,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
       medalId: req.params.medalId,
       body: req.body
     });
@@ -528,9 +526,9 @@ export const deleteMedal = async (req: Request, res: Response): Promise<void> =>
     // Responde com 200 OK e uma mensagem de sucesso. (Poderia ser 204 No Content também).
     res.status(200).json({ message: 'Medalha deletada com sucesso' });
 
-  } catch (error) {
+  } catch (error: unknown) {
     // Captura e loga erros gerais.
-    logger.error(`Erro ao deletar medalha ${req.params.medalId}`, { error });
+    logger.error(`Erro ao deletar medalha ${req.params.medalId}`, { error: error instanceof Error ? error.message : String(error) });
     // Responde com erro 500.
     res.status(500).json({ message: 'Erro interno ao deletar medalha' });
   }

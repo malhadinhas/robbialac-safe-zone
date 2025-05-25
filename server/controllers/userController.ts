@@ -4,15 +4,22 @@ import logger from '../utils/logger';
 import { isValidObjectId } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { AuthenticatedRequest } from '../types/express';
 
 export async function getUsers(req: Request, res: Response): Promise<void> {
   try {
     const users = await User.find().select('-password').lean();
     logger.info(`Usuários recuperados: ${users.length}`);
     res.json(users);
-  } catch (error) {
-    logger.error('Erro ao recuperar usuários:', error);
-    res.status(500).json({ message: 'Erro ao recuperar usuários' });
+  } catch (error: unknown) {
+    logger.error('Erro ao recuperar usuários:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    res.status(500).json({ 
+      message: 'Erro ao recuperar usuários',
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 }
 
@@ -219,7 +226,7 @@ export async function login(req: Request, res: Response): Promise<void> {
   }
 }
 
-export async function getCurrentUser(req: Request, res: Response): Promise<void> {
+export async function getCurrentUser(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const userId = req.user?.id;
 

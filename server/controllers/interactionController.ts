@@ -15,7 +15,8 @@ import { ObjectId } from 'mongodb';         // Tipo ObjectId do MongoDB/Mongoose
 import { registerActivityData } from './activityController';
 import Accident from '../models/Accident';
 import Sensibilizacao from '../models/Sensibilizacao';
-import { getCollection } from '../services/database';
+import Incident from '../models/Incident';
+import { AuthenticatedRequest } from '../types/express';
 
 /**
  * @function isValidItemType
@@ -90,8 +91,7 @@ export const addLike = async (req: Request, res: Response): Promise<void> => {
         // Buscar título do item para registo de atividade
         let itemTitle = '';
         if (itemType === 'qa') {
-            const incidentsCollection = await getCollection('incidents');
-            const qa = await incidentsCollection.findOne({ _id: new ObjectId(itemId) });
+            const qa = await Incident.findOne({ _id: itemId });
             itemTitle = qa?.title || '';
         } else if (itemType === 'accident') {
             const accident = await Accident.findById(itemId).select('name');
@@ -119,18 +119,14 @@ export const addLike = async (req: Request, res: Response): Promise<void> => {
         // 6. Retorna sucesso. Usar 200 OK é mais simples do que diferenciar entre criação (201) e confirmação.
         res.status(200).json({ message: 'Like registado com sucesso.' });
 
-    } catch (error: any) {
-        // Tratamento de erro específico para violação de índice único (código 11000).
-        // Embora o upsert deva lidar com isso, é uma boa prática ter um fallback.
-        if (error.code === 11000) {
+    } catch (error: unknown) {
+        if (typeof error === 'object' && error && 'code' in error && (error as { code: number }).code === 11000) {
             logger.warn('addLike: Like duplicado detectado (índice único).', { userId, itemId, itemType });
-            // Retorna 200 OK mesmo assim, informando que o usuário já gostou.
-            return res.status(200).json({ message: 'Já gostou deste item.' });
+            res.status(200).json({ message: 'Já gostou deste item.' });
+            return;
         }
-        // Loga outros erros inesperados.
-        logger.error('Erro ao adicionar like:', { userId, itemId, itemType, error: error.message, stack: error.stack });
-        // Retorna erro 500 Internal Server Error.
-        res.status(500).json({ message: 'Erro ao adicionar like.', details: error.message });
+        logger.error('Erro ao adicionar like:', { userId, itemId, itemType, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+        res.status(500).json({ message: 'Erro ao adicionar like.', details: error instanceof Error ? error.message : String(error) });
     }
 };
 
@@ -181,11 +177,9 @@ export const removeLike = async (req: Request, res: Response): Promise<void> => 
         // Retorna 200 OK (ou poderia ser 204 No Content).
         res.status(200).json({ message: 'Like removido com sucesso.' });
 
-    } catch (error: any) {
-        // Captura e loga erros inesperados.
-        logger.error('Erro ao remover like:', { userId, itemId, itemType, error: error.message, stack: error.stack });
-        // Retorna erro 500 Internal Server Error.
-        res.status(500).json({ message: 'Erro ao remover like.', details: error.message });
+    } catch (error: unknown) {
+        logger.error('Erro ao remover like:', { userId, itemId, itemType, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+        res.status(500).json({ message: 'Erro ao remover like.', details: error instanceof Error ? error.message : String(error) });
     }
 };
 
@@ -200,20 +194,15 @@ export const removeLike = async (req: Request, res: Response): Promise<void> => 
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com o comentário criado (status 201) ou um erro (400, 401, 500).
  */
-export const addComment = async (req: Request, res: Response): Promise<void> => {
-    // 1. Obter ID e Nome do usuário da requisição.
+export const addComment = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     const userId = req.user?.id;
-    // LINTER ERROR: A propriedade 'name' pode não existir no tipo inferido/definido de req.user.
-    //               Garantir que o middleware de autenticação adicione 'name' ou ajustar o tipo/lógica.
-    const userName = req.user?.name || 'Utilizador Desconhecido'; // Fallback caso 'name' não esteja presente.
+    const userName = req.user?.name || 'Utilizador Desconhecido';
 
-    // Valida se o ID do usuário está presente.
     if (!userId) {
         logger.warn('addComment: Utilizador não autenticado (sem userId em req.user).');
         return res.status(401).json({ message: 'Utilizador não autenticado.' });
     }
-    // Log para verificar se o nome foi obtido corretamente.
-    // LINTER ERROR: Mesma questão sobre a propriedade 'name'.
+
     logger.info('addComment: Dados do utilizador obtidos do token.', { userId, userNameFromToken: req.user?.name, resolvedUserName: userName });
 
     // 2. Obter dados do comentário do corpo da requisição.
@@ -253,8 +242,7 @@ export const addComment = async (req: Request, res: Response): Promise<void> => 
         // Buscar título do item para registo de atividade
         let itemTitle = '';
         if (itemType === 'qa') {
-            const incidentsCollection = await getCollection('incidents');
-            const qa = await incidentsCollection.findOne({ _id: new ObjectId(itemId) });
+            const qa = await Incident.findOne({ _id: itemId });
             itemTitle = qa?.title || '';
         } else if (itemType === 'accident') {
             const accident = await Accident.findById(itemId).select('name');
@@ -298,11 +286,9 @@ export const addComment = async (req: Request, res: Response): Promise<void> => 
         // Responde com status 201 Created e o comentário formatado.
         res.status(201).json(responseComment);
 
-    } catch (error: any) {
-        // Captura e loga erros inesperados.
-        logger.error('Erro ao adicionar comentário:', { userId, itemId, itemType, error: error.message, stack: error.stack });
-        // Responde com erro 500 Internal Server Error.
-        res.status(500).json({ message: 'Erro ao adicionar comentário.', details: error.message });
+    } catch (error: unknown) {
+        logger.error('Erro ao adicionar comentário:', { userId, itemId, itemType, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+        res.status(500).json({ message: 'Erro ao adicionar comentário.', details: error instanceof Error ? error.message : String(error) });
     }
 };
 
@@ -358,11 +344,9 @@ export const getCommentsByItem = async (req: Request, res: Response): Promise<vo
             totalComments // O número total de comentários para este item.
         });
 
-    } catch (error: any) {
-        // Captura e loga erros inesperados.
-        logger.error('Erro ao buscar comentários:', { itemId, itemType, error: error.message, stack: error.stack });
-        // Retorna erro 500 Internal Server Error.
-        res.status(500).json({ message: 'Erro ao buscar comentários.', details: error.message });
+    } catch (error: unknown) {
+        logger.error('Erro ao buscar comentários:', { itemId, itemType, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+        res.status(500).json({ message: 'Erro ao buscar comentários.', details: error instanceof Error ? error.message : String(error) });
     }
 };
 
@@ -387,8 +371,8 @@ export const getLikeInfo = async (req: Request, res: Response): Promise<void> =>
       userHasLiked = !!like;
     }
     res.json({ likeCount, userHasLiked });
-  } catch (error) {
-    logger.error('Erro ao obter info de likes:', error);
+  } catch (error: unknown) {
+    logger.error('Erro ao obter info de likes:', error instanceof Error ? { message: error.message, stack: error.stack } : { error });
     res.status(500).json({ message: 'Erro ao obter info de likes.' });
   }
 }; 

@@ -50,7 +50,8 @@ export const getZoneStatsById = async (req: Request, res: Response) => {
     const zoneStats = await ZoneStats.findOne({ zoneId }).lean();
     if (!zoneStats) {
       logger.warn('Estatísticas da zona não encontradas', { zoneId });
-      return res.status(404).json({ message: 'Estatísticas da zona não encontradas' });
+      res.status(404).json({ message: 'Estatísticas da zona não encontradas' });
+      return;
     }
     if (!zoneStats.stats.completionRate && zoneStats.stats.totalVideos > 0) {
       zoneStats.stats.completionRate = (zoneStats.stats.videosWatched / zoneStats.stats.totalVideos) * 100;

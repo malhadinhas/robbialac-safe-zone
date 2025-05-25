@@ -6,7 +6,7 @@ export interface IUserActivity extends Document {
   activityId?: string;
   points?: number;
   timestamp: Date;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
 }
 
 const UserActivitySchema = new Schema<IUserActivity>({

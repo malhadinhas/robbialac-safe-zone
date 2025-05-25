@@ -6,6 +6,7 @@ import logger from '../utils/logger';
 import { User as UserType } from '../types';
 import { UserMedal as UserMedalType } from '../types/userMedal';
 import { Medal as MedalType } from '../types/medal';
+import UserActivity from '../models/UserActivity';
 
 interface UserPointsBreakdown {
   category: string;
@@ -163,23 +164,21 @@ export const getUserPointsBreakdown = async (req: Request, res: Response) => {
     
     if (!userId) {
       logger.warn('Solicitação de pontos sem ID de usuário');
-      return res.status(400).json({ message: 'ID de usuário é obrigatório' });
+      res.status(400).json({ message: 'ID de usuário é obrigatório' });
+      return;
     }
     
     logger.info(`Buscando distribuição de pontos para o usuário ${userId}`);
     
-    // Obtém a coleção de atividades do usuário
-    const activitiesCollection = await getCollection('user_activities');
-    
     // Consulta as atividades do usuário agrupadas por categoria
-    const pointsByCategory = await activitiesCollection.aggregate([
+    const pointsByCategory = await UserActivity.aggregate([
       { $match: { userId } },
       { $group: {
           _id: "$category",
           totalPoints: { $sum: "$points" }
         }
       }
-    ]).toArray();
+    ]);
     
     // Define as cores para cada categoria
     const categoryColors = {
@@ -211,13 +210,12 @@ export const getUserPointsBreakdown = async (req: Request, res: Response) => {
     logger.info(`Distribuição de pontos recuperada com sucesso`, { userId, categories: result.length });
     res.json(result);
     
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Erro ao buscar distribuição de pontos do usuário', {
       userId: req.params.userId,
       error: error instanceof Error ? error.message : 'Erro desconhecido'
     });
-    
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Erro ao buscar distribuição de pontos',
       details: error instanceof Error ? error.message : 'Erro desconhecido'
     });
@@ -233,13 +231,14 @@ export const getUserRanking = async (req: Request, res: Response) => {
     
     if (!userId) {
       logger.warn('Solicitação de ranking sem ID de usuário');
-      return res.status(400).json({ message: 'ID de usuário é obrigatório' });
+      res.status(400).json({ message: 'ID de usuário é obrigatório' });
+      return;
     }
     
     logger.info(`Buscando ranking para o usuário ${userId}`);
     
     // Obtém a coleção de usuários
-    const usersCollection = await getCollection('users');
+    const usersCollection = await User.find();
     
     // Obtém todos os usuários ordenados por pontos (decrescente)
     const usersSorted = await usersCollection.find({}).sort({ points: -1 }).toArray();
@@ -268,7 +267,7 @@ export const getUserRanking = async (req: Request, res: Response) => {
     
     res.json(result);
     
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Erro ao buscar ranking do usuário', {
       userId: req.params.userId,
       error: error instanceof Error ? error.message : 'Erro desconhecido'
@@ -325,8 +324,8 @@ export const getLeaderboard = async (req: Request, res: Response) => {
       };
     }));
     res.json(leaderboardData);
-  } catch (error) {
-    logger.error('Erro ao obter leaderboard', { error });
+  } catch (error: unknown) {
+    logger.error('Erro ao obter leaderboard', { error: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ message: 'Erro ao obter leaderboard' });
   }
 }; 

@@ -6,7 +6,7 @@
  * como a contagem de funcionários.
  */
 import { Request, Response } from 'express';
-import { getCollection } from '../services/database'; // Função para obter uma coleção MongoDB
+import Department from '../models/Department';
 import logger from '../utils/logger'; // Utilitário de logging
 import { ObjectId } from 'mongodb'; // Tipo ObjectId do MongoDB
 
@@ -34,21 +34,18 @@ interface Department {
  */
 export const getDepartments = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Obtém acesso à coleção 'departments' usando o serviço de banco de dados.
-    const collection = await getCollection<Department>('departments');
-
     // Busca todos os documentos na coleção 'departments'.
     // find() sem filtro retorna um cursor para todos os documentos.
     // toArray() converte o cursor em um array de objetos JavaScript.
-    const departments = await collection.find().toArray();
+    const departments = await Department.find();
 
     logger.info('Departamentos recuperados com sucesso.', { count: departments.length });
     // Responde com o array de departamentos em formato JSON. O status 200 OK é implícito.
     res.json(departments);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Captura qualquer erro que ocorra durante a busca no banco de dados.
-    logger.error('Erro ao recuperar departamentos:', { error: error.message, stack: error.stack });
+    logger.error('Erro ao recuperar departamentos:', { error: error instanceof Error ? error.message : String(error) });
     // Responde com um status 500 (Internal Server Error) e uma mensagem de erro genérica.
     res.status(500).json({ message: 'Erro ao recuperar departamentos' });
   }
@@ -67,14 +64,11 @@ export const getDepartmentById = async (req: Request, res: Response): Promise<vo
     const { id } = req.params;
     logger.info('Requisição para buscar departamento por ID (string).', { id });
 
-    // Obtém a coleção 'departments'.
-    const collection = await getCollection<Department>('departments');
-
     // Busca por um único documento onde o campo 'id' (definido como string na interface)
     // seja igual ao ID fornecido na URL.
     // ATENÇÃO: Esta busca pode não funcionar se o ID primário for o `_id` (ObjectId)
     // e não houver um campo 'id' (string) nos documentos, ou se ele não for único.
-    const department = await collection.findOne({ id: id });
+    const department = await Department.findOne({ id: id });
 
     // Verifica se o método findOne retornou um documento.
     if (!department) {
@@ -88,9 +82,9 @@ export const getDepartmentById = async (req: Request, res: Response): Promise<vo
     logger.info('Departamento recuperado com sucesso pelo ID (string).', { id });
     res.json(department);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Captura e loga erros ocorridos durante a busca.
-    logger.error('Erro ao recuperar departamento por ID (string):', { id: req.params.id, error: error.message, stack: error.stack });
+    logger.error('Erro ao recuperar departamento por ID (string):', { id: req.params.id, error: error instanceof Error ? error.message : String(error) });
     // Responde com erro 500.
     res.status(500).json({ message: 'Erro ao recuperar departamento' });
   }
@@ -109,19 +103,17 @@ export const getDepartmentById = async (req: Request, res: Response): Promise<vo
 export const getDepartmentsWithEmployees = async (req: Request, res: Response): Promise<void> => {
   // Esta função atualmente tem a mesma implementação que getDepartments.
   try {
-    // Obtém a coleção 'departments'.
-    const collection = await getCollection<Department>('departments');
     // Busca todos os documentos.
-    const departments = await collection.find().toArray();
+    const departments = await Department.find();
 
     // Log pode ser enganoso devido ao nome da função.
     logger.info('Departamentos (com funcionários?) recuperados com sucesso.', { count: departments.length });
     // Responde com o array de departamentos.
     res.json(departments);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Captura e loga erros.
-    logger.error('Erro ao recuperar departamentos (com funcionários?):', { error: error.message, stack: error.stack });
+    logger.error('Erro ao recuperar departamentos (com funcionários?):', { error: error instanceof Error ? error.message : String(error) });
     // Responde com erro 500.
     res.status(500).json({ message: 'Erro ao recuperar departamentos com funcionários' });
   }
@@ -167,11 +159,8 @@ export const updateDepartmentEmployeeCount = async (req: Request, res: Response)
     }
     // --- Fim das Validações ---
 
-    // Obtém a coleção 'departments'.
-    const collection = await getCollection<Department>('departments');
-
     // Executa a operação de atualização no MongoDB.
-    const result = await collection.updateOne(
+    const result = await Department.updateOne(
       // Critério de filtro: Encontra o documento onde o campo '_id' é igual ao ObjectId correspondente ao 'departmentId'.
       { _id: new ObjectId(departmentId) },
       // Operador de atualização $set: Define o valor do campo 'employeeCount' para o novo número fornecido.
@@ -206,9 +195,9 @@ export const updateDepartmentEmployeeCount = async (req: Request, res: Response)
     // Responde com mensagem de sucesso e status 200 OK.
     res.status(200).json({ message: 'Contagem de funcionários atualizada com sucesso' });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Captura e loga erros gerais que possam ocorrer.
-    logger.error('Erro ao atualizar contagem de funcionários:', { id: req.params.departmentId, error: error.message, stack: error.stack });
+    logger.error('Erro ao atualizar contagem de funcionários:', { id: req.params.departmentId, error: error instanceof Error ? error.message : String(error) });
     // Responde com erro 500.
     res.status(500).json({ message: 'Erro ao atualizar contagem de funcionários' });
   }

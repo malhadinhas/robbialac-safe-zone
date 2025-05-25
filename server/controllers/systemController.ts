@@ -15,7 +15,8 @@ export const getSystemConfig = async (req: Request, res: Response) => {
     if (!config) {
       const defaultConfig = { annualIncidentTargetPerEmployee: 5 };
       logger.info('Usando configuração padrão do sistema');
-      return res.json(defaultConfig);
+      res.json(defaultConfig);
+      return;
     }
     logger.info('Configuração do sistema recuperada com sucesso');
     res.json(config);

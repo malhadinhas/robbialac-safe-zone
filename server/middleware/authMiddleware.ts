@@ -79,12 +79,12 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
       path: req.path
     });
     next();
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Erro ao verificar autenticação', { 
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       path: req.path,
       method: req.method,
-      stack: error.stack
+      stack: error instanceof Error ? error.stack : undefined
     });
     res.status(500).json({ message: 'Erro ao verificar autenticação' });
   }
@@ -132,11 +132,12 @@ export const isAdmin = async (req: Request, res: Response, next: NextFunction) =
       });
       next();
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Erro ao verificar permissão de administrador', { 
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       path: req.path,
-      method: req.method
+      method: req.method,
+      stack: error instanceof Error ? error.stack : undefined
     });
     res.status(500).json({ message: 'Erro ao verificar permissão de administrador' });
   }
@@ -187,11 +188,12 @@ export const hasRole = (roles: string[]) => {
         });
         next();
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Erro ao verificar papel do usuário', { 
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         path: req.path,
-        method: req.method
+        method: req.method,
+        stack: error instanceof Error ? error.stack : undefined
       });
       res.status(500).json({ message: 'Erro ao verificar papel do usuário' });
     }

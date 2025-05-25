@@ -47,6 +47,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var database_1 = require("../services/database");
 var logger_1 = require("../utils/logger");
+var UserActivity = require('../models/UserActivity');
 function seedUserActivities() {
     return __awaiter(this, void 0, void 0, function () {
         var activitiesCollection, count, users, allActivities, _i, users_1, user, videoActivities, incidentActivities, trainingActivities, result, _loop_1, _a, users_2, user, error_1;
@@ -60,7 +61,7 @@ function seedUserActivities() {
                 case 1:
                     // Conectar ao banco de dados
                     _b.sent();
-                    return [4 /*yield*/, (0, database_1.getCollection)('user_activities')];
+                    return [4 /*yield*/, UserActivity.find()];
                 case 2:
                     activitiesCollection = _b.sent();
                     return [4 /*yield*/, activitiesCollection.countDocuments()];
@@ -129,7 +130,7 @@ function seedUserActivities() {
                         // Combinar todas as atividades para este usuário
                         allActivities.push.apply(allActivities, __spreadArray(__spreadArray(__spreadArray([], videoActivities, false), incidentActivities, false), trainingActivities, false));
                     }
-                    return [4 /*yield*/, activitiesCollection.insertMany(allActivities)];
+                    return [4 /*yield*/, UserActivity.insertMany(allActivities)];
                 case 4:
                     result = _b.sent();
                     logger_1.default.info("".concat(result.insertedCount, " atividades inseridas com sucesso para ").concat(users.length, " usu\u00E1rios"));
