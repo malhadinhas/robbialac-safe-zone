@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { getCollection } from '../services/database';
+import ZoneStats from '../models/ZoneStats';
+import CategoryStats from '../models/CategoryStats';
 import logger from '../utils/logger';
 
 // Interface que define a estrutura das estatísticas de uma zona
-export interface ZoneStats {
+export interface ZoneStatsInterface {
   zoneId: string;
   zoneName: string;
   stats: {
@@ -15,7 +16,7 @@ export interface ZoneStats {
 }
 
 // Interface que define a estrutura das estatísticas de uma categoria
-export interface CategoryStats {
+export interface CategoryStatsInterface {
   categoryId: string;
   title: string;
   description: string;
@@ -27,21 +28,15 @@ export interface CategoryStats {
 // Função para buscar estatísticas de todas as zonas
 export const getZoneStats = async (req: Request, res: Response) => {
   try {
-    // Obtém a coleção 'zone_stats' da base de dados
-    const collection = await getCollection<ZoneStats>('zone_stats');
-    // Busca todas as estatísticas das zonas
-    const stats = await collection.find().toArray();
-    
-    // Calcula a taxa de conclusão se não estiver definida
+    const stats = await ZoneStats.find().lean();
     const formattedStats = stats.map(zone => {
       if (!zone.stats.completionRate && zone.stats.totalVideos > 0) {
         zone.stats.completionRate = (zone.stats.videosWatched / zone.stats.totalVideos) * 100;
       }
       return zone;
     });
-    
     logger.info('Estatísticas de zonas recuperadas com sucesso', { count: stats.length });
-    res.json(formattedStats); // Retorna as estatísticas formatadas
+    res.json(formattedStats);
   } catch (error) {
     logger.error('Erro ao recuperar estatísticas de zonas', { error });
     res.status(500).json({ message: 'Erro ao recuperar estatísticas de zonas' });
@@ -51,25 +46,17 @@ export const getZoneStats = async (req: Request, res: Response) => {
 // Função para buscar estatísticas de uma zona específica
 export const getZoneStatsById = async (req: Request, res: Response) => {
   try {
-    const { zoneId } = req.params; // Extrai o zoneId dos parâmetros da rota
-    // Obtém a coleção 'zone_stats' da base de dados
-    const collection = await getCollection<ZoneStats>('zone_stats');
-    
-    // Busca as estatísticas da zona pelo ID
-    const zoneStats = await collection.findOne({ zoneId });
-    
+    const { zoneId } = req.params;
+    const zoneStats = await ZoneStats.findOne({ zoneId }).lean();
     if (!zoneStats) {
       logger.warn('Estatísticas da zona não encontradas', { zoneId });
       return res.status(404).json({ message: 'Estatísticas da zona não encontradas' });
     }
-    
-    // Calcula a taxa de conclusão se não estiver definida
     if (!zoneStats.stats.completionRate && zoneStats.stats.totalVideos > 0) {
       zoneStats.stats.completionRate = (zoneStats.stats.videosWatched / zoneStats.stats.totalVideos) * 100;
     }
-    
     logger.info('Estatísticas da zona recuperadas com sucesso', { zoneId });
-    res.json(zoneStats); // Retorna as estatísticas da zona
+    res.json(zoneStats);
   } catch (error) {
     logger.error('Erro ao recuperar estatísticas da zona', { zoneId: req.params.zoneId, error });
     res.status(500).json({ message: 'Erro ao recuperar estatísticas da zona' });
@@ -79,13 +66,9 @@ export const getZoneStatsById = async (req: Request, res: Response) => {
 // Função para buscar estatísticas de todas as categorias
 export const getCategoryStats = async (req: Request, res: Response) => {
   try {
-    // Obtém a coleção 'category_stats' da base de dados
-    const collection = await getCollection<CategoryStats>('category_stats');
-    // Busca todas as estatísticas das categorias
-    const stats = await collection.find().toArray();
-    
+    const stats = await CategoryStats.find().lean();
     logger.info('Estatísticas de categorias recuperadas com sucesso', { count: stats.length });
-    res.json(stats); // Retorna as estatísticas das categorias
+    res.json(stats);
   } catch (error) {
     logger.error('Erro ao recuperar estatísticas de categorias', { error });
     res.status(500).json({ message: 'Erro ao recuperar estatísticas de categorias' });

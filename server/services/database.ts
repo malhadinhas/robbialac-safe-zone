@@ -91,13 +91,6 @@ export async function tryReconnect(): Promise<boolean> {
   }
 }
 
-export async function getCollection<T>(collectionName: string) {
-  if (!isConnected) {
-    await connectToDatabase();
-  }
-  return mongoose.connection.collection<T>(collectionName);
-}
-
 // Garantir que a conexão seja fechada quando a aplicação for encerrada
 process.on('SIGINT', async () => {
   await disconnectFromDatabase();

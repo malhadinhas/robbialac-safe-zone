@@ -7,7 +7,7 @@
  * (Criar, Ler, Atualizar, Deletar) para gerenciar as próprias medalhas.
  */
 import { Request, Response } from 'express';
-import { getCollection } from '../services/database'; // Função para obter coleções MongoDB
+import Medal from '../models/Medal';
 import logger from '../utils/logger'; // Utilitário de logging
 import { ObjectId } from 'mongodb'; // Tipo ObjectId do MongoDB
 
@@ -57,10 +57,8 @@ export interface UserMedal {
  */
 export const getMedals = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Obtém a coleção 'medals'.
-    const collection = await getCollection<Medal>('medals');
     // Busca todos os documentos na coleção.
-    const medals = await collection.find().toArray();
+    const medals = await Medal.find();
 
     logger.info('Medalhas recuperadas com sucesso', { count: medals.length });
     // Responde com o array de medalhas.
@@ -86,9 +84,7 @@ export const getUserMedals = async (req: Request, res: Response): Promise<void> 
     logger.info(`Buscando medalhas para o usuário: ${userId}`);
 
     // 1. Buscar as entradas na coleção 'user_medals' para este usuário.
-    const userMedalsCollection = await getCollection<UserMedal>('user_medals');
-    // Encontra todos os documentos onde o campo 'userId' corresponde ao parâmetro.
-    const userMedals = await userMedalsCollection.find({ userId }).toArray();
+    const userMedals = await UserMedal.find({ userId });
 
     // Se o usuário não tem nenhuma medalha, retorna um array vazio.
     if (userMedals.length === 0) {
@@ -101,9 +97,7 @@ export const getUserMedals = async (req: Request, res: Response): Promise<void> 
     logger.debug(`Usuário ${userId} possui IDs de medalha:`, medalIds);
 
     // 3. Buscar os detalhes completos das medalhas na coleção 'medals' usando os IDs obtidos.
-    const medalsCollection = await getCollection<Medal>('medals');
-    // Usa o operador $in para buscar todas as medalhas cujo campo 'id' (string) está na lista `medalIds`.
-    const medals = await medalsCollection.find({ id: { $in: medalIds } }).toArray();
+    const medals = await Medal.find({ id: { $in: medalIds } });
     logger.debug(`Detalhes das medalhas encontradas: ${medals.length} itens.`);
 
     // 4. Combinar os detalhes da medalha com a data em que foi conquistada pelo usuário.
@@ -144,15 +138,13 @@ export const getUserUnacquiredMedals = async (req: Request, res: Response): Prom
     logger.info(`Buscando medalhas não conquistadas pelo usuário: ${userId}`);
 
     // 1. Buscar os IDs das medalhas que o usuário JÁ possui (coleção 'user_medals').
-    const userMedalsCollection = await getCollection<UserMedal>('user_medals');
-    const userMedals = await userMedalsCollection.find({ userId }).toArray();
+    const userMedals = await UserMedal.find({ userId });
     // Extrai apenas os IDs das medalhas possuídas.
     const acquiredMedalIds = userMedals.map(userMedal => userMedal.medalId);
     logger.debug(`Usuário ${userId} possui IDs de medalha:`, acquiredMedalIds);
 
     // 2. Buscar TODAS as medalhas disponíveis no sistema (coleção 'medals').
-    const medalsCollection = await getCollection<Medal>('medals');
-    const allMedals = await medalsCollection.find().toArray();
+    const allMedals = await Medal.find();
     logger.debug(`Total de medalhas no sistema: ${allMedals.length}`);
 
     // 3. Filtrar a lista de todas as medalhas para manter apenas aquelas cujo ID NÃO está na lista de medalhas adquiridas.
@@ -206,31 +198,28 @@ export const checkActionBasedMedals = async (
     }
 
     // 2. Buscar todas as medalhas que são acionadas por este tipo de ação (`triggerAction`).
-    const medalsCollection = await getCollection<Medal>('medals');
-    // Encontra medalhas onde o campo `triggerAction` é igual ao `targetTriggerAction` determinado.
-    const potentialMedals = await medalsCollection.find({ triggerAction: targetTriggerAction }).toArray();
+    const medals = await Medal.find({ triggerAction: targetTriggerAction });
 
     // Se não há medalhas definidas para essa ação, encerra.
-    if (potentialMedals.length === 0) {
+    if (medals.length === 0) {
       logger.info(`Nenhuma medalha encontrada no sistema para o trigger ${targetTriggerAction}`);
       return [];
     }
-    logger.debug(`Encontradas ${potentialMedals.length} medalhas potenciais para ${targetTriggerAction}.`);
+    logger.debug(`Encontradas ${medals.length} medalhas potenciais para ${targetTriggerAction}.`);
 
     // 3. Buscar as medalhas que este usuário específico JÁ possui.
-    const userMedalsCollection = await getCollection<UserMedal>('user_medals');
-    const userEarnedMedals = await userMedalsCollection.find({ userId }).toArray();
+    const userMedals = await UserMedal.find({ userId });
     // Cria um array apenas com os IDs das medalhas já ganhas.
-    const earnedMedalIds = userEarnedMedals.map(um => um.medalId);
+    const earnedMedalIds = userMedals.map(um => um.medalId);
     logger.debug(`Usuário ${userId} já possui ${earnedMedalIds.length} medalhas. IDs:`, earnedMedalIds);
 
     // 4. Filtrar as medalhas potenciais, removendo as que o usuário já ganhou.
     // `medalsToCheck` contém apenas as medalhas que o usuário *poderia* ganhar com esta ação.
-    const medalsToCheck = potentialMedals.filter(medal => !earnedMedalIds.includes(medal.id));
+    const medalsToCheck = medals.filter(medal => !earnedMedalIds.includes(medal.id));
 
     // Se não há medalhas novas a verificar para este usuário e ação, encerra.
     if (medalsToCheck.length === 0) {
-      logger.info(`Usuário ${userId} já possui todas as ${potentialMedals.length} medalhas disponíveis para ${targetTriggerAction} ou não há medalhas novas.`);
+      logger.info(`Usuário ${userId} já possui todas as ${medals.length} medalhas disponíveis para ${targetTriggerAction} ou não há medalhas novas.`);
       return [];
     }
     logger.debug(`Verificando ${medalsToCheck.length} medalhas que o usuário ${userId} ainda não possui para ${targetTriggerAction}.`);
@@ -298,7 +287,7 @@ export const checkActionBasedMedals = async (
         newlyEarnedMedals.push(medal); // Adiciona ao array de medalhas ganhas nesta execução.
 
         // **Atribui a medalha ao usuário no banco de dados imediatamente.**
-        await userMedalsCollection.insertOne({
+        await UserMedal.create({
           userId, // ID do usuário
           medalId: medal.id, // ID (string) da medalha
           dateEarned: new Date(), // Data/hora atual
@@ -340,17 +329,14 @@ export const assignMedalToUser = async (req: Request, res: Response): Promise<vo
     }
 
     // 1. Verificar se a medalha existe no sistema.
-    const medalsCollection = await getCollection<Medal>('medals');
-    // Busca a medalha pelo seu ID string.
-    const medal = await medalsCollection.findOne({ id: medalId });
+    const medal = await Medal.findOne({ id: medalId });
     if (!medal) {
       logger.warn(`Atribuição manual: Medalha não encontrada com ID: ${medalId}`);
       return res.status(404).json({ message: 'Medalha não encontrada' });
     }
 
     // 2. Verificar se o usuário já possui esta medalha para evitar duplicatas.
-    const userMedalsCollection = await getCollection<UserMedal>('user_medals');
-    const existingMedal = await userMedalsCollection.findOne({ userId, medalId });
+    const existingMedal = await UserMedal.findOne({ userId, medalId });
     if (existingMedal) {
       logger.info(`Usuário ${userId} já possui a medalha ${medalId} (atribuída em ${existingMedal.dateEarned}). Atribuição manual ignorada.`);
       // Retorna 200 OK indicando que a operação não era necessária.
@@ -366,7 +352,7 @@ export const assignMedalToUser = async (req: Request, res: Response): Promise<vo
       medalId,
       dateEarned: new Date() // Define a data de conquista como agora.
     };
-    await userMedalsCollection.insertOne(userMedal);
+    await UserMedal.create(userMedal);
     logger.info(`Medalha ${medalId} atribuída manualmente com sucesso ao usuário ${userId}`);
 
     // 4. Registrar a atribuição manual como uma atividade no histórico do usuário.
@@ -443,32 +429,11 @@ export const createMedal = async (req: Request, res: Response): Promise<void> =>
     logger.info(`ID normalizado para a nova medalha: ${medalData.id}`);
 
     // Obtém a coleção 'medals'.
-    const collection = await getCollection<Medal>('medals');
+    const medal = await Medal.create(medalData);
 
-    // Verifica se já existe uma medalha com o mesmo ID (slug).
-    const existingMedal = await collection.findOne({ id: medalData.id });
-    if (existingMedal) {
-      logger.warn(`Tentativa de criar medalha com ID duplicado: ${medalData.id}`);
-      // Retorna 409 Conflict se o ID já estiver em uso.
-      return res.status(409).json({ message: `Medalha com ID '${medalData.id}' já existe` });
-    }
-
-    // Prepara o documento final para inserção, adicionando timestamps.
-    const medalToInsert: Medal = {
-        ...medalData,
-        created_at: new Date(),
-        updated_at: new Date()
-    }
-
-    // Insere a nova medalha no banco.
-    // Usa `as any` temporariamente se houver incompatibilidade de tipo BSON (raro com config padrão).
-    const result = await collection.insertOne(medalToInsert as any);
-
-    logger.info(`Nova medalha criada com sucesso: ${medalData.name} (ID: ${medalData.id}), _id: ${result.insertedId}`);
-    // Busca a medalha recém-criada para retornar o documento completo.
-    const createdMedal = await collection.findOne({ _id: result.insertedId });
+    logger.info(`Nova medalha criada com sucesso: ${medalData.name} (ID: ${medalData.id}), _id: ${medal._id}`);
     // Responde com 201 Created e o documento da medalha criada.
-    res.status(201).json(createdMedal);
+    res.status(201).json(medal);
 
   } catch (error) {
     // Captura e loga erros gerais.
@@ -489,79 +454,40 @@ export const createMedal = async (req: Request, res: Response): Promise<void> =>
  */
 export const updateMedal = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { medalId } = req.params; // ID legível (slug) da medalha a ser atualizada.
-    // Dados a serem atualizados (campos parciais, não inclui _id nem id).
+    const { medalId } = req.params;
     const updateData: Partial<Omit<Medal, '_id' | 'id'>> = req.body;
     logger.info(`Requisição para atualizar medalha recebida: ${medalId}`, { updateData });
 
-    // Validação 1: Verifica se algum dado foi enviado para atualização.
     if (Object.keys(updateData).length === 0) {
       logger.warn(`Nenhum dado fornecido para atualização da medalha ${medalId}`);
       return res.status(400).json({ message: 'Nenhum dado fornecido para atualização' });
     }
-    // Validação 2: Verifica se a contagem necessária (se presente) é válida.
     if (updateData.requiredCount !== undefined && updateData.requiredCount <= 0) {
-        logger.warn(`Contagem inválida na atualização da medalha ${medalId}: ${updateData.requiredCount}`);
-        return res.status(400).json({ message: 'Contagem necessária deve ser maior que zero' });
+      logger.warn(`Contagem inválida na atualização da medalha ${medalId}: ${updateData.requiredCount}`);
+      return res.status(400).json({ message: 'Contagem necessária deve ser maior que zero' });
     }
-    // Validação 3: (Simplificada) Verifica condição de categoria para vídeo/treino.
-    // Uma validação completa exigiria buscar a medalha atual para verificar o estado combinado.
     if ((updateData.triggerAction === 'videoWatched' || updateData.triggerAction === 'trainingCompleted') && updateData.triggerCategory === undefined) {
-         // Esta validação pode ser falha se apenas outros campos estiverem sendo atualizados.
-         logger.warn(`Atualização de medalha ${medalId} pode resultar em estado inválido (ação vídeo/treino sem categoria) - validação incompleta.`);
-         // Poderia retornar erro 400 aqui, mas a lógica atual permite continuar.
-     }
-
-    // Obtém a coleção 'medals'.
-    const collection = await getCollection<Medal>('medals');
-
-    // É uma boa prática verificar se a medalha existe ANTES de tentar atualizar.
-    const existingMedal = await collection.findOne({ id: medalId });
-    if (!existingMedal) {
-      logger.warn(`Tentativa de atualizar medalha não encontrada: ${medalId}`);
-      // Log extra para depuração: lista IDs disponíveis.
-      const allMedals = await collection.find({}, { projection: { id: 1, name: 1 } }).toArray();
-      logger.info('Medalhas disponíveis no sistema:', { medals: allMedals.map(m => m.id) });
-      // Retorna 404 Not Found.
-      return res.status(404).json({
-        message: 'Medalha não encontrada',
-        requestedId: medalId
-      });
+      logger.warn(`Atualização de medalha ${medalId} pode resultar em estado inválido (ação vídeo/treino sem categoria) - validação incompleta.`);
     }
-
-    // Garante que o campo 'id' (slug) não seja alterado, removendo-o do objeto de atualização se presente.
-    delete (updateData as any).id; // Remove a propriedade 'id' se existir em updateData.
-
-    // Executa a operação `updateOne` no MongoDB.
-    const result = await collection.updateOne(
-      { id: medalId }, // Critério de filtro: encontra a medalha pelo seu ID string (slug).
-      // Operador $set: atualiza os campos fornecidos em `updateData` e define `updated_at` para a data atual.
-      { $set: { ...updateData, updated_at: new Date() } }
+    delete (updateData as any).id;
+    const updatedMedal = await Medal.findOneAndUpdate(
+      { id: medalId },
+      { $set: { ...updateData, updated_at: new Date() } },
+      { new: true }
     );
-
-    // Verifica se a medalha foi encontrada para atualização (matchedCount).
-    if (result.matchedCount === 0) {
-      // Isso não deveria acontecer devido à verificação findOne anterior, mas é uma salvaguarda.
-      logger.warn(`Tentativa de atualizar medalha não encontrada (após verificação findOne): ${medalId}`);
+    if (!updatedMedal) {
+      logger.warn(`Tentativa de atualizar medalha não encontrada: ${medalId}`);
       return res.status(404).json({ message: 'Medalha não encontrada' });
     }
-
-    // Busca a medalha atualizada para retornar na resposta.
-    const updatedMedal = await collection.findOne({ id: medalId });
     logger.info(`Medalha atualizada com sucesso: ${medalId}`);
-
-    // Responde com 200 OK e o documento da medalha atualizado.
     res.status(200).json(updatedMedal);
-
   } catch (error: any) {
-    // Captura e loga erros gerais.
     logger.error(`Erro ao atualizar medalha ${req.params.medalId}`, {
       error: error.message,
       stack: error.stack,
       medalId: req.params.medalId,
       body: req.body
     });
-    // Responde com erro 500.
     res.status(500).json({ message: 'Erro interno ao atualizar medalha' });
   }
 };
@@ -579,11 +505,8 @@ export const deleteMedal = async (req: Request, res: Response): Promise<void> =>
     const { medalId } = req.params; // ID legível (slug) da medalha a ser deletada.
     logger.info(`Requisição para deletar medalha: ${medalId}`);
 
-    // Obtém a coleção 'medals'.
-    const collection = await getCollection<Medal>('medals');
-
     // Tenta deletar a medalha que corresponde ao ID (slug).
-    const result = await collection.deleteOne({ id: medalId });
+    const result = await Medal.deleteOne({ id: medalId });
 
     // Verifica se alguma medalha foi deletada.
     if (result.deletedCount === 0) {

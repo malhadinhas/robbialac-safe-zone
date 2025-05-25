@@ -1,6 +1,6 @@
-import { connectToDatabase, getCollection } from '../services/database';
+import { connectToDatabase } from '../services/database';
+import Medal from '../models/Medal';
 import logger from '../utils/logger';
-import { User, Medal } from '../types';
 
 /**
  * Este script atualiza os IDs das medalhas para serem mais descritivos
@@ -8,17 +8,11 @@ import { User, Medal } from '../types';
  */
 async function updateMedalIds() {
   try {
-    // Conectar ao banco de dados
     await connectToDatabase();
     logger.info('Conexão com o banco de dados estabelecida');
 
-    // Obter coleções
-    const medalsCollection = await getCollection('medals');
-    const userMedalsCollection = await getCollection('user_medals');
-    const activitiesCollection = await getCollection('user_activities');
-
     // Mapeamento de ID numérico para ID descritivo
-    const idMapping = {
+    const idMapping: Record<string, string> = {
       "1": "observador-iniciante",
       "2": "vigilante-ativo",
       "3": "vigilante-dedicado",
@@ -26,62 +20,21 @@ async function updateMedalIds() {
       "5": "guardiao-prevencao"
     };
 
-    // Verificar se existem medalhas para atualizar
-    const totalMedals = await medalsCollection.countDocuments();
-    logger.info(`Total de medalhas no sistema: ${totalMedals}`);
-
-    if (totalMedals === 0) {
+    const medals = await Medal.find({ id: { $in: Object.keys(idMapping) } });
+    if (medals.length === 0) {
       logger.warn('Nenhuma medalha encontrada para atualizar');
       process.exit(0);
       return;
     }
 
-    // Para cada medalha no mapeamento
-    for (const [oldId, newId] of Object.entries(idMapping)) {
-      // Buscar a medalha pelo ID antigo
-      const medal = await medalsCollection.findOne({ id: oldId });
-      
-      if (!medal) {
-        logger.warn(`Medalha com ID ${oldId} não encontrada`);
-        continue;
-      }
-
+    for (const medal of medals) {
+      const oldId = medal.id;
+      const newId = idMapping[oldId];
+      if (!newId) continue;
       logger.info(`Atualizando medalha: ${medal.name} (${oldId} -> ${newId})`);
-
-      // Criar uma nova medalha com o ID atualizado
-      const updatedMedal = {
-        ...medal,
-        id: newId
-      };
-      delete updatedMedal._id; // Remover _id para evitar conflito
-
-      // Usar uma operação de findOneAndUpdate com upsert: true
-      // Isso evita problemas se o script for executado mais de uma vez
-      const result = await medalsCollection.findOneAndUpdate(
-        { id: newId }, 
-        { $set: updatedMedal },
-        { upsert: true, returnDocument: 'after' }
-      );
-
-      // Se encontrou e atualizou uma nova medalha, remover a antiga
-      if (result && result.value && oldId !== newId) {
-        await medalsCollection.deleteOne({ id: oldId });
-        logger.info(`Medalha antiga com ID ${oldId} removida`);
-
-        // Atualizar referências em user_medals
-        const userMedalUpdates = await userMedalsCollection.updateMany(
-          { medalId: oldId },
-          { $set: { medalId: newId } }
-        );
-        logger.info(`Atualizadas ${userMedalUpdates.modifiedCount} referências em user_medals`);
-
-        // Atualizar referências em activities
-        const activityUpdates = await activitiesCollection.updateMany(
-          { activityId: oldId, category: 'medal' },
-          { $set: { activityId: newId } }
-        );
-        logger.info(`Atualizadas ${activityUpdates.modifiedCount} referências em activities`);
-      }
+      medal.id = newId;
+      await medal.save();
+      logger.info(`Medalha ${medal.name} atualizada para novo ID: ${newId}`);
     }
 
     logger.info('Atualização de IDs de medalhas concluída com sucesso');
@@ -92,5 +45,4 @@ async function updateMedalIds() {
   }
 }
 
-// Executar o script
 updateMedalIds(); 

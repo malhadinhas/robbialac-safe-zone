@@ -7,9 +7,11 @@
  */
 import { Request, Response } from 'express';
 import logger from '../utils/logger'; // Utilitário de logging
-import { getCollection } from '../services/database'; // Função para obter coleções MongoDB nativas
 import Video from '../models/Video'; // Modelo Mongoose para Vídeos
-import { User, Incident, LoginEvent, UploadLog } from '../types'; // Tipos/Interfaces para dados
+import User from '../models/User';
+import Incident from '../models/Incident';
+import LoginEvent from '../models/LoginEvent';
+import UploadLog from '../models/UploadLog';
 import { ObjectId } from 'mongodb'; // Tipo ObjectId do MongoDB
 
 /**
@@ -24,46 +26,25 @@ import { ObjectId } from 'mongodb'; // Tipo ObjectId do MongoDB
 export const getBasicAnalytics = async (req: Request, res: Response): Promise<void> => {
   logger.info('Requisição recebida para obter dados analíticos básicos');
   try {
-    // Obtém acesso às coleções necessárias.
-    // Usa getCollection para acesso direto via driver MongoDB nativo.
-    const usersCollection = await getCollection<User>('users');
-    const incidentsCollection = await getCollection<Incident>('incidents');
-    // Para Vídeos, usa o modelo Mongoose, assumindo que ele está configurado
-    // (se também usasse getCollection, o código seria similar aos outros).
-
-    // Realiza contagens de documentos em cada coleção/modelo.
-    const totalUsers = await usersCollection.countDocuments();
-    const totalIncidents = await incidentsCollection.countDocuments();
-    const totalVideos = await Video.countDocuments(); // Usando Mongoose
-
-    // Exemplo de métrica adicional: Contagem de incidentes nos últimos 30 dias.
-    const thirtyDaysAgo = new Date(); // Data atual
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30); // Subtrai 30 dias
-    // Conta documentos na coleção 'incidents' onde a data é maior ou igual a 30 dias atrás.
-    const recentIncidentsCount = await incidentsCollection.countDocuments({
-      date: { $gte: thirtyDaysAgo }
-    });
-
-    // Monta o objeto de resposta com os dados coletados.
+    const totalUsers = await User.countDocuments();
+    const totalIncidents = await Incident.countDocuments();
+    const totalVideos = await Video.countDocuments();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentIncidentsCount = await Incident.countDocuments({ date: { $gte: thirtyDaysAgo } });
     const analyticsData = {
       totalUsers,
       totalIncidents,
       totalVideos,
-      recentIncidentsCount, // Inclui a contagem recente
-      // Outras métricas poderiam ser adicionadas aqui.
+      recentIncidentsCount,
     };
-
     logger.info('Dados analíticos básicos coletados com sucesso.', analyticsData);
-    // Responde com os dados e status 200 OK.
     res.status(200).json(analyticsData);
-
   } catch (error: any) {
-    // Captura e loga erros durante a busca dos dados.
     logger.error('Erro ao obter dados analíticos básicos:', {
       error: error.message,
       stack: error.stack,
     });
-    // Responde com erro 500 Internal Server Error.
     res.status(500).json({ message: 'Erro ao buscar dados analíticos' });
   }
 };
@@ -118,47 +99,19 @@ const getGroupStage = (groupBy: string): { _id: any } => {
  * @returns {Promise<void>} Responde com um array de estatísticas de login ou um erro (500).
  */
 export const getLoginStats = async (req: Request, res: Response): Promise<void> => {
-  // Obtém o parâmetro 'groupBy' da query string, com 'day' como padrão.
   const groupBy = req.query.groupBy as string || 'day';
   logger.info(`Requisição para obter estatísticas de login`, { groupBy });
-
   try {
-    // Obtém a coleção onde os eventos de login são armazenados.
-    const loginEventsCollection = await getCollection<LoginEvent>('loginEvents');
-    // Obtém a estrutura de agrupamento usando a função auxiliar.
     const groupStageId = getGroupStage(groupBy);
-
-    // Executa o pipeline de agregação.
-    const stats = await loginEventsCollection.aggregate([
-      // Estágio 1: Agrupar documentos pelo período de tempo definido em groupStageId.
-      {
-        $group: {
-          ...groupStageId, // Define o _id para agrupar (ex: { year: ..., month: ... })
-          count: { $sum: 1 } // Conta quantos documentos (logins) existem em cada grupo.
-        }
-      },
-      // Estágio 2: Ordenar os resultados pelo _id (que contém a data/período) em ordem ascendente.
-      {
-        $sort: { "_id": 1 }
-      },
-      // Estágio 3: Projetar (formatar) a saída.
-      {
-        $project: {
-          _id: 0, // Remove o campo _id original.
-          period: "$_id", // Renomeia o campo _id (que contém o período) para 'period'.
-          count: 1 // Mantém o campo 'count'.
-        }
-      }
-    ]).toArray(); // Converte os resultados da agregação para um array.
-
+    const stats = await LoginEvent.aggregate([
+      { $group: { ...groupStageId, count: { $sum: 1 } } },
+      { $sort: { '_id': 1 } },
+      { $project: { _id: 0, period: '$_id', count: 1 } }
+    ]);
     logger.info(`Estatísticas de login por ${groupBy} coletadas com sucesso.`);
-    // Responde com os dados estatísticos e status 200 OK.
     res.status(200).json(stats);
-
   } catch (error: any) {
-    // Captura e loga erros.
     logger.error('Erro ao obter estatísticas de login:', { error: error.message, stack: error.stack, groupBy });
-    // Responde com erro 500 Internal Server Error.
     res.status(500).json({ message: 'Erro ao buscar estatísticas de login' });
   }
 };
@@ -172,49 +125,19 @@ export const getLoginStats = async (req: Request, res: Response): Promise<void> 
  * @returns {Promise<void>} Responde com um array de estatísticas de upload ou um erro (500).
  */
 export const getUploadStats = async (req: Request, res: Response): Promise<void> => {
-  // Obtém o parâmetro 'groupBy', com 'day' como padrão.
   const groupBy = req.query.groupBy as string || 'day';
   logger.info(`Requisição para obter estatísticas de upload`, { groupBy });
-
   try {
-    // Obtém a coleção onde os logs de upload são armazenados.
-    const uploadLogsCollection = await getCollection<UploadLog>('uploadLogs');
-    // Obtém a estrutura de agrupamento temporal.
     const groupStageId = getGroupStage(groupBy);
-
-    // Executa o pipeline de agregação.
-    const stats = await uploadLogsCollection.aggregate([
-      // Estágio 1: Agrupar logs de upload pelo período de tempo.
-      {
-        $group: {
-          ...groupStageId, // Define o _id para agrupar.
-          totalSize: { $sum: "$fileSize" }, // Soma o tamanho ('fileSize') de todos os arquivos em cada grupo.
-          count: { $sum: 1 } // Conta quantos documentos (uploads) existem em cada grupo.
-        }
-      },
-      // Estágio 2: Ordenar os resultados pelo período em ordem ascendente.
-      {
-        $sort: { "_id": 1 }
-      },
-      // Estágio 3: Projetar (formatar) a saída.
-      {
-        $project: {
-          _id: 0, // Remove o _id original.
-          period: "$_id", // Renomeia _id para 'period'.
-          totalSize: 1, // Mantém o campo 'totalSize'.
-          count: 1 // Mantém o campo 'count'.
-        }
-      }
-    ]).toArray(); // Converte para array.
-
+    const stats = await UploadLog.aggregate([
+      { $group: { ...groupStageId, totalSize: { $sum: '$fileSize' }, count: { $sum: 1 } } },
+      { $sort: { '_id': 1 } },
+      { $project: { _id: 0, period: '$_id', totalSize: 1, count: 1 } }
+    ]);
     logger.info(`Estatísticas de upload por ${groupBy} coletadas com sucesso.`);
-    // Responde com os dados e status 200 OK.
     res.status(200).json(stats);
-
   } catch (error: any) {
-    // Captura e loga erros.
     logger.error('Erro ao obter estatísticas de upload:', { error: error.message, stack: error.stack, groupBy });
-    // Responde com erro 500.
     res.status(500).json({ message: 'Erro ao buscar estatísticas de upload' });
   }
 };
