@@ -7,16 +7,14 @@
  * Interage com a coleção 'incidents' e 'departments' no MongoDB.
  */
 import { Request, Response } from 'express';
-import { getCollection } from '../services/database'; // Função para obter coleções MongoDB
-// Presume-se que '../types' define as interfaces Incident e Department.
-// LINTER ERROR: O linter indica que 'Department' não é exportado de '../types'.
-//                Verifique o arquivo types.ts e garanta que a interface Department esteja definida e exportada.
 import { Incident, Department } from '../types';
-import logger from '../utils/logger'; // Utilitário de logging
-import { ObjectId } from 'mongodb'; // Tipo ObjectId do MongoDB
-import crypto from 'crypto'; // Módulo crypto do Node.js para gerar UUID
+import logger from '../utils/logger';
+import crypto from 'crypto';
 import Like from '../models/Like';
 import Comment from '../models/Comment';
+import IncidentModel from '../models/Incident';
+import DepartmentModel from '../models/Department';
+import { isValidObjectId } from 'mongoose';
 
 /**
  * @function getIncidents
@@ -29,15 +27,9 @@ import Comment from '../models/Comment';
  */
 export async function getIncidents(req: Request, res: Response): Promise<void> {
   try {
-    // Obtém a coleção 'incidents' do banco de dados.
-    const collection = await getCollection<Incident>('incidents');
-    // Obtém o filtro de status da query string (ex: ?status=archived).
     const statusFilter = req.query.status as string;
-
-    // Objeto para construir a query de filtro do MongoDB.
     let query = {};
 
-    // Define a query baseada no filtro de status fornecido.
     if (statusFilter === 'not_archived') {
       query = { status: { $ne: 'Arquivado' } };
       logger.info('Buscando incidentes não arquivados...');
@@ -48,41 +40,23 @@ export async function getIncidents(req: Request, res: Response): Promise<void> {
       logger.info('Buscando todos os incidentes (sem filtro de status)...');
     }
 
-    // Executa a busca na coleção:
-    const incidents = await collection.find(query).sort({ date: -1 }).toArray();
-    const incidentIds = incidents.map(inc => inc._id);
+    const incidents = await IncidentModel.find(query)
+      .populate('department', 'name')
+      .populate('reportedBy', 'name email')
+      .lean();
 
-    // Buscar contadores de likes e comentários para todos os incidentes
-    const likeCounts = await Like.aggregate([
-      { $match: { itemId: { $in: incidentIds }, itemType: 'qa' } },
-      { $group: { _id: '$itemId', count: { $sum: 1 } } }
-    ]);
-    const commentCounts = await Comment.aggregate([
-      { $match: { itemId: { $in: incidentIds }, itemType: 'qa' } },
-      { $group: { _id: '$itemId', count: { $sum: 1 } } }
-    ]);
-    const likesMap = new Map(likeCounts.map(item => [item._id.toString(), item.count]));
-    const commentsMap = new Map(commentCounts.map(item => [item._id.toString(), item.count]));
-
-    // Formata as datas e inclui os contadores
     const formattedIncidents = incidents.map(incident => ({
       ...incident,
-      date: incident.date,
-      completionDate: incident.completionDate,
-      resolutionDeadline: incident.resolutionDeadline,
-      likeCount: likesMap.get(incident._id.toString()) || 0,
-      commentCount: commentsMap.get(incident._id.toString()) || 0
+      likes: incident.likes?.length || 0,
+      comments: incident.comments?.length || 0
     }));
 
     logger.info(`Encontrados ${incidents.length} incidentes com filtro '${statusFilter || 'nenhum'}'`);
     res.json(formattedIncidents);
 
   } catch (error) {
-    logger.error('Erro detalhado ao buscar incidentes:', error);
-    res.status(500).json({
-      error: 'Erro ao buscar incidentes',
-      details: error instanceof Error ? error.message : 'Erro desconhecido'
-    });
+    logger.error('Erro ao buscar incidentes:', error);
+    res.status(500).json({ message: 'Erro ao buscar incidentes' });
   }
 }
 
@@ -95,35 +69,36 @@ export async function getIncidents(req: Request, res: Response): Promise<void> {
  */
 export async function getIncidentById(req: Request, res: Response): Promise<void> {
   try {
-    const { incidentId } = req.params;
-    const collection = await getCollection<Incident>('incidents');
-    let incident = null;
-
-    if (ObjectId.isValid(incidentId)) {
-      // Buscar por _id (ObjectId)
-      incident = await collection.findOne({ _id: new ObjectId(incidentId) });
-    } else {
-      // Buscar por id (UUID string)
-      incident = await collection.findOne({ id: incidentId });
-    }
-
-    if (!incident) {
-      logger.warn('Incidente não encontrado pelo ID.', { incidentId });
-      res.status(404).json({ error: 'Incidente não encontrado' });
+    const { id } = req.params;
+    
+    if (!isValidObjectId(id)) {
+      logger.warn('Tentativa de acesso com ID inválido', { id });
+      res.status(400).json({ message: 'ID de incidente inválido' });
       return;
     }
 
-    logger.info('Incidente recuperado com sucesso pelo ID.', { incidentId });
-    res.json({
-      ...incident,
-      date: new Date(incident.date),
-      completionDate: incident.completionDate ? new Date(incident.completionDate) : undefined,
-      resolutionDeadline: incident.resolutionDeadline ? new Date(incident.resolutionDeadline) : undefined
-    });
+    const incident = await IncidentModel.findById(id)
+      .populate('department', 'name')
+      .populate('reportedBy', 'name email')
+      .lean();
 
+    if (!incident) {
+      logger.warn('Incidente não encontrado', { id });
+      res.status(404).json({ message: 'Incidente não encontrado' });
+      return;
+    }
+
+    const formattedIncident = {
+      ...incident,
+      likes: incident.likes?.length || 0,
+      comments: incident.comments?.length || 0
+    };
+
+    logger.info('Incidente encontrado', { id });
+    res.json(formattedIncident);
   } catch (error) {
-    logger.error('Erro ao buscar incidente por ID:', { incidentId: req.params.incidentId, error });
-    res.status(500).json({ error: 'Erro ao buscar incidente' });
+    logger.error('Erro ao obter incidente:', error);
+    res.status(500).json({ message: 'Erro ao obter incidente' });
   }
 }
 
@@ -143,158 +118,44 @@ export async function getIncidentById(req: Request, res: Response): Promise<void
  */
 export async function createIncident(req: Request, res: Response): Promise<void> {
   try {
-    // Tipa o corpo da requisição como um objeto parcial de Incidente.
-    const incidentData = req.body as Partial<Incident>;
-    // Obtém o objeto 'user' que foi adicionado à requisição pelo middleware de autenticação.
-    // Usa `any` como type assertion, mas o ideal seria ter um tipo Request estendido.
-    const authenticatedUser = (req as any).user;
+    const { title, description, location, department, severity, type } = req.body;
 
-    // 1. Validação de campos obrigatórios:
-    // Lista dos campos que devem estar presentes no corpo da requisição.
-    const requiredFields: (keyof Incident)[] = ['title', 'description', 'location', 'date', 'department', 'suggestionToFix'];
-    // Filtra a lista para encontrar quais campos estão faltando em incidentData.
-    const missingFields = requiredFields.filter(field => !incidentData[field]);
-
-    // Se houver campos faltando, retorna erro 400 Bad Request.
-    if (missingFields.length > 0) {
-      logger.warn(`Tentativa de criar incidente com campos em falta: ${missingFields.join(', ')}`, { data: incidentData });
-      res.status(400).json({
-        error: 'Campos obrigatórios em falta',
-        details: `Os seguintes campos são necessários: ${missingFields.join(', ')}`
-      });
-      return; // Para a execução.
+    if (!title || !description || !location || !department || !severity || !type) {
+      logger.warn('Tentativa de criar incidente com dados incompletos');
+      res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+      return;
     }
 
-    // 2. Validação e conversão da data:
-    let incidentDate: Date;
-    try {
-      // Tenta criar um objeto Date a partir do valor fornecido.
-      // Usa o operador '!' (non-null assertion) assumindo que 'date' existe devido à validação anterior.
-      incidentDate = new Date(incidentData.date!);
-      // Verifica se a data resultante é válida (não NaN).
-      if (isNaN(incidentDate.getTime())) {
-        throw new Error('Data inválida'); // Lança erro se a data for inválida.
-      }
-    } catch (dateError) {
-      logger.warn('Data inválida recebida ao criar incidente:', { date: incidentData.date });
-      // Retorna erro 400 se a data for inválida.
-      res.status(400).json({ error: 'Formato de data inválido' });
-      return; // Para a execução.
+    let departmentDoc = await DepartmentModel.findOne({ name: department });
+    if (!departmentDoc) {
+      departmentDoc = await DepartmentModel.create({ name: department });
+      logger.info('Novo departamento criado', { name: department });
     }
 
-    // 3. Obter o identificador do usuário (reportado por):
-    // Assume que o middleware de autenticação adiciona o email do usuário a `req.user.email`.
-    const reportedBy = authenticatedUser?.email;
-    // Se não for possível obter o email, retorna erro 401 Unauthorized.
-    if (!reportedBy) {
-        logger.error('Não foi possível obter o email do usuário autenticado para reportedBy em createIncident.');
-        res.status(401).json({ error: 'Usuário não autenticado ou sem email' });
-        return; // Para a execução.
-    }
-
-    // 4. Verificação e Criação Automática de Departamento:
-    // Verifica se foi fornecido um nome de departamento e se é uma string não vazia.
-    if (incidentData.department && typeof incidentData.department === 'string') {
-      const departmentName = incidentData.department.trim();
-      if (departmentName) {
-        // Obtém a coleção 'departments'.
-        const departmentsCollection = await getCollection<Department>('departments');
-        // Procura por um departamento existente com base no nome (label) ou no valor (slug).
-        // Isso tenta evitar duplicatas caso o frontend envie o label ou o value.
-        const existingDepartment = await departmentsCollection.findOne({
-          $or: [
-            { label: departmentName }, // Busca pelo nome exato
-            { value: departmentName.toLowerCase().replace(/\s+/g, '_') } // Busca pelo nome formatado como 'value'
-          ]
-        });
-
-        // Se o departamento não existe...
-        if (!existingDepartment) {
-          logger.info(`Departamento "${departmentName}" não encontrado. Tentando criar novo departamento.`);
-          // Prepara os dados para o novo departamento.
-          const newDepartment: Omit<Department, '_id'> = {
-            label: departmentName, // Nome como recebido.
-            // Gera um 'value' (slug) a partir do nome (lowercase, espaços por _).
-            value: departmentName.toLowerCase().replace(/\s+/g, '_'),
-            employeeCount: 0, // Contagem inicial de funcionários.
-            // 'id' (string) e 'color' precisariam ser definidos aqui se forem obrigatórios no DB.
-            id: departmentName.toLowerCase().replace(/\s+/g, '_'), // Exemplo: usar value como id
-            color: '#CCCCCC' // Exemplo: cor padrão
-          };
-          try {
-            // Tenta inserir o novo departamento na coleção.
-            // Usa 'as Department' para satisfazer o tipo esperado pela coleção, mesmo faltando _id.
-            await departmentsCollection.insertOne(newDepartment as Department);
-            logger.info(`Departamento "${departmentName}" criado automaticamente com sucesso.`);
-          } catch (deptError) {
-            // Loga o erro se a criação automática falhar, mas continua o processo de criação do incidente.
-            logger.error(`Falha ao criar automaticamente o departamento "${departmentName}" durante criação de incidente:`, deptError);
-          }
-        }
-      }
-    }
-    // --- Fim da Verificação de Departamento ---
-
-    // Obtém a coleção 'incidents'.
-    const incidentsCollection = await getCollection<Incident>('incidents');
-
-    // Constrói o objeto final do novo incidente, combinando dados validados e valores padrão.
-    const newIncident: Omit<Incident, '_id'> = {
-      // Campos obrigatórios (validados acima, usa '!' pois sabemos que existem).
-      title: incidentData.title!,
-      description: incidentData.description!,
-      location: incidentData.location!,
-      date: incidentDate, // Usa o objeto Date validado.
-      department: incidentData.department!,
-      suggestionToFix: incidentData.suggestionToFix!,
-
-      // Campos opcionais (usa valor do body ou um padrão).
-      factoryArea: incidentData.factoryArea, // Pode ser undefined se não fornecido.
-      images: incidentData.images || [], // Usa array vazio como padrão se não fornecido.
-
-      // Campos definidos pelo sistema/backend.
-      id: crypto.randomUUID(), // Gera um UUID v4 para o campo 'id' (string).
-      status: 'Reportado', // Define o status inicial padrão.
-      reportedBy: reportedBy, // Email do usuário autenticado.
-      reporterName: incidentData.reporterName, // Nome do repórter (pode ser diferente do usuário logado).
-
-      // Campos relacionados à análise/resolução (definidos com valores iniciais/padrão).
-      // LINTER ERROR: "Não Definido" não é um valor válido para 'severity'.
-      //                Corrigir para um valor do Enum, ex: "Baixo", ou ajustar o tipo/enum.
-      severity: "Não Definido", // Usar um valor válido como "Baixo" ou "Médio"?
-      frequency: undefined,
-      implementedAction: undefined,
-      responsible: undefined,
-      adminNotes: undefined,
-      resolutionDeadline: undefined,
-      completionDate: undefined,
-      pointsAwarded: 0, // Pontos iniciais por reportar (pode ser ajustado depois).
-      // Valores calculados (a serem definidos posteriormente).
-      gravityValue: undefined,
-      frequencyValue: undefined,
-      risk: undefined,
-      qaQuality: undefined,
-      resolutionDays: undefined
-    };
-
-    // Insere o documento do novo incidente na coleção.
-    // Usa 'as Incident' para adequar ao tipo esperado pela coleção.
-    const result = await incidentsCollection.insertOne(newIncident as Incident);
-    // Busca o incidente recém-criado pelo seu _id para retornar o documento completo.
-    const createdIncident = await incidentsCollection.findOne({ _id: result.insertedId });
-
-    logger.info(`Novo incidente criado com sucesso. _id: ${result.insertedId}`, { reportedBy });
-    // Responde com status 201 Created e o documento do incidente criado.
-    res.status(201).json(createdIncident);
-
-  } catch (error) {
-    // Captura e loga erros gerais.
-    logger.error('Erro detalhado ao criar incidente:', error);
-    // Responde com erro 500.
-    res.status(500).json({
-        error: 'Erro interno ao criar incidente',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
+    const incident = new IncidentModel({
+      title,
+      description,
+      location,
+      department: departmentDoc._id,
+      severity,
+      type,
+      reportedBy: req.user?.email,
+      status: 'open',
+      createdAt: new Date()
     });
+
+    await incident.save();
+
+    const populatedIncident = await IncidentModel.findById(incident._id)
+      .populate('department', 'name')
+      .populate('reportedBy', 'name email')
+      .lean();
+
+    logger.info('Incidente criado com sucesso', { id: incident._id });
+    res.status(201).json(populatedIncident);
+  } catch (error) {
+    logger.error('Erro ao criar incidente:', error);
+    res.status(500).json({ message: 'Erro ao criar incidente' });
   }
 }
 
@@ -309,99 +170,44 @@ export async function createIncident(req: Request, res: Response): Promise<void>
  */
 export async function updateIncident(req: Request, res: Response): Promise<void> {
   try {
-    const { incidentId } = req.params; // ID do incidente a atualizar.
-    // `updateData` contém apenas os campos que o cliente enviou para serem atualizados.
+    const { id } = req.params;
     const updateData = req.body;
-    logger.info(`Requisição para atualizar incidente ${incidentId}`, { changes: updateData });
 
-    // Validação 1: Verifica se o ID é válido.
-    if (!ObjectId.isValid(incidentId)) {
-      logger.warn('ID inválido fornecido para atualização de incidente.', { incidentId });
-      res.status(400).json({ error: 'ID de incidente inválido' });
-      return; // Para a execução.
+    if (!isValidObjectId(id)) {
+      logger.warn('Tentativa de atualizar incidente com ID inválido', { id });
+      res.status(400).json({ message: 'ID de incidente inválido' });
+      return;
     }
 
-    // Validação 2: Exemplo de validação específica de campo (status).
-    // Se o campo 'status' estiver presente nos dados de atualização...
-    if (updateData.status) {
-       // Define os valores permitidos para o status.
-      const allowedStatus = ['Reportado', 'Em Análise', 'Resolvido', 'Arquivado'];
-      // Se o status fornecido não estiver na lista de permitidos...
-      if (!allowedStatus.includes(updateData.status)) {
-        logger.warn(`Status inválido recebido na atualização do incidente ${incidentId}: ${updateData.status}`);
-        // Retorna erro 400 Bad Request.
-        res.status(400).json({
-          error: 'Status inválido',
-          details: `O status deve ser um dos seguintes: ${allowedStatus.join(', ')}`
-        });
-        return; // Para a execução.
+    if (updateData.department) {
+      let departmentDoc = await DepartmentModel.findOne({ name: updateData.department });
+      if (!departmentDoc) {
+        departmentDoc = await DepartmentModel.create({ name: updateData.department });
+        logger.info('Novo departamento criado durante atualização', { name: updateData.department });
       }
-    }
-    // Adicionar mais validações específicas para outros campos se necessário (datas, números, etc.).
-
-    // --- Lógica de Atualização ---
-    // Obtém a coleção 'incidents'.
-    const collection = await getCollection<Incident>('incidents');
-
-    // Prepara o objeto `$set` para a operação `updateOne`.
-    // Inclui apenas os campos que foram enviados no `req.body`.
-    const fieldsToUpdate: any = {};
-    for (const key in updateData) {
-      // Verifica se a propriedade pertence ao objeto (e não ao protótipo).
-      if (Object.prototype.hasOwnProperty.call(updateData, key)) {
-        // Exemplo de tratamento especial para campos de data: converte para objeto Date.
-        if ((key === 'date' || key === 'completionDate' || key === 'resolutionDeadline') && updateData[key]) {
-          try {
-            fieldsToUpdate[key] = new Date(updateData[key]);
-            if (isNaN(fieldsToUpdate[key].getTime())) throw new Error('Data inválida');
-          } catch (dateError) {
-             logger.warn(`Data inválida no campo ${key} durante atualização do incidente ${incidentId}: ${updateData[key]}`);
-             res.status(400).json({ error: `Formato de data inválido para o campo ${key}` });
-             return;
-          }
-        } else {
-          // Para outros campos, apenas copia o valor.
-          fieldsToUpdate[key] = updateData[key];
-        }
-      }
+      updateData.department = departmentDoc._id;
     }
 
-    // Verifica se há pelo menos um campo para atualizar.
-    if (Object.keys(fieldsToUpdate).length === 0) {
-       logger.info(`Nenhum campo válido fornecido para atualizar o incidente ${incidentId}.`);
-       res.status(400).json({ error: 'Nenhum campo fornecido para atualização' });
-       return; // Para a execução.
+    const incident = await IncidentModel.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true }
+    )
+    .populate('department', 'name')
+    .populate('reportedBy', 'name email')
+    .lean();
+
+    if (!incident) {
+      logger.warn('Incidente não encontrado para atualização', { id });
+      res.status(404).json({ message: 'Incidente não encontrado' });
+      return;
     }
 
-    // Executa a operação `updateOne` no MongoDB.
-    const result = await collection.updateOne(
-      { _id: new ObjectId(incidentId) }, // Critério de filtro: encontra pelo _id.
-      { $set: fieldsToUpdate } // Operador $set: atualiza apenas os campos especificados em fieldsToUpdate.
-    );
-
-    // Verifica se algum documento foi encontrado (`matchedCount`).
-    if (result.matchedCount === 0) {
-        logger.warn(`Incidente ${incidentId} não encontrado para atualização.`);
-        // Retorna 404 Not Found.
-        res.status(404).json({ error: 'Incidente não encontrado' });
-        return; // Para a execução.
-    }
-
-    // Se a atualização foi bem-sucedida (matchedCount > 0), busca o documento atualizado.
-    const updatedIncident = await collection.findOne({ _id: new ObjectId(incidentId) });
-
-    logger.info(`Incidente ${incidentId} atualizado com sucesso.`, { changes: fieldsToUpdate });
-    // Responde com o documento atualizado.
-    res.json(updatedIncident);
-
+    logger.info('Incidente atualizado com sucesso', { id });
+    res.json(incident);
   } catch (error) {
-    // Captura e loga erros gerais.
-    logger.error(`Erro ao atualizar incidente ${req.params.incidentId}:`, { error, body: req.body });
-    // Responde com erro 500.
-    res.status(500).json({
-      error: 'Erro interno ao atualizar incidente',
-      details: error instanceof Error ? error.message : 'Erro desconhecido'
-    });
+    logger.error('Erro ao atualizar incidente:', error);
+    res.status(500).json({ message: 'Erro ao atualizar incidente' });
   }
 }
 
@@ -414,41 +220,28 @@ export async function updateIncident(req: Request, res: Response): Promise<void>
  */
 export async function deleteIncident(req: Request, res: Response): Promise<void> {
   try {
-    const { incidentId } = req.params; // ID do incidente a deletar.
+    const { id } = req.params;
 
-    // Validação do ID.
-    if (!ObjectId.isValid(incidentId)) {
-       logger.warn('ID inválido fornecido para deleção de incidente.', { incidentId });
-       res.status(400).json({ error: 'ID de incidente inválido' });
-       return; // Para a execução.
+    if (!isValidObjectId(id)) {
+      logger.warn('Tentativa de excluir incidente com ID inválido', { id });
+      res.status(400).json({ message: 'ID de incidente inválido' });
+      return;
     }
 
-    // Obtém a coleção 'incidents'.
-    const collection = await getCollection<Incident>('incidents');
-    // Executa a operação `deleteOne` para remover o documento com o _id correspondente.
-    const result = await collection.deleteOne({ _id: new ObjectId(incidentId) });
-
-    // Verifica se algum documento foi deletado (`deletedCount`).
-    if (result.deletedCount === 0) {
-      logger.warn(`Incidente ${incidentId} não encontrado para exclusão.`);
-      // Retorna 404 Not Found se nenhum documento foi deletado.
-      res.status(404).json({ error: 'Incidente não encontrado para exclusão' });
-      return; // Para a execução.
+    const incident = await IncidentModel.findByIdAndDelete(id);
+    if (!incident) {
+      logger.warn('Incidente não encontrado para exclusão', { id });
+      res.status(404).json({ message: 'Incidente não encontrado' });
+      return;
     }
 
-    // Se a deleção foi bem-sucedida.
-    logger.info(`Incidente ${incidentId} excluído com sucesso.`);
-    // Responde com status 204 No Content (padrão para DELETE bem-sucedido).
-    res.status(204).send();
-
+    logger.info('Incidente excluído com sucesso', { id });
+    res.json({ message: 'Incidente excluído com sucesso' });
   } catch (error) {
-    // Captura e loga erros.
-    logger.error(`Erro ao excluir incidente ${req.params.incidentId}:`, error);
-    // Responde com erro 500.
-    res.status(500).json({ error: 'Erro ao excluir incidente' });
+    logger.error('Erro ao excluir incidente:', error);
+    res.status(500).json({ message: 'Erro ao excluir incidente' });
   }
 }
-
 
 /**
  * @function getIncidentsByDepartment
@@ -459,71 +252,51 @@ export async function deleteIncident(req: Request, res: Response): Promise<void>
  * @returns {Promise<void>} Responde com um array de objetos { department: string, count: number } ou um erro (500).
  */
 export async function getIncidentsByDepartment(req: Request, res: Response): Promise<void> {
-    // Obtém o ano da query string e converte para número, ou fica undefined.
-    const year = req.query.year ? parseInt(req.query.year as string) : undefined;
-    logger.info('Requisição para buscar incidentes por departamento.', { year });
+  const year = req.query.year ? parseInt(req.query.year as string) : undefined;
+  logger.info('Requisição para buscar incidentes por departamento.', { year });
 
   try {
-    // Obtém as coleções 'incidents' e 'departments'.
-    const incidentsCollection = await getCollection<Incident>('incidents');
-    const departmentsCollection = await getCollection<Department>('departments');
-
-    // Constrói a condição de filtro por data se um ano foi especificado.
     let dateCondition = {};
     if (year && !isNaN(year)) {
-        const startDate = new Date(year, 0, 1); // 1º de Janeiro do ano especificado.
-        const endDate = new Date(year + 1, 0, 1); // 1º de Janeiro do ano seguinte.
-        // Filtra incidentes cuja data está entre o início do ano (inclusivo) e o início do próximo ano (exclusivo).
-        dateCondition = { date: { $gte: startDate, $lt: endDate } };
-        logger.info(`Aplicando filtro por ano: ${year}`);
+      const startDate = new Date(year, 0, 1);
+      const endDate = new Date(year + 1, 0, 1);
+      dateCondition = { date: { $gte: startDate, $lt: endDate } };
+      logger.info(`Aplicando filtro por ano: ${year}`);
     }
 
-    // 1. Busca todos os documentos de departamento primeiro.
-    const departments = await departmentsCollection.find({}).toArray();
+    const departments = await DepartmentModel.find({});
     logger.info(`Encontrados ${departments.length} departamentos para processar.`);
 
-    // 2. Itera sobre cada departamento e conta os incidentes correspondentes.
-    // Usa Promise.all para executar as contagens em paralelo para cada departamento.
     const departmentStats = await Promise.all(
-        departments.map(async (dept) => {
-            // Define a query para contar incidentes:
-            // - 'department' deve ser igual ao 'label' do departamento atual.
-            // - Inclui a condição de data (se houver).
-            const query = {
-                department: dept.label, // Assumindo que o incidente armazena o 'label' do departamento.
-                ...dateCondition // Adiciona o filtro de data, se existir.
-            };
+      departments.map(async (dept) => {
+        const query = {
+          department: dept.label,
+          ...dateCondition
+        };
 
-            // Conta quantos documentos na coleção 'incidents' correspondem à query.
-            const count = await incidentsCollection.countDocuments(query);
-            logger.debug(`Contagem para departamento '${dept.label}' (Ano: ${year || 'todos'}): ${count}`);
+        const count = await IncidentModel.countDocuments(query);
+        logger.debug(`Contagem para departamento '${dept.label}' (Ano: ${year || 'todos'}): ${count}`);
 
-            // Retorna o objeto com o nome do departamento e a contagem.
-            return {
-                department: dept.label, // Usa o 'label' para exibição.
-                count: count
-            };
-        })
+        return {
+          department: dept.label,
+          count: count
+        };
+      })
     );
 
-    // 3. Ordena as estatísticas pela contagem em ordem decrescente.
     departmentStats.sort((a, b) => b.count - a.count);
 
     logger.info(`Estatísticas de incidentes por departamento calculadas com sucesso. Ano: ${year || 'todos'}`);
-    // Responde com o array de estatísticas.
     res.json(departmentStats);
 
-    } catch (error) {
-        // Captura e loga erros gerais.
-        logger.error('Erro ao buscar estatísticas de incidentes por departamento:', { error, year });
-        // Responde com erro 500.
-        res.status(500).json({
-            error: 'Erro ao buscar estatísticas de incidentes por departamento',
-            details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
-    }
+  } catch (error) {
+    logger.error('Erro ao buscar estatísticas de incidentes por departamento:', { error, year });
+    res.status(500).json({
+      error: 'Erro ao buscar estatísticas de incidentes por departamento',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
 }
-
 
 /**
  * @function getRecentIncidents
@@ -535,47 +308,161 @@ export async function getIncidentsByDepartment(req: Request, res: Response): Pro
  */
 export async function getRecentIncidents(req: Request, res: Response): Promise<void> {
   try {
-    // Obtém o limite da query string, com padrão 5.
     const limit = parseInt(req.query.limit as string) || 5;
-    // Validação do limite.
     if (limit <= 0) {
-        logger.warn('Limite inválido solicitado para incidentes recentes.', { limit });
-        res.status(400).json({ error: 'O limite deve ser um número positivo.' });
-        return; // Para a execução.
+      logger.warn('Limite inválido solicitado para incidentes recentes.', { limit });
+      res.status(400).json({ error: 'O limite deve ser um número positivo.' });
+      return;
     }
     logger.info(`Buscando ${limit} incidentes recentes.`);
 
-    // Obtém a coleção 'incidents'.
-    const collection = await getCollection<Incident>('incidents');
+    const recentIncidents = await IncidentModel.find({})
+      .sort({ date: -1 })
+      .limit(limit)
+      .select('_id title date');
 
-    // Define a query. Poderia filtrar por status não arquivado aqui se necessário.
-    // Ex: const query = { status: { $ne: 'Arquivado' } };
-    const query = {}; // Atualmente busca todos os status.
-
-    // Busca os incidentes:
-    const recentIncidents = await collection.find(query)
-      .sort({ date: -1 }) // Ordena pela data do incidente, mais recente primeiro.
-      .limit(limit) // Limita o número de resultados.
-      .toArray(); // Converte para array.
-
-    // Formata a resposta para incluir apenas os campos necessários pelo frontend (boa prática).
     const formattedIncidents = recentIncidents.map(inc => ({
-      _id: inc._id, // ID do incidente
-      title: inc.title, // Título do incidente
-      date: inc.date instanceof Date ? inc.date.toISOString() : inc.date, // Data como string ISO
+      _id: inc._id,
+      title: inc.title,
+      date: inc.date instanceof Date ? inc.date.toISOString() : inc.date,
     }));
 
     logger.info(`Retornando ${formattedIncidents.length} incidentes recentes formatados.`);
-    // Responde com o array formatado.
     res.json(formattedIncidents);
 
   } catch (error) {
-    // Captura e loga erros.
     logger.error('Erro ao buscar incidentes recentes:', { error, limit: req.query.limit });
-    // Responde com erro 500.
     res.status(500).json({
       error: 'Erro ao buscar incidentes recentes',
       details: error instanceof Error ? error.message : 'Erro desconhecido'
     });
+  }
+}
+
+export async function likeIncident(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      logger.warn('Tentativa de curtir incidente sem autenticação');
+      res.status(401).json({ message: 'Não autorizado' });
+      return;
+    }
+
+    if (!isValidObjectId(id)) {
+      logger.warn('Tentativa de curtir incidente com ID inválido', { id });
+      res.status(400).json({ message: 'ID de incidente inválido' });
+      return;
+    }
+
+    const incident = await IncidentModel.findById(id);
+    if (!incident) {
+      logger.warn('Incidente não encontrado para curtir', { id });
+      res.status(404).json({ message: 'Incidente não encontrado' });
+      return;
+    }
+
+    const hasLiked = incident.likes?.includes(userId);
+    if (hasLiked) {
+      incident.likes = incident.likes?.filter(id => id.toString() !== userId);
+    } else {
+      incident.likes = [...(incident.likes || []), userId];
+    }
+
+    await incident.save();
+
+    logger.info('Like atualizado com sucesso', { id, userId, action: hasLiked ? 'unlike' : 'like' });
+    res.json({ 
+      message: hasLiked ? 'Like removido com sucesso' : 'Like adicionado com sucesso',
+      likes: incident.likes?.length || 0
+    });
+  } catch (error) {
+    logger.error('Erro ao atualizar like:', error);
+    res.status(500).json({ message: 'Erro ao atualizar like' });
+  }
+}
+
+export async function commentIncident(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      logger.warn('Tentativa de comentar incidente sem autenticação');
+      res.status(401).json({ message: 'Não autorizado' });
+      return;
+    }
+
+    if (!content) {
+      logger.warn('Tentativa de comentar incidente sem conteúdo');
+      res.status(400).json({ message: 'Conteúdo do comentário é obrigatório' });
+      return;
+    }
+
+    if (!isValidObjectId(id)) {
+      logger.warn('Tentativa de comentar incidente com ID inválido', { id });
+      res.status(400).json({ message: 'ID de incidente inválido' });
+      return;
+    }
+
+    const incident = await IncidentModel.findById(id);
+    if (!incident) {
+      logger.warn('Incidente não encontrado para comentar', { id });
+      res.status(404).json({ message: 'Incidente não encontrado' });
+      return;
+    }
+
+    const comment = {
+      content,
+      user: userId,
+      createdAt: new Date()
+    };
+
+    incident.comments = [...(incident.comments || []), comment];
+    await incident.save();
+
+    const populatedIncident = await IncidentModel.findById(id)
+      .populate('comments.user', 'name email')
+      .lean();
+
+    logger.info('Comentário adicionado com sucesso', { id, userId });
+    res.json({
+      message: 'Comentário adicionado com sucesso',
+      comments: populatedIncident?.comments || []
+    });
+  } catch (error) {
+    logger.error('Erro ao adicionar comentário:', error);
+    res.status(500).json({ message: 'Erro ao adicionar comentário' });
+  }
+}
+
+export async function getIncidentsByUser(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      logger.warn('Tentativa de obter incidentes sem autenticação');
+      res.status(401).json({ message: 'Não autorizado' });
+      return;
+    }
+
+    const incidents = await IncidentModel.find({ reportedBy: userId })
+      .populate('department', 'name')
+      .populate('reportedBy', 'name email')
+      .lean();
+
+    const formattedIncidents = incidents.map(incident => ({
+      ...incident,
+      likes: incident.likes?.length || 0,
+      comments: incident.comments?.length || 0
+    }));
+
+    logger.info(`Incidentes do usuário recuperados: ${formattedIncidents.length}`, { userId });
+    res.json(formattedIncidents);
+  } catch (error) {
+    logger.error('Erro ao recuperar incidentes do usuário:', error);
+    res.status(500).json({ message: 'Erro ao recuperar incidentes do usuário' });
   }
 }

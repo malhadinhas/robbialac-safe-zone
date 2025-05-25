@@ -1,172 +1,246 @@
-import { Request, Response } from 'express'; // Importa os tipos do Express para tipar as funções de request e response
-import { getCollection } from '../services/database'; // Função para obter uma coleção da base de dados
-import { User } from '../types'; // Tipo User definido na aplicação
-import { hashPassword } from '../services/auth'; // Função para fazer hash da password
-import logger from '../utils/logger'; // Logger para registar informações e erros
-import { ObjectId } from 'mongodb';
-import { sendVerificationEmail } from '../services/email';
+import { Request, Response } from 'express';
+import User from '../models/User';
+import logger from '../utils/logger';
+import { isValidObjectId } from 'mongoose';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
-// Função para obter todos os utilizadores
-export async function getUsers(req: Request, res: Response) {
+export async function getUsers(req: Request, res: Response): Promise<void> {
   try {
-    const collection = await getCollection<User>('users'); // Obtém a coleção 'users'
-    const users = await collection.find({}).toArray(); // Busca todos os utilizadores
-    res.json(users); // Retorna a lista de utilizadores
+    const users = await User.find().select('-password').lean();
+    logger.info(`Usuários recuperados: ${users.length}`);
+    res.json(users);
   } catch (error) {
-    console.error('Erro ao buscar usuários:', error); // Log de erro
-    res.status(500).json({ error: 'Erro ao buscar usuários' }); // Retorna erro 500
+    logger.error('Erro ao recuperar usuários:', error);
+    res.status(500).json({ message: 'Erro ao recuperar usuários' });
   }
 }
 
-// Função para obter um utilizador pelo ID
-export async function getUserById(req: Request, res: Response) {
+export async function getUserById(req: Request, res: Response): Promise<void> {
   try {
-    const { id } = req.params; // Extrai o id dos parâmetros da rota
-    const collection = await getCollection<User>('users'); // Obtém a coleção 'users'
-    let user = null;
-    try {
-      user = await collection.findOne({ _id: new ObjectId(id) });
-    } catch (e) {
-      // id não é um ObjectId válido
-      return res.status(400).json({ error: 'ID inválido' });
+    const { id } = req.params;
+    
+    if (!isValidObjectId(id)) {
+      logger.warn('Tentativa de acesso com ID inválido', { id });
+      res.status(400).json({ message: 'ID de usuário inválido' });
+      return;
     }
-    if (!user) {
-      return res.status(404).json({ error: 'Usuário não encontrado' }); // Se não encontrar, retorna 404
-    }
-    // Mapeamento _id -> _id
-    const { _id, ...userWithoutMongoId } = user;
-    res.json(userWithoutMongoId); // Retorna o utilizador encontrado sem _id
-  } catch (error) {
-    console.error('Erro ao buscar usuário:', error); // Log de erro
-    res.status(500).json({ error: 'Erro ao buscar usuário' }); // Retorna erro 500
-  }
-}
 
-// Função para obter um utilizador pelo email
-export async function getUserByEmail(req: Request, res: Response) {
-  try {
-    const { email } = req.params; // Extrai o email dos parâmetros da rota
-    const collection = await getCollection<User>('users'); // Obtém a coleção 'users'
-    const user = await collection.findOne({ email }); // Procura o utilizador pelo email
+    const user = await User.findById(id).select('-password').lean();
     
     if (!user) {
-      return res.status(404).json({ error: 'Usuário não encontrado' }); // Se não encontrar, retorna 404
+      logger.warn('Usuário não encontrado', { id });
+      res.status(404).json({ message: 'Usuário não encontrado' });
+      return;
     }
-    // Mapeamento _id -> id
-    const { _id, ...userWithoutMongoId } = user;
-    res.json(userWithoutMongoId); // Retorna o utilizador encontrado sem _id
+
+    logger.info('Usuário encontrado', { id });
+    res.json(user);
   } catch (error) {
-    console.error('Erro ao buscar usuário por email:', error); // Log de erro
-    res.status(500).json({ error: 'Erro ao buscar usuário' }); // Retorna erro 500
+    logger.error('Erro ao obter usuário:', error);
+    res.status(500).json({ message: 'Erro ao obter usuário' });
   }
 }
 
-// Função para criar um novo utilizador
-export async function createUser(req: Request, res: Response) {
+export async function createUser(req: Request, res: Response): Promise<void> {
   try {
-    const { email, password, ...restData } = req.body; // Extrai email, password e outros dados do corpo do pedido
+    const { name, email, password, role } = req.body;
 
-    // Validação básica dos campos obrigatórios
-    if (!email || !password) {
-      logger.warn('Tentativa de criar utilizador sem email ou password');
-      return res.status(400).json({ error: 'Email e password são obrigatórios' }); // Retorna erro 400 se faltar algum campo
+    if (!name || !email || !password) {
+      logger.warn('Tentativa de criar usuário com dados incompletos');
+      res.status(400).json({ message: 'Nome, email e senha são obrigatórios' });
+      return;
     }
 
-    const collection = await getCollection<User>('users'); // Obtém a coleção 'users'
-    
-    // Verifica se já existe um utilizador com o mesmo email
-    const existingUser = await collection.findOne({ email });
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
-      logger.warn('Tentativa de criar utilizador com email já existente', { email });
-      return res.status(400).json({ error: 'Email já cadastrado' }); // Retorna erro 400 se o email já existir
+      logger.warn('Tentativa de criar usuário com email já existente', { email });
+      res.status(400).json({ message: 'Email já cadastrado' });
+      return;
     }
 
-    // Faz hash da password antes de guardar
-    const hashedPassword = await hashPassword(password);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Gerar código de verificação de 6 dígitos
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Cria o novo utilizador com valores padrão e campos de verificação
-    const newUser: User = {
+    const user = new User({
+      name,
       email,
       password: hashedPassword,
-      ...restData,
-      id: crypto.randomUUID(), // Gera um ID único
-      points: 100, // Pontos iniciais
-      level: 1, // Nível inicial
-      medals: [],
-      viewedVideos: [],
-      reportedIncidents: [],
-      verificationCode,
-      isVerified: false
-    };
-    
-    await collection.insertOne(newUser); // Insere o novo utilizador na base de dados
-    logger.info('Novo utilizador criado com sucesso', { email });
+      role: role || 'user'
+    });
 
-    // Enviar email de verificação
-    await sendVerificationEmail(email, verificationCode);
-    logger.info('Email de verificação enviado', { email });
+    await user.save();
 
-    // Remove a password e o código do objeto antes de devolver ao frontend
-    const { password: _, verificationCode: __, ...userToReturn } = newUser;
-    res.status(201).json(userToReturn); // Retorna o utilizador criado (sem password/código)
-
-  } catch (error: any) {
-    logger.error('Erro ao criar utilizador', { error: error.message, stack: error.stack }); // Log de erro
-    res.status(500).json({ error: 'Erro ao criar utilizador' }); // Retorna erro 500
-  }
-}
-
-// Função para atualizar um utilizador existente
-export async function updateUser(req: Request, res: Response) {
-  try {
-    const { id } = req.params; // id é o _id do MongoDB
-    const updateData = req.body;
-    const collection = await getCollection<User>('users');
-
-    let objectId;
-    try {
-      objectId = new ObjectId(id);
-    } catch (e) {
-      return res.status(400).json({ error: 'ID inválido' });
-    }
-
-    // Atualiza o utilizador pelo _id
-    const result = await collection.updateOne(
-      { _id: objectId },
-      { $set: updateData }
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET || 'default_secret',
+      { expiresIn: '24h' }
     );
 
-    if (result.matchedCount === 0) {
-      return res.status(404).json({ error: 'Usuário não encontrado' });
-    }
-
-    res.json({ message: 'Usuário atualizado com sucesso' });
+    logger.info('Usuário criado com sucesso', { id: user._id });
+    res.status(201).json({
+      message: 'Usuário criado com sucesso',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (error) {
-    console.error('Erro ao atualizar usuário:', error);
-    res.status(500).json({ error: 'Erro ao atualizar usuário' });
+    logger.error('Erro ao criar usuário:', error);
+    res.status(500).json({ message: 'Erro ao criar usuário' });
   }
 }
 
-// Função para eliminar um utilizador
-export async function deleteUser(req: Request, res: Response) {
+export async function updateUser(req: Request, res: Response): Promise<void> {
   try {
-    const { id } = req.params; // Extrai o id dos parâmetros da rota
-    const collection = await getCollection<User>('users'); // Obtém a coleção 'users'
-    
-    // Elimina o utilizador pelo id
-    const result = await collection.deleteOne({ id });
-    
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ error: 'Usuário não encontrado' }); // Se não encontrar, retorna 404
+    const { id } = req.params;
+    const { name, email, password, role } = req.body;
+
+    if (!isValidObjectId(id)) {
+      logger.warn('Tentativa de atualizar usuário com ID inválido', { id });
+      res.status(400).json({ message: 'ID de usuário inválido' });
+      return;
     }
-    
-    res.json({ message: 'Usuário excluído com sucesso' }); // Retorna mensagem de sucesso
+
+    const user = await User.findById(id);
+    if (!user) {
+      logger.warn('Usuário não encontrado para atualização', { id });
+      res.status(404).json({ message: 'Usuário não encontrado' });
+      return;
+    }
+
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        logger.warn('Tentativa de atualizar email para um já existente', { email });
+        res.status(400).json({ message: 'Email já cadastrado' });
+        return;
+      }
+      user.email = email;
+    }
+
+    if (name) user.name = name;
+    if (role) user.role = role;
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
+    }
+
+    await user.save();
+
+    logger.info('Usuário atualizado com sucesso', { id });
+    res.json({
+      message: 'Usuário atualizado com sucesso',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (error) {
-    console.error('Erro ao excluir usuário:', error); // Log de erro
-    res.status(500).json({ error: 'Erro ao excluir usuário' }); // Retorna erro 500
+    logger.error('Erro ao atualizar usuário:', error);
+    res.status(500).json({ message: 'Erro ao atualizar usuário' });
+  }
+}
+
+export async function deleteUser(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      logger.warn('Tentativa de excluir usuário com ID inválido', { id });
+      res.status(400).json({ message: 'ID de usuário inválido' });
+      return;
+    }
+
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      logger.warn('Usuário não encontrado para exclusão', { id });
+      res.status(404).json({ message: 'Usuário não encontrado' });
+      return;
+    }
+
+    logger.info('Usuário excluído com sucesso', { id });
+    res.json({ message: 'Usuário excluído com sucesso' });
+  } catch (error) {
+    logger.error('Erro ao excluir usuário:', error);
+    res.status(500).json({ message: 'Erro ao excluir usuário' });
+  }
+}
+
+export async function login(req: Request, res: Response): Promise<void> {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      logger.warn('Tentativa de login com dados incompletos');
+      res.status(400).json({ message: 'Email e senha são obrigatórios' });
+      return;
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      logger.warn('Tentativa de login com email não cadastrado', { email });
+      res.status(401).json({ message: 'Credenciais inválidas' });
+      return;
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      logger.warn('Tentativa de login com senha incorreta', { email });
+      res.status(401).json({ message: 'Credenciais inválidas' });
+      return;
+    }
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET || 'default_secret',
+      { expiresIn: '24h' }
+    );
+
+    logger.info('Login realizado com sucesso', { id: user._id });
+    res.json({
+      message: 'Login realizado com sucesso',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    logger.error('Erro ao realizar login:', error);
+    res.status(500).json({ message: 'Erro ao realizar login' });
+  }
+}
+
+export async function getCurrentUser(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      logger.warn('Tentativa de obter usuário atual sem autenticação');
+      res.status(401).json({ message: 'Não autorizado' });
+      return;
+    }
+
+    const user = await User.findById(userId).select('-password').lean();
+    if (!user) {
+      logger.warn('Usuário atual não encontrado', { id: userId });
+      res.status(404).json({ message: 'Usuário não encontrado' });
+      return;
+    }
+
+    logger.info('Usuário atual recuperado com sucesso', { id: userId });
+    res.json(user);
+  } catch (error) {
+    logger.error('Erro ao obter usuário atual:', error);
+    res.status(500).json({ message: 'Erro ao obter usuário atual' });
   }
 }
 
