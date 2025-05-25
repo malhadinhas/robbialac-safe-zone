@@ -67,7 +67,7 @@
 ## 7. Verifica o Endpoint
 
 - No painel do Railway, vais ver o URL público do backend (ex: `https://nome-do-projeto.up.railway.app`).
-- Usa este URL para configurar o `VITE_API_URL` do frontend (Netlify).
+- Usa este URL para configurar o `VITE_API_URL` do frontend (Netlify). lll
 
 ---
 
