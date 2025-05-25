@@ -46,7 +46,7 @@ const isValidItemType = (type: string): type is 'qa' | 'accident' | 'sensibiliza
 export const addLike = async (req: Request, res: Response): Promise<void> => {
     // 1. Obter ID do usuário da requisição (assumindo que o middleware de autenticação adicionou `req.user`).
     //    Acessa `req.user?.id` - o `?` previne erro se `req.user` não existir.
-    const userId = req.user?.id;
+    const userId = req.user?.userId;
     // Se não houver ID de usuário, retorna erro 401 Unauthorized.
     if (!userId) {
         logger.warn('addLike: Tentativa de adicionar like sem autenticação.');
@@ -142,7 +142,7 @@ export const addLike = async (req: Request, res: Response): Promise<void> => {
  */
 export const removeLike = async (req: Request, res: Response): Promise<void> => {
     // 1. Obter ID do usuário da requisição.
-    const userId = req.user?.id;
+    const userId = req.user?.userId;
     if (!userId) {
         logger.warn('removeLike: Tentativa de remover like sem autenticação.');
         res.status(401).json({ message: 'Utilizador não autenticado.' });
@@ -199,9 +199,10 @@ export const removeLike = async (req: Request, res: Response): Promise<void> => 
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com o comentário criado (status 201) ou um erro (400, 401, 500).
  */
-export const addComment = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-    const userId = req.user?.id;
-    const userName = req.user?.name || 'Utilizador Desconhecido';
+export const addComment = async (req: Request, res: Response): Promise<void> => {
+    const { user } = req as unknown as AuthenticatedRequest;
+    const userId = user?.userId;
+    const userName = user?.name || 'Utilizador Desconhecido';
 
     if (!userId) {
         logger.warn('addComment: Utilizador não autenticado (sem userId em req.user).');
@@ -368,7 +369,7 @@ export const getCommentsByItem = async (req: Request, res: Response): Promise<vo
 export const getLikeInfo = async (req: Request, res: Response): Promise<void> => {
   try {
     const { itemType, itemId } = req.params;
-    const userId = req.user?.id;
+    const userId = req.user?.userId;
     if (!itemId || !itemType || !isValidObjectId(itemId) || !isValidItemType(itemType)) {
       return res.status(400).json({ message: 'Dados inválidos.' });
     }

@@ -2,7 +2,7 @@ import { connectToDatabase } from '../services/database';
 import User from '../models/User';
 import Medal from '../models/Medal';
 import UserMedal from '../models/UserMedal';
-import UserActivity from '../models/UserActivity';
+import { UserActivity } from '../models/UserActivity';
 import logger from '../utils/logger';
 
 /**

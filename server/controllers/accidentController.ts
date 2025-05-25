@@ -124,7 +124,7 @@ export const getAccidents = async (req: Request, res: Response): Promise<void> =
   try {
     // Tenta obter o ID do usuário logado do objeto req.user (assumindo middleware de autenticação).
     // Converte para ObjectId se existir, caso contrário fica null.
-    const userId = req.user?.id ? new mongoose.Types.ObjectId(req.user.id) : null;
+    const userId = (req as any).user?.userId ? new mongoose.Types.ObjectId((req as any).user.userId) : null;
     logger.info('Requisição para buscar acidentes recebida.', { userId: userId?.toString(), query: req.query });
 
     // Extrai possíveis parâmetros de filtro da query string da URL.
@@ -270,7 +270,7 @@ export const getAccidentById = async (req: Request, res: Response): Promise<void
     // Converte o ID string para um objeto ObjectId do Mongoose.
     const docId = new mongoose.Types.ObjectId(id);
     // Obtém o ID do usuário logado, se disponível.
-    const userId = req.user?.id ? new mongoose.Types.ObjectId(req.user.id) : null;
+    const userId = (req as any).user?.userId ? new mongoose.Types.ObjectId((req as any).user.userId) : null;
     logger.info('Requisição para buscar acidente por ID recebida.', { docId: docId.toString(), userId: userId?.toString() });
 
     // Pipeline de agregação similar ao getAccidents, mas com $match pelo _id específico.

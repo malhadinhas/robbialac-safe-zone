@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { MongoDBConfig } from '../config/database';
+import { getDatabaseConfig } from '../config/database';
 
 let isConnected = false;
 let connectionError: string | null = null;
@@ -8,6 +8,9 @@ export async function connectToDatabase(): Promise<void> {
   console.log('=== Iniciando conexão com o banco de dados ===');
   console.log('MONGODB_URI do process.env:', process.env.MONGODB_URI);
   
+  const dbConfig = getDatabaseConfig();
+  const uri = dbConfig.uri;
+  
   // Se já estiver conectado, não faz nada
   if (isConnected && mongoose.connection.readyState === 1) {
     console.log('Já conectado ao banco de dados');
@@ -15,12 +18,11 @@ export async function connectToDatabase(): Promise<void> {
   }
 
   try {
-    const uri = MongoDBConfig.uri;
     console.log('URI usada na conexão:', uri);
-    console.log('DB usado na conexão:', MongoDBConfig.dbName);
+    console.log('DB usado na conexão:', dbConfig.dbName);
     
     console.log('Configuração carregada:', {
-      dbName: MongoDBConfig.dbName,
+      dbName: dbConfig.dbName,
       uriPrefix: uri.substring(0, 20) + '...'
     });
 
@@ -29,7 +31,7 @@ export async function connectToDatabase(): Promise<void> {
     
     console.log('Conectando ao MongoDB via Mongoose...');
     await mongoose.connect(uri, {
-      dbName: MongoDBConfig.dbName,
+      dbName: dbConfig.dbName,
     });
     
     console.log('=== Conectado ao MongoDB com sucesso ===');

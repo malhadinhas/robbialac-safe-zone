@@ -6,7 +6,7 @@ import logger from '../utils/logger';
 import { User as UserType } from '../types';
 import { UserMedal as UserMedalType } from '../types/userMedal';
 import { Medal as MedalType } from '../types/medal';
-import UserActivity from '../models/UserActivity';
+import { UserActivity } from '../models/UserActivity';
 
 interface UserPointsBreakdown {
   category: string;

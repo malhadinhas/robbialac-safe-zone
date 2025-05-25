@@ -7,7 +7,7 @@
  * Acidentes e Sensibilizações) com contagem de interações (likes/comentários).
  */
 import { Request, Response } from 'express';
-import UserActivity from '../models/UserActivity';
+import { UserActivity } from '../models/UserActivity';
 import logger from '../utils/logger'; // Utilitário de logging
 import { ObjectId } from 'mongodb'; // Tipo ObjectId do MongoDB
 import { checkActionBasedMedals } from './medalController'; // Função para verificar conquistas de medalhas baseadas em ações
