@@ -143,11 +143,15 @@ app.get('/api/health', (req, res) => {
  * Inicialização do servidor
  * Conecta ao banco de dados antes de iniciar o servidor
  */
+console.log('Início do server/server.ts');
 connectToDatabase().then(() => {
+  console.log('Antes do app.listen');
   app.listen(port, '0.0.0.0', () => {
     logger.info(`Servidor rodando em http://0.0.0.0:${port}`);
+    console.log('Depois do app.listen');
   });
 }).catch(error => {
+  console.error('Erro no connectToDatabase:', error);
   throw new Error(`Erro ao iniciar o servidor: ${error.message}`);
 });
 
