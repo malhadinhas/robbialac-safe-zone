@@ -18,7 +18,8 @@
     "fix:video-model": "tsx server/scripts/fixVideoModel.ts",
     "postinstall": "cpx \"node_modules/pdfjs-dist/build/pdf.worker.min.js\" public -v",
     "move:uploads": "tsx scripts/moveUploadsToStorage.ts",
-    "start": "npm run server"
+    "start": "tsx server/server.ts",
+    "start:prod": "node server/server.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.787.0",

@@ -45,7 +45,10 @@ const validateOrigin = (origin: string | undefined): boolean => {
   const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://www.robbiseg.pt'
+    'https://www.robbiseg.pt',
+    'https://staging-api.learnsafe360.pt', // Staging backend
+    'https://learnsafe360.netlify.app',    // Netlify frontend produção
+    'https://staging-learnsafe360.netlify.app' // Netlify frontend staging
   ];
   // Permitir configuração dinâmica por variável de ambiente
   const envOrigins = (process.env.CORS_ORIGINS || '').split(',').filter(Boolean);

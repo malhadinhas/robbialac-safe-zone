@@ -3,77 +3,192 @@
 ## 1. Fluxograma do Ponto de Vista do Usuário
 
 ```mermaid
-graph TD
-    A[Início] --> B[Login]
-    B --> C[Dashboard]
+flowchart TD
+    %% Definição de estilos
+    classDef start fill:#2ecc71,stroke:#27ae60,color:white
+    classDef process fill:#3498db,stroke:#2980b9,color:white
+    classDef decision fill:#f1c40f,stroke:#f39c12,color:black
+    classDef end fill:#e74c3c,stroke:#c0392b,color:white
 
-    C --> D[Menu Principal]
-    D --> E[Formações]
-    D --> F[Quase Acidentes]
-    D --> G[Acidentes]
-    D --> H[Sensibilização]
-    D --> I[Estatísticas]
-    D --> J[Pontuação]
-    D --> K[Definições]
+    %% Nós principais
+    Start([Início]):::start
+    Login[Login]:::process
+    Dashboard[Dashboard]:::process
+    Menu[Menu Principal]:::process
 
-    F --> F1[Registrar QA]
-    F --> F2[Visualizar QA]
-    F --> F3[Editar QA]
-    F --> F4[Estatísticas QA]
+    %% Submenus
+    Formacoes[Formações]:::process
+    QuaseAcidentes[Quase Acidentes]:::process
+    Acidentes[Acidentes]:::process
+    Sensibilizacao[Sensibilização]:::process
+    Estatisticas[Estatísticas]:::process
+    Pontuacao[Pontuação]:::process
+    Definicoes[Definições]:::process
 
-    G --> G1[Registrar Acidente]
-    G --> G2[Visualizar Acidentes]
+    %% Fluxo principal
+    Start --> Login
+    Login --> Dashboard
+    Dashboard --> Menu
 
-    H --> H1[Ver Conteúdo]
-    H --> H2[Interagir/Likes]
-    H --> H3[Comentar]
+    %% Conexões do menu
+    Menu --> Formacoes
+    Menu --> QuaseAcidentes
+    Menu --> Acidentes
+    Menu --> Sensibilizacao
+    Menu --> Estatisticas
+    Menu --> Pontuacao
+    Menu --> Definicoes
 
-    I --> I1[Ver Gráficos]
-    I --> I2[Exportar Dados]
+    %% Subfluxos
+    subgraph QuaseAcidentes
+        QA1[Registrar QA]:::process
+        QA2[Visualizar QA]:::process
+        QA3[Editar QA]:::process
+        QA4[Estatísticas QA]:::process
+    end
 
-    J --> J1[Ver Pontuação]
-    J --> J2[Ver Medalhas]
+    subgraph Acidentes
+        AC1[Registrar Acidente]:::process
+        AC2[Visualizar Acidentes]:::process
+    end
 
-    K --> K1[Configurar Interface]
-    K --> K2[Configurar Notificações]
-    K --> K3[Gerenciar Perfil]
+    subgraph Sensibilizacao
+        S1[Ver Conteúdo]:::process
+        S2[Interagir/Likes]:::process
+        S3[Comentar]:::process
+    end
+
+    subgraph Estatisticas
+        E1[Ver Gráficos]:::process
+        E2[Exportar Dados]:::process
+    end
+
+    subgraph Pontuacao
+        P1[Ver Pontuação]:::process
+        P2[Ver Medalhas]:::process
+    end
+
+    subgraph Definicoes
+        D1[Configurar Interface]:::process
+        D2[Configurar Notificações]:::process
+        D3[Gerenciar Perfil]:::process
+    end
 ```
 
-## 2. Fluxograma da Arquitetura da Aplicação ------------------------------
+## 2. Fluxograma da Arquitetura da Aplicação
 
 ```mermaid
-graph TD
-    A[Frontend React] --> B[Contextos]
-    B --> B1[AuthContext]
-    B --> B2[DatabaseContext]
+flowchart TD
+    %% Definição de estilos
+    classDef frontend fill:#3498db,stroke:#2980b9,color:white
+    classDef backend fill:#2ecc71,stroke:#27ae60,color:white
+    classDef database fill:#e74c3c,stroke:#c0392b,color:white
+    classDef service fill:#f1c40f,stroke:#f39c12,color:black
 
-    A --> C[Componentes]
-    C --> C1[Layout]
-    C --> C2[UI Components]
-    C --> C3[Feature Components]
+    %% Frontend
+    subgraph Frontend[Frontend React]
+        Contextos[Contextos]:::frontend
+        Componentes[Componentes]:::frontend
+        Servicos[Serviços]:::frontend
+    end
 
-    A --> D[Serviços]
-    D --> D1[Auth Service]
-    D --> D2[API Service]
-    D --> D3[Interaction Service]
-    D --> D4[WhatsApp Service]
+    %% Backend
+    subgraph Backend[Backend Node.js]
+        Controllers[Controllers]:::backend
+        Models[Models]:::backend
+    end
 
-    E[Backend Node.js] --> F[Controllers]
-    F --> F1[Auth Controller]
-    F --> F2[Interaction Controller]
-    F --> F3[Incident Controller]
+    %% Conexões Frontend
+    Contextos --> AuthContext[AuthContext]:::frontend
+    Contextos --> DatabaseContext[DatabaseContext]:::frontend
 
-    E --> G[Models]
-    G --> G1[User Model]
-    G --> G2[Incident Model]
-    G --> G3[Like Model]
-    G --> G4[Comment Model]
+    Componentes --> Layout[Layout]:::frontend
+    Componentes --> UI[UI Components]:::frontend
+    Componentes --> Feature[Feature Components]:::frontend
 
-    E --> H[Database]
-    H --> H1[MongoDB]
+    Servicos --> AuthService[Auth Service]:::frontend
+    Servicos --> APIService[API Service]:::frontend
+    Servicos --> InteractionService[Interaction Service]:::frontend
+    Servicos --> WhatsAppService[WhatsApp Service]:::frontend
 
-    I[Integrações] --> I1[WhatsApp API]
-    I --> I2[Storage Service]
+    %% Conexões Backend
+    Controllers --> AuthController[Auth Controller]:::backend
+    Controllers --> InteractionController[Interaction Controller]:::backend
+    Controllers --> IncidentController[Incident Controller]:::backend
+
+    Models --> UserModel[User Model]:::backend
+    Models --> IncidentModel[Incident Model]:::backend
+    Models --> LikeModel[Like Model]:::backend
+    Models --> CommentModel[Comment Model]:::backend
+
+    %% Database e Integrações
+    Database[(MongoDB Atlas)]:::database
+    Integracoes[Integrações]:::service
+
+    Backend --> Database
+    Backend --> Integracoes
+
+    Integracoes --> WhatsAppAPI[WhatsApp API]:::service
+    Integracoes --> StorageService[Storage Service]:::service
+```
+
+## 3. Fluxograma de Fluxo de Dados e Segurança
+
+```mermaid
+flowchart TD
+    %% Definição de estilos
+    classDef client fill:#3498db,stroke:#2980b9,color:white
+    classDef service fill:#2ecc71,stroke:#27ae60,color:white
+    classDef security fill:#e74c3c,stroke:#c0392b,color:white
+    classDef storage fill:#f1c40f,stroke:#f39c12,color:black
+
+    %% Cliente e Proxy
+    Cliente[Cliente]:::client
+    Cloudflare[Cloudflare]:::service
+    Frontend[Netlify Frontend]:::service
+    Backend[Railway Backend]:::service
+
+    %% Serviços
+    Auth[Auth Service]:::service
+    MongoDB[(MongoDB Atlas)]:::storage
+    R2[Cloudflare R2]:::storage
+
+    %% Monitoramento
+    Monitor[Monitoramento]:::service
+    Analytics[Cloudflare Analytics]:::service
+    Metrics[Railway Metrics]:::service
+
+    %% Segurança
+    Security[Segurança]:::security
+
+    %% Conexões principais
+    Cliente -->|HTTPS| Cloudflare
+    Cloudflare -->|Proxy| Frontend
+    Cloudflare -->|Proxy| Backend
+    Frontend -->|API Requests| Backend
+
+    %% Conexões de serviços
+    Backend -->|Autenticação| Auth
+    Backend -->|Operações CRUD| MongoDB
+    Backend -->|Upload/Download| R2
+
+    %% Conexões de autenticação
+    Auth -->|Tokens JWT| Frontend
+    Auth -->|Validação| Backend
+
+    %% Conexões de armazenamento
+    MongoDB -->|Backup| Backup[Backup Automático]:::storage
+    R2 -->|CDN| CDN[Distribuição Global]:::service
+
+    %% Conexões de monitoramento
+    Monitor -->|Logs| Analytics
+    Monitor -->|Métricas| Metrics
+
+    %% Conexões de segurança
+    Security -->|WAF| Cloudflare
+    Security -->|Rate Limiting| Backend
+    Security -->|CORS| Frontend
+    Security -->|Encryption| MongoDB
 ```
 
 ## Como Visualizar os Fluxogramas
