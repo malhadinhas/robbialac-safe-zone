@@ -222,3 +222,31 @@ export const handleUploadError = (err: unknown, req: Request, res: Response, nex
 // - validateUploadedVideo: Middleware para validação pós-upload (campos obrigatórios, tamanho, existência).
 // - handleUploadError: Middleware para tratamento de erros do multer.
 // O objetivo é garantir que só vídeos válidos e com metadados completos entram no sistema, e que ficheiros inválidos são removidos imediatamente. 
+
+interface UploadRequest extends Request {
+  file?: Express.Multer.File;
+  files?: Express.Multer.File[];
+}
+
+export const uploadMiddleware = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+  fileFilter: (req: UploadRequest, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    const allowedMimeTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Tipo de arquivo não permitido'));
+    }
+  },
+}); 

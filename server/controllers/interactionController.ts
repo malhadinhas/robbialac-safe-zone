@@ -50,7 +50,8 @@ export const addLike = async (req: Request, res: Response): Promise<void> => {
     // Se não houver ID de usuário, retorna erro 401 Unauthorized.
     if (!userId) {
         logger.warn('addLike: Tentativa de adicionar like sem autenticação.');
-        return res.status(401).json({ message: 'Utilizador não autenticado.' });
+        res.status(401).json({ message: 'Utilizador não autenticado.' });
+        return;
     }
 
     // 2. Obter ID do item e tipo do item do corpo da requisição.
@@ -62,7 +63,8 @@ export const addLike = async (req: Request, res: Response): Promise<void> => {
     //    - `itemType` deve ser um dos tipos permitidos pela função auxiliar.
     if (!itemId || !itemType || !isValidObjectId(itemId) || !isValidItemType(itemType)) {
         logger.warn('addLike: Tentativa com dados inválidos.', { body: req.body, userId });
-        return res.status(400).json({ message: 'Dados inválidos para adicionar like.' });
+        res.status(400).json({ message: 'Dados inválidos para adicionar like.' });
+        return;
     }
 
     try {
@@ -143,7 +145,8 @@ export const removeLike = async (req: Request, res: Response): Promise<void> => 
     const userId = req.user?.id;
     if (!userId) {
         logger.warn('removeLike: Tentativa de remover like sem autenticação.');
-        return res.status(401).json({ message: 'Utilizador não autenticado.' });
+        res.status(401).json({ message: 'Utilizador não autenticado.' });
+        return;
     }
 
     // 2. Obter itemId e itemType do corpo da requisição (poderia ser de query params para DELETE).
@@ -152,7 +155,8 @@ export const removeLike = async (req: Request, res: Response): Promise<void> => 
     // 3. Validar os dados recebidos.
     if (!itemId || !itemType || !isValidObjectId(itemId) || !isValidItemType(itemType)) {
         logger.warn('removeLike: Tentativa com dados inválidos.', { body: req.body, userId });
-        return res.status(400).json({ message: 'Dados inválidos para remover like.' });
+        res.status(400).json({ message: 'Dados inválidos para remover like.' });
+        return;
     }
 
     try {
@@ -169,7 +173,8 @@ export const removeLike = async (req: Request, res: Response): Promise<void> => 
             // Se nenhum documento foi removido, significa que o like não existia.
             logger.warn('removeLike: Like não encontrado para remoção.', { userId, itemId, itemType });
             // Retorna 404 Not Found.
-            return res.status(404).json({ message: 'Like não encontrado.' });
+            res.status(404).json({ message: 'Like não encontrado.' });
+            return;
         }
 
         // Se deletedCount > 0, a remoção foi bem-sucedida.
@@ -200,7 +205,8 @@ export const addComment = async (req: AuthenticatedRequest, res: Response): Prom
 
     if (!userId) {
         logger.warn('addComment: Utilizador não autenticado (sem userId em req.user).');
-        return res.status(401).json({ message: 'Utilizador não autenticado.' });
+        res.status(401).json({ message: 'Utilizador não autenticado.' });
+        return;
     }
 
     logger.info('addComment: Dados do utilizador obtidos do token.', { userId, userNameFromToken: req.user?.name, resolvedUserName: userName });
@@ -213,12 +219,14 @@ export const addComment = async (req: AuthenticatedRequest, res: Response): Prom
     //    - Formato válido para `itemId` e `itemType`.
     if (!itemId || !itemType || !text || !isValidObjectId(itemId) || !isValidItemType(itemType)) {
         logger.warn('addComment: Tentativa com dados inválidos.', { body: req.body, userId });
-        return res.status(400).json({ message: 'Dados inválidos para adicionar comentário.' });
+        res.status(400).json({ message: 'Dados inválidos para adicionar comentário.' });
+        return;
     }
     //    - Validação do comprimento do texto do comentário.
-    if (text.trim().length === 0 || text.length > 500) {
+    if (!text || text.length === 0 || text.length > 500) {
         logger.warn('addComment: Comentário vazio ou muito longo.', { userId, itemId, length: text.length });
-        return res.status(400).json({ message: 'Comentário vazio ou excede 500 caracteres.' });
+        res.status(400).json({ message: 'Comentário vazio ou excede 500 caracteres.' });
+        return;
     }
 
     try {
@@ -312,12 +320,14 @@ export const getCommentsByItem = async (req: Request, res: Response): Promise<vo
     // 2. Validar os dados recebidos.
     if (!itemId || !itemType || !isValidObjectId(itemId) || !isValidItemType(itemType)) {
         logger.warn('getCommentsByItem: Tentativa com dados inválidos.', { params: req.params });
-        return res.status(400).json({ message: 'Dados inválidos para buscar comentários.' });
+        res.status(400).json({ message: 'Dados inválidos para buscar comentários.' });
+        return;
     }
     // Valida se os parâmetros de paginação são positivos.
     if (page <= 0 || limit <= 0) {
         logger.warn('getCommentsByItem: Paginação inválida.', { page, limit });
-        return res.status(400).json({ message: 'Paginação inválida.' });
+        res.status(400).json({ message: 'Paginação inválida.' });
+        return;
     }
 
     try {

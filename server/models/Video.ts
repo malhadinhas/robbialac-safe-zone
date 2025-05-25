@@ -20,6 +20,11 @@ export interface IVideo extends Document {
   };
   status: 'processing' | 'ready' | 'error'; // Estado do vídeo
   processingError?: string;       // Mensagem de erro de processamento (opcional)
+  url: string;
+  thumbnailUrl: string;
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Definição do schema do Mongoose para Video
@@ -80,6 +85,25 @@ const VideoSchema = new Schema<IVideo>({
   },
   processingError: {
     type: String
+  },
+  url: {
+    type: String,
+    required: true
+  },
+  thumbnailUrl: {
+    type: String,
+    required: true
+  },
+  tags: [{
+    type: String
+  }],
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true // Adiciona automaticamente createdAt e updatedAt

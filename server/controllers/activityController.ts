@@ -305,7 +305,7 @@ export async function getFeed(req: Request, res: Response): Promise<void> {
     logger.info(`Encontradas ${recentSensibilizacoes.length} Sensibilizações recentes.`);
 
     // --- PASSO 2: Formatar e Combinar os Itens Base ---
-    let combinedBaseItems = [
+    const combinedBaseItems = [
       ...recentQAs.map(qa => ({
         _id: qa._id,
         type: 'qa' as const,

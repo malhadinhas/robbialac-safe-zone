@@ -7,6 +7,8 @@
  */
 import { config } from 'dotenv';
 import { DatabaseConfig } from '../types';
+import mongoose from 'mongoose';
+import { logger } from '../utils/logger';
 
 // Carrega as variáveis de ambiente do arquivo .env para process.env.
 // Esta é uma prática padrão para gerenciar configurações sensíveis fora do código.
@@ -27,7 +29,7 @@ const databaseConfig: DatabaseConfig = {
    * ATENÇÃO: O valor padrão hardcoded contém credenciais e não é recomendado para produção.
    * É mais seguro configurar esta URI exclusivamente através de variáveis de ambiente.
    */
-  uri: process.env.MONGODB_URI || 'mongodb+srv://RobbialacSeguranca:L4QZLeo7U0EwsKw8@workplace-safety.j7o51.mongodb.net/workplace-safety',
+  uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/robbialac-safe-zone',
   /**
    * O nome do banco de dados a ser utilizado.
    * Prioriza a variável de ambiente MONGODB_DB_NAME.
@@ -73,4 +75,25 @@ export function validateDatabaseConfig(config: DatabaseConfig): void {
   if (!config.dbName) {
     throw new Error('Nome do banco de dados não definido');
   }
-} 
+}
+
+export const connectDB = async (): Promise<void> => {
+  try {
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/robbialac-safe-zone';
+    await mongoose.connect(mongoUri);
+    logger.info('Conectado ao MongoDB');
+  } catch (error) {
+    logger.error('Erro ao conectar ao MongoDB:', { error });
+    throw error;
+  }
+};
+
+export const disconnectDB = async (): Promise<void> => {
+  try {
+    await mongoose.disconnect();
+    logger.info('Desconectado do MongoDB');
+  } catch (error) {
+    logger.error('Erro ao desconectar do MongoDB:', { error });
+    throw error;
+  }
+}; 

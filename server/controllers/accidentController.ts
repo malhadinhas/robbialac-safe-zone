@@ -359,7 +359,7 @@ export const updateAccident = async (req: Request, res: Response): Promise<void>
     logger.info('Requisição para atualizar acidente recebida.', { id, body: req.body, file: req.file?.originalname });
 
     // Objeto para armazenar os dados que serão efetivamente enviados para atualização no MongoDB.
-    let updateData: Record<string, unknown> = { name, country, date: new Date(date) };
+    const updateData: Record<string, unknown> = { name, country, date: new Date(date) };
 
     // Verifica se um novo arquivo foi enviado na requisição para substituir o existente.
     if (req.file) {

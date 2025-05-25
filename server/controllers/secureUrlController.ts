@@ -104,7 +104,8 @@ export const generateSecureUrl = async (req: Request, res: Response) => {
   try {
     // Verificações iniciais
     if (!s3Client) {
-      return res.status(500).json({ error: 'Erro interno do servidor: Cliente S3 não inicializado' });
+      res.status(500).json({ error: 'Erro interno do servidor: Cliente S3 não inicializado' });
+      return;
     }
 
     // Extração da chave do objeto
@@ -114,7 +115,8 @@ export const generateSecureUrl = async (req: Request, res: Response) => {
     // Validações e processamento
     if (!urlKey && !keyParam) {
       logger.error('[SecureUrlController] Requisição sem url ou key');
-      return res.status(400).json({ error: 'URL ou key do objeto é necessária' });
+      res.status(400).json({ error: 'URL ou key do objeto é necessária' });
+      return;
     }
 
     // Obtém a chave do objeto
@@ -165,7 +167,7 @@ export const generateSecureUrl = async (req: Request, res: Response) => {
     }
 
     // Mantemos o formato "signedUrl" para compatibilidade com o cliente
-    return res.json({ signedUrl });
+    res.json({ signedUrl });
   } catch (error) {
     // Tratamento de erros
     logger.error('[SecureUrlController] Erro ao gerar URL segura', {
@@ -174,6 +176,6 @@ export const generateSecureUrl = async (req: Request, res: Response) => {
       objectKey: urlKey || keyParam,
       bucketName: R2_CONFIG.bucketName
     });
-    return res.status(500).json({ message: 'Falha ao gerar URL segura.' });
+    res.status(500).json({ message: 'Falha ao gerar URL segura.' });
   }
 }; 

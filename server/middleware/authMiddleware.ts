@@ -1,21 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken } from '../services/auth';
+import jwt from 'jsonwebtoken';
 import logger from '../utils/logger';
+import { config } from '../config';
 
 // Interface para estender o objeto Request com usuário autenticado
 // Isto permite adicionar req.user ao objeto de request do Express
 // e usar essa informação em qualquer rota protegida
 // (útil para saber quem está autenticado e qual o seu papel)
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        email: string;
-        role: string;
-      };
-    }
-  }
+interface JwtPayload {
+  userId: string;
+  role: string;
+}
+
+interface AuthenticatedRequest extends Request {
+  user?: JwtPayload;
 }
 
 // Flag para desenvolvimento - ativa o bypass de autenticação se em ambiente de desenvolvimento
@@ -28,14 +26,13 @@ const BYPASS_AUTH = process.env.NODE_ENV === 'development';
  * - Caso contrário, verifica se existe um token JWT válido no header Authorization.
  * - Se o token for válido, adiciona os dados do utilizador ao objeto req.user.
  */
-export const isAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
+export const isAuthenticated = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     // Bypass de autenticação para desenvolvimento
     if (BYPASS_AUTH) {
       logger.warn('BYPASS_AUTH ativado: Pulando verificação de autenticação');
       req.user = {
-        id: 'dev-admin',
-        email: 'admin@robbialac.pt',
+        userId: 'dev-admin',
         role: 'admin_app'
       };
       return next();
@@ -61,7 +58,7 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
       return res.status(401).json({ message: 'Formato de token inválido' });
     }
 
-    const decodedToken = await verifyToken(token); // Verifica e decodifica o token
+    const decodedToken = jwt.verify(token, config.jwtSecret) as JwtPayload;
     
     if (!decodedToken) {
       logger.warn('Token inválido ou expirado', {
@@ -75,7 +72,7 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
     req.user = decodedToken;
     
     logger.info('Usuário autenticado com sucesso', { 
-      userId: decodedToken.id,
+      userId: decodedToken.userId,
       path: req.path
     });
     next();
@@ -96,14 +93,13 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
  * - Verifica se o papel do utilizador é 'admin_app' ou 'admin_qa'.
  * - Se não for admin, retorna 403 (acesso não autorizado).
  */
-export const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
+export const isAdmin = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     // Bypass de autenticação para desenvolvimento
     if (BYPASS_AUTH) {
       logger.warn('BYPASS_AUTH ativado: Pulando verificação de admin');
       req.user = {
-        id: 'dev-admin',
-        email: 'admin@robbialac.pt',
+        userId: 'dev-admin',
         role: 'admin_app'
       };
       return next();
@@ -118,7 +114,7 @@ export const isAdmin = async (req: Request, res: Response, next: NextFunction) =
       // Verifica se o usuário tem papel de administrador
       if (req.user.role !== 'admin_app' && req.user.role !== 'admin_qa') {
         logger.warn('Acesso não autorizado a rota de administrador', { 
-          userId: req.user.id, 
+          userId: req.user.userId, 
           role: req.user.role,
           path: req.path
         });
@@ -151,7 +147,7 @@ export const isAdmin = async (req: Request, res: Response, next: NextFunction) =
  * - Se não estiver, retorna 403 (acesso não autorizado).
  */
 export const hasRole = (roles: string[]) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     try {
       // Bypass de autenticação para desenvolvimento
       if (BYPASS_AUTH) {

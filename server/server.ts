@@ -4,7 +4,7 @@
  */
 
 import 'dotenv/config';
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
@@ -31,7 +31,7 @@ import corsMiddleware from './config/cors';
 import fileAccessMiddleware from './middleware/fileAccessMiddleware';
 import uploadsRoutes from './routes/uploads';
 import usersRoutes from './routes/users';
-import { Request, Response, NextFunction } from 'express';
+import routes from './routes';
 
 /**
  * Verificação das variáveis de ambiente necessárias para o Cloudflare R2
@@ -103,29 +103,15 @@ checkStorage().catch(error => {
  * Captura e formata todos os erros não tratados
  */
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  res.status(500).json({ error: err.message });
+  logger.error('Erro não tratado:', { error: err });
+  res.status(500).json({ message: 'Erro interno do servidor' });
 });
 
 /**
  * Configuração das rotas da API
  * Cada rota é modularizada em seu próprio arquivo
  */
-app.use('/api/auth', authRoutes);
-app.use('/api/accidents', accidentRoutes);     // Gestão de acidentes
-app.use('/api/incidents', incidentRoutes);     // Gestão de incidentes
-app.use('/api/videos', videoRoutes);           // Gestão de vídeos
-app.use('/api/secure-url', secureUrlRoutes);   // URLs seguras
-app.use('/api/departments', departmentRoutes); // Gestão de departamentos
-app.use('/api/medals', medalRoutes);           // Sistema de gamificação
-app.use('/api/zones', zoneRoutes);            // Gestão de zonas
-app.use('/api/stats', statsRoutes);           // Estatísticas
-app.use('/api/activities', activityRoutes);   // Registro de atividades
-app.use('/api/system', systemRoutes);         // Configurações do sistema
-app.use('/api/sensibilizacao', sensibilizacaoRoutes); // Gestão de sensibilização
-app.use('/api/analytics', analyticsRoutes); // Adiciona as rotas de analytics
-app.use('/api/interactions', interactionRoutes);
-app.use('/api/uploads', uploadsRoutes);
-app.use('/api/users', usersRoutes);
+app.use('/api', routes);
 
 /**
  * Rota de diagnóstico para verificar status do banco de dados
@@ -145,16 +131,19 @@ app.get('/api/health', (req, res) => {
  * Conecta ao banco de dados antes de iniciar o servidor
  */
 console.log('Início do server/server.ts');
-connectToDatabase().then(() => {
-  console.log('Antes do app.listen');
-  app.listen(port, '0.0.0.0', () => {
-    logger.info(`Servidor rodando em http://0.0.0.0:${port}`);
-    console.log('Depois do app.listen');
-  });
-}).catch(error => {
-  console.error('Erro no connectToDatabase:', error);
-  throw new Error(`Erro ao iniciar o servidor: ${error.message}`);
-});
+const startServer = async () => {
+  try {
+    await connectToDatabase();
+    app.listen(port, '0.0.0.0', () => {
+      logger.info(`Servidor rodando em http://0.0.0.0:${port}`);
+    });
+  } catch (error) {
+    logger.error('Erro ao iniciar servidor:', { error });
+    process.exit(1);
+  }
+};
+
+startServer();
 
 // Mantém o processo vivo para debug no Railway (remover depois)
 setInterval(() => {}, 1000 * 60 * 60); 

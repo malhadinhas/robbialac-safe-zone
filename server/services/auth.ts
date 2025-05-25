@@ -1,5 +1,5 @@
 import { Collection, ObjectId } from 'mongodb';
-import bcryptjs from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import UserModel, { IUser } from '../models/User';
 import logger from '../utils/logger';
@@ -26,6 +26,11 @@ export type AuthenticatedUser = {
   avatarUrl?: string;
 };
 
+interface JwtPayload {
+  userId: string;
+  role: string;
+}
+
 export async function validateCredentials(email: string, password: string): Promise<AuthenticatedUser | null> {
   // ---- REMOVER DEBUG LOGS DIRETOS ---- 
   // console.log(`[validateCredentials - Direct Log] Received Email: ${email}`);
@@ -50,7 +55,7 @@ export async function validateCredentials(email: string, password: string): Prom
     // console.log(`[validateCredentials - Direct Log] Stored Hash: ${user.password}`);
     // ---- FIM REMOVER DEBUG LOG DIRETO ---
 
-    const isValid = await bcryptjs.compare(password, user.password); 
+    const isValid = await bcrypt.compare(password, user.password); 
     
     logger.info('[validateCredentials] bcryptjs.compare result:', { isValid }); 
         
@@ -83,33 +88,29 @@ export async function validateCredentials(email: string, password: string): Prom
   }
 }
 
-export function generateToken(user: Omit<IUser, 'password'> & { _id: ObjectId; name?: string }): string {
-  // Convertendo ObjectId para string para incluir no token
-  const userIdString = user._id.toString(); 
-  return jwt.sign(
-    {
-      id: userIdString, // <<< CORRIGIDO: Usar o _id convertido para string
-      email: user.email,
-      role: user.role,
-      name: user.name || 'Utilizador Desconhecido' // <<< ADICIONADO: Incluir nome do user
-    },
-    JWT_SECRET,
-    { expiresIn: '24h' }
-  );
-}
+export const generateToken = (userId: string, role: string): string => {
+  return jwt.sign({ userId, role }, process.env.JWT_SECRET || 'default-secret', {
+    expiresIn: '24h',
+  });
+};
 
-export async function verifyToken(token: string): Promise<{ id: string; email: string; role: string; name?: string } | null> {
+export const verifyToken = (token: string): JwtPayload => {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: string; email: string; role: string; name?: string };
-    return decoded;
+    return jwt.verify(token, process.env.JWT_SECRET || 'default-secret') as JwtPayload;
   } catch (error) {
-    return null;
+    logger.error('Erro ao verificar token:', { error });
+    throw new Error('Token inválido');
   }
-}
+};
 
-export async function hashPassword(password: string): Promise<string> {
-  return bcryptjs.hash(password, SALT_ROUNDS);
-}
+export const hashPassword = async (password: string): Promise<string> => {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
+};
+
+export const comparePasswords = async (password: string, hashedPassword: string): Promise<boolean> => {
+  return bcrypt.compare(password, hashedPassword);
+};
 
 export async function createUser(userData: Omit<IUser, 'id' | 'password'> & { password: string }): Promise<IUser> {
   try {

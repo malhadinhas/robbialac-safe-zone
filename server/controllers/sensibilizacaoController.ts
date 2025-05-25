@@ -30,7 +30,8 @@ export const createSensibilizacao = async (req: Request, res: Response): Promise
     logger.info('Criando novo documento de sensibilização:', req.body);
     
     if (!req.file) {
-      return res.status(400).json({ error: 'Arquivo PDF é obrigatório' });
+      res.status(400).json({ error: 'Arquivo PDF é obrigatório' });
+      return;
     }
 
     // Gerar chave única para o arquivo
@@ -143,7 +144,8 @@ export const getSensibilizacoes = async (req: Request, res: Response): Promise<v
     logger.info(`Agregação concluída, ${sensibilizacoes.length} documentos processados`);
       
     if (sensibilizacoes.length === 0) {
-      return res.json([]);
+      res.json([]);
+      return;
     }
 
     const sensibilizacoesWithUrls = await Promise.all(sensibilizacoes.map(async (sensibilizacao) => {
@@ -193,7 +195,8 @@ export const getSensibilizacaoById = async (req: Request, res: Response): Promis
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
        logger.warn('ID inválido fornecido para getSensibilizacaoById', { id: req.params.id });
-       return res.status(400).json({ error: 'ID do documento inválido' });
+       res.status(400).json({ error: 'ID do documento inválido' });
+       return;
     }
     const docId = new mongoose.Types.ObjectId(req.params.id);
     const userId = req.user?.id ? new mongoose.Types.ObjectId(req.user.id) : null;
@@ -223,7 +226,8 @@ export const getSensibilizacaoById = async (req: Request, res: Response): Promis
 
     if (!results || results.length === 0) {
       logger.warn('Documento não encontrado após agregação', { docId });
-      return res.status(404).json({ error: 'Documento de sensibilização não encontrado' });
+      res.status(404).json({ error: 'Documento de sensibilização não encontrado' });
+      return;
     }
 
     const sensibilizacao = results[0];
@@ -262,13 +266,15 @@ export const getSensibilizacaoById = async (req: Request, res: Response): Promis
 export const updateSensibilizacao = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, country, date } = req.body;
-    let updateData: Record<string, unknown> = { name, country, date };
+    // Objeto para armazenar os dados que serão efetivamente enviados para atualização no MongoDB.
+    const updateData: Record<string, unknown> = { name, country, date: new Date(date) };
 
     // Se um novo arquivo foi enviado
     if (req.file) {
       const sensibilizacao = await Sensibilizacao.findById(req.params.id);
       if (!sensibilizacao) {
-        return res.status(404).json({ error: 'Documento de sensibilização não encontrado' });
+        res.status(404).json({ error: 'Documento de sensibilização não encontrado' });
+        return;
       }
 
       // Deletar arquivo antigo do R2
@@ -293,7 +299,8 @@ export const updateSensibilizacao = async (req: Request, res: Response): Promise
     );
 
     if (!sensibilizacao) {
-      return res.status(404).json({ error: 'Documento de sensibilização não encontrado' });
+      res.status(404).json({ error: 'Documento de sensibilização não encontrado' });
+      return;
     }
 
     // Gerar URL assinada para o PDF
@@ -322,7 +329,8 @@ export const deleteSensibilizacao = async (req: Request, res: Response): Promise
     const sensibilizacao = await Sensibilizacao.findById(req.params.id);
 
     if (!sensibilizacao) {
-      return res.status(404).json({ error: 'Documento de sensibilização não encontrado' });
+      res.status(404).json({ error: 'Documento de sensibilização não encontrado' });
+      return;
     }
 
     // Deletar arquivo do R2

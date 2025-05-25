@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { MongoDBConfig } from '../../src/config/database';
+import { MongoDBConfig } from '../config/database';
 
 let isConnected = false;
 let connectionError: string | null = null;

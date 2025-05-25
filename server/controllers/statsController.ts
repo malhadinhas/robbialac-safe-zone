@@ -208,8 +208,6 @@ export const getUserPointsBreakdown = async (req: Request, res: Response) => {
     });
     
     logger.info(`Distribuição de pontos recuperada com sucesso`, { userId, categories: result.length });
-    res.json(result);
-    
   } catch (error: unknown) {
     logger.error('Erro ao buscar distribuição de pontos do usuário', {
       userId: req.params.userId,
@@ -264,9 +262,6 @@ export const getUserRanking = async (req: Request, res: Response) => {
       position: result.position,
       totalUsers: result.totalUsers
     });
-    
-    res.json(result);
-    
   } catch (error: unknown) {
     logger.error('Erro ao buscar ranking do usuário', {
       userId: req.params.userId,

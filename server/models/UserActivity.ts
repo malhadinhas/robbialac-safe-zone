@@ -2,20 +2,29 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IUserActivity extends Document {
   userId: string;
-  category: 'video' | 'incident' | 'training' | 'medal';
-  activityId?: string;
-  points?: number;
+  action: string;
+  details: Record<string, unknown>;
   timestamp: Date;
-  details?: Record<string, unknown>;
 }
 
-const UserActivitySchema = new Schema<IUserActivity>({
-  userId: { type: String, required: true },
-  category: { type: String, required: true, enum: ['video', 'incident', 'training', 'medal'] },
-  activityId: { type: String },
-  points: { type: Number, default: 0 },
-  timestamp: { type: Date, default: Date.now },
-  details: { type: Schema.Types.Mixed }
+const userActivitySchema = new Schema<IUserActivity>({
+  userId: {
+    type: String,
+    required: true,
+    index: true,
+  },
+  action: {
+    type: String,
+    required: true,
+  },
+  details: {
+    type: Schema.Types.Mixed,
+    required: true,
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
-export default mongoose.models.UserActivity || mongoose.model<IUserActivity>('UserActivity', UserActivitySchema); 
+export const UserActivity = mongoose.model<IUserActivity>('UserActivity', userActivitySchema); 

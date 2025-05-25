@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
+import mime from 'mime-types';
 import { verifyToken } from '../services/auth';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 // Lista de tipos MIME permitidos
 const ALLOWED_MIME_TYPES = [
@@ -17,8 +18,8 @@ const ALLOWED_MIME_TYPES = [
 // Função para validar o tipo de arquivo
 const validateFileType = (filePath: string): boolean => {
   try {
-    const mimeType = require('mime-types').lookup(filePath);
-    return ALLOWED_MIME_TYPES.includes(mimeType);
+    const mimeType = mime.lookup(filePath);
+    return ALLOWED_MIME_TYPES.includes(mimeType as string);
   } catch (error) {
     logger.error('Erro ao validar tipo de arquivo', { error, filePath });
     return false;
@@ -33,9 +34,30 @@ const sanitizeFileName = (fileName: string): string => {
     .toLowerCase();                  // Converte para minúsculas
 };
 
+interface FileAccessRequest extends Request {
+  user?: {
+    userId: string;
+    role: string;
+  };
+}
+
 // Middleware de proteção de arquivos
-export const fileAccessMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+export const fileAccessMiddleware = async (req: FileAccessRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
+    const { fileId } = req.params;
+    const user = req.user;
+
+    if (!user) {
+      res.status(401).json({ message: 'Usuário não autenticado' });
+      return;
+    }
+
+    // Verifica se o usuário tem permissão para acessar o arquivo
+    if (user.role !== 'admin_app' && user.role !== 'admin_qa') {
+      res.status(403).json({ message: 'Acesso não autorizado' });
+      return;
+    }
+
     // Verificar autenticação
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {

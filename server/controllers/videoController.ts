@@ -41,14 +41,11 @@ export async function getVideos(req: Request, res: Response): Promise<void> {
 
     // Retorna os dados como estão (com as chaves R2, não URLs assinadas)
     logger.info('Dados dos vídeos a serem enviados na resposta GET /api/videos:', videosFromDb);
-    res.json(videosFromDb); 
-
   } catch (error: unknown) {
     logger.error('Erro ao recuperar vídeos em GET /api/videos', { 
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });
-    res.status(500).json({ message: 'Erro ao recuperar vídeos' });
   }
 }
 
@@ -59,7 +56,6 @@ export async function getVideoById(req: Request, res: Response): Promise<void> {
     
     if (!isValidObjectId(id)) {
       logger.warn('Tentativa de acesso GET /api/videos/:id com ID inválido', { id });
-      res.status(400).json({ message: 'ID de vídeo inválido' });
       return;
     }
     
@@ -68,23 +64,16 @@ export async function getVideoById(req: Request, res: Response): Promise<void> {
     
     if (!video) {
       logger.warn('Vídeo não encontrado em GET /api/videos/:id', { id });
-      res.status(404).json({ message: 'Vídeo não encontrado' });
       return;
     }
     
     logger.info(`Vídeo encontrado em GET /api/videos/:id : ${id}`, { videoStatus: video.status });
     logger.info(`Dados do vídeo a serem enviados na resposta GET /api/videos/${id}:`, video);
-    res.json(video); 
-
   } catch (error: unknown) {
     logger.error('Erro ao obter vídeo por ID em GET /api/videos/:id', { 
       error: error instanceof Error ? error.message : String(error), 
       id: req.params.id,
       stack: error instanceof Error ? error.stack : undefined
-    });
-    res.status(500).json({ 
-      message: 'Erro interno ao obter vídeo', 
-      details: error instanceof Error ? error.message : String(error) 
     });
   }
 }
@@ -116,7 +105,6 @@ export async function createVideo(req: Request, res: Response): Promise<void> {
 
     if (!req.file) {
       logger.error('Nenhum arquivo enviado');
-      res.status(400).json({ message: 'Nenhum arquivo enviado' });
       return;
     }
 
@@ -130,9 +118,6 @@ export async function createVideo(req: Request, res: Response): Promise<void> {
     
     if (missingFields.length > 0) {
       logger.warn('Campos obrigatórios ausentes', { missingFields });
-      res.status(400).json({ 
-        message: `Campos obrigatórios ausentes: ${missingFields.join(', ')}` 
-      });
       return;
     }
 
@@ -143,7 +128,6 @@ export async function createVideo(req: Request, res: Response): Promise<void> {
       
       if (!videoInfo) {
         logger.error('Erro na validação do vídeo');
-        res.status(400).json({ message: 'Erro na validação do vídeo' });
         return;
       }
 
@@ -345,7 +329,6 @@ export async function createVideo(req: Request, res: Response): Promise<void> {
           logger.error('Erro ao remover arquivo temporário', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError), path: req.file.path });
         }
       }
-      res.status(400).json({ message: validationError instanceof Error ? validationError.message : 'Erro na validação ou criação do vídeo' });
       return;
     }
   } catch (error: unknown) {
@@ -359,10 +342,8 @@ export async function createVideo(req: Request, res: Response): Promise<void> {
       }
     }
     if (error instanceof Error && error.name === 'ValidationError') {
-      res.status(400).json({ message: 'Erro de validação', errors: (error as { errors: unknown }).errors });
       return;
     }
-    res.status(500).json({ message: 'Erro ao criar vídeo', error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined });
   }
 }
 
@@ -372,14 +353,11 @@ export async function updateVideo(req: Request, res: Response): Promise<void> {
     const video = await Video.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!video) {
       logger.warn('Vídeo não encontrado para atualização', { id: req.params.id });
-      res.status(404).json({ message: 'Vídeo não encontrado' });
       return;
     }
     logger.info('Vídeo atualizado com sucesso', { id: video._id });
-    res.json(video);
   } catch (error) {
     logger.error('Erro ao atualizar vídeo', { id: req.params.id, error });
-    res.status(500).json({ message: 'Erro ao atualizar vídeo' });
   }
 }
 
@@ -389,14 +367,11 @@ export async function deleteVideo(req: Request, res: Response): Promise<void> {
     const video = await Video.findByIdAndDelete(req.params.id);
     if (!video) {
       logger.warn('Vídeo não encontrado para exclusão', { id: req.params.id });
-      res.status(404).json({ message: 'Vídeo não encontrado' });
       return;
     }
     logger.info('Vídeo excluído com sucesso', { id: req.params.id });
-    res.json({ message: 'Vídeo excluído com sucesso' });
   } catch (error) {
     logger.error('Erro ao excluir vídeo', { id: req.params.id, error });
-    res.status(500).json({ message: 'Erro ao excluir vídeo' });
   }
 }
 
@@ -405,7 +380,6 @@ export async function incrementVideoViews(req: Request, res: Response): Promise<
   try {
     if (!req.params.id) {
       logger.warn('Tentativa de incrementar visualizações sem ID do vídeo');
-      res.status(400).json({ message: 'ID do vídeo é obrigatório' });
       return;
     }
 
@@ -417,20 +391,14 @@ export async function incrementVideoViews(req: Request, res: Response): Promise<
 
     if (!video) {
       logger.warn(`Vídeo não encontrado para incremento de views: ${req.params.id}`);
-      res.status(404).json({ message: 'Vídeo não encontrado' });
       return;
     }
 
     logger.info(`Visualizações incrementadas com sucesso para o vídeo: ${video.id}`);
-    res.json(video);
   } catch (error) {
     logger.error('Erro ao incrementar visualizações:', { 
       error,
       videoId: req.params.id 
-    });
-    res.status(500).json({ 
-      message: 'Erro ao incrementar visualizações',
-      details: error instanceof Error ? error.message : 'Erro desconhecido'
     });
   }
 }
@@ -460,10 +428,6 @@ export async function getLastViewedVideosByCategory(req: Request, res: Response)
       category: req.params.category,
       message: error instanceof Error ? error.message : 'Erro desconhecido'
     });
-    res.status(500).json({ 
-      message: 'Erro ao buscar vídeos',
-      details: error instanceof Error ? error.message : 'Erro desconhecido' 
-    });
   }
 }
 
@@ -476,7 +440,6 @@ export async function getRecentVideos(req: Request, res: Response): Promise<void
 
         if (limit <= 0) {
             logger.warn('Invalid limit requested for recent videos', { limit });
-            res.status(400).json({ error: 'O limite deve ser um número positivo.' });
             return;
         }
 
@@ -503,10 +466,6 @@ export async function getRecentVideos(req: Request, res: Response): Promise<void
             error: error instanceof Error ? error.message : String(error),
             stack: error instanceof Error ? error.stack : undefined,
             query: req.query
-        });
-        res.status(500).json({ 
-            error: 'Erro ao buscar vídeos recentes',
-            details: error instanceof Error ? error.message : 'Erro desconhecido' 
         });
     }
 }

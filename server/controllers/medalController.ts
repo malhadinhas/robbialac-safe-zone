@@ -63,6 +63,10 @@ export const getMedals = async (req: Request, res: Response): Promise<void> => {
     const medals = await Medal.find();
 
     logger.info('Medalhas recuperadas com sucesso', { count: medals.length });
+    if (!medals || medals.length === 0) {
+      res.json([]); // Retorna array vazio e encerra.
+      return;
+    }
     // Responde com o array de medalhas.
     res.json(medals);
   } catch (error: unknown) {
@@ -89,7 +93,8 @@ export const getUserMedals = async (req: Request, res: Response): Promise<void> 
     // Se o usuário não tem nenhuma medalha, retorna um array vazio.
     if (userMedals.length === 0) {
       logger.info('Nenhuma medalha encontrada para o usuário', { userId });
-      return res.json([]); // Retorna array vazio e encerra.
+      res.json([]); // Retorna array vazio e encerra.
+      return;
     }
 
     // 2. Obter os IDs (string) das medalhas que o usuário possui a partir dos resultados anteriores.
@@ -405,18 +410,17 @@ export const createMedal = async (req: Request, res: Response): Promise<void> =>
     // Uma biblioteca como Zod seria mais robusta para validação.
     if (!medalData.id || !medalData.name || !medalData.description || !medalData.imageSrc || !medalData.triggerAction || !medalData.requiredCount) {
       logger.warn('Tentativa de criar medalha com dados incompletos', medalData);
-      return res.status(400).json({ message: 'Dados incompletos para criar a medalha' });
+      res.status(400).json({ message: 'Dados incompletos para criar a medalha' });
+      return;
     }
-    // Valida se a contagem é positiva.
     if (medalData.requiredCount <= 0) {
-        logger.warn(`Contagem inválida na criação da medalha ${medalData.id}: ${medalData.requiredCount}`);
-        return res.status(400).json({ message: 'Contagem necessária deve ser maior que zero' });
+      res.status(400).json({ message: 'Contagem necessária deve ser maior que zero' });
+      return;
     }
-    // Validação condicional: Se a ação for vídeo ou treino, a categoria é obrigatória.
     if ((medalData.triggerAction === 'videoWatched' || medalData.triggerAction === 'trainingCompleted') && !medalData.triggerCategory) {
-         logger.warn(`Categoria não fornecida para medalha ${medalData.id} com trigger ${medalData.triggerAction}`);
-         return res.status(400).json({ message: 'Categoria é obrigatória para ações de vídeo ou treino' });
-     }
+      res.status(400).json({ message: 'Categoria é obrigatória para ações de vídeo ou treino' });
+      return;
+    }
 
     // Normaliza o ID string fornecido (lowercase, sem espaços, caracteres especiais).
     // Isso cria um "slug" consistente para o ID.
@@ -450,7 +454,7 @@ export const createMedal = async (req: Request, res: Response): Promise<void> =>
 export const updateMedal = async (req: Request, res: Response): Promise<void> => {
   try {
     const { medalId } = req.params;
-    const updateData: Partial<Omit<Medal, '_id' | 'id'>> = req.body;
+    const updateData: Record<string, unknown> = { name: req.body.name, country: req.body.country, date: new Date(req.body.date) };
     logger.info(`Requisição para atualizar medalha recebida: ${medalId}`, { updateData });
 
     if (Object.keys(updateData).length === 0) {
@@ -510,7 +514,8 @@ export const deleteMedal = async (req: Request, res: Response): Promise<void> =>
     if (result.deletedCount === 0) {
       logger.warn(`Tentativa de deletar medalha não encontrada: ${medalId}`);
       // Retorna 404 Not Found se a medalha não existia.
-      return res.status(404).json({ message: 'Medalha não encontrada' });
+      res.status(404).json({ message: 'Medalha não encontrada' });
+      return;
     }
 
     // Opcional: Remover as entradas correspondentes na coleção 'user_medals'.
