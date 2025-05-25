@@ -10,6 +10,8 @@ async function fixVideoModel() {
     // Conectar ao banco de dados
     await connectToDatabase();
     
+    if (!mongoose.connection.db) throw new Error('DB not connected');
+    
     // Remover o índice problemático
     await mongoose.connection.db.collection('videos').dropIndex('id_1');
     logger.info('Índice id_1 removido com sucesso');

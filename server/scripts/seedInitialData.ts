@@ -83,7 +83,7 @@ async function seedInitialData() {
     }
 
     // Buscar todos os usuários
-    const users = await usersCollection.find().toArray();
+    const users = await usersCollection.find().toArray() as User[];
     logger.info(`Encontrados ${users.length} usuários no sistema`);
 
     let totalActivitiesAdded = 0;

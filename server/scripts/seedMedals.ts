@@ -3,41 +3,36 @@ import { Medal } from '../controllers/medalController';
 import logger from '../utils/logger';
 import { randomUUID } from 'crypto';
 
-const medals: Omit<Medal, 'created_at' | 'updated_at'>[] = [
+const medals = [
   {
     id: randomUUID(),
     name: 'Segurança em Foco',
     description: 'Concedida a colaboradores que completaram todos os módulos de segurança.',
-    imageSrc: '/images/medals/safety_focus.png',
-    category: 'Segurança'
+    imageSrc: '/images/medals/safety_focus.png'
   },
   {
     id: randomUUID(),
     name: 'Mestre da Qualidade',
     description: 'Reconhecimento por excelência em práticas de qualidade.',
-    imageSrc: '/images/medals/quality_master.png',
-    category: 'Qualidade'
+    imageSrc: '/images/medals/quality_master.png'
   },
   {
     id: randomUUID(),
     name: 'Guardião de Regras',
     description: 'Atribuída a quem demonstra conhecimento excepcional de procedimentos.',
-    imageSrc: '/images/medals/rules_guardian.png',
-    category: 'Procedimentos e Regras'
+    imageSrc: '/images/medals/rules_guardian.png'
   },
   {
     id: randomUUID(),
     name: 'Prevenção Total',
     description: 'Reconhecimento por contribuir ativamente para a prevenção de acidentes.',
-    imageSrc: '/images/medals/prevention.png',
-    category: 'Segurança'
+    imageSrc: '/images/medals/prevention.png'
   },
   {
     id: randomUUID(),
     name: 'Inovador',
     description: 'Premiação por sugestões inovadoras que melhoram a segurança ou eficiência.',
-    imageSrc: '/images/medals/innovator.png',
-    category: 'Inovação'
+    imageSrc: '/images/medals/innovator.png'
   }
 ];
 
