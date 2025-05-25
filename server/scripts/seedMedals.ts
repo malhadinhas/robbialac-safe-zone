@@ -1,5 +1,5 @@
 import { connectToDatabase, getCollection } from '../services/database';
-import { Medal } from '../controllers/medalController';
+import { Medal } from '../types';
 import logger from '../utils/logger';
 import { randomUUID } from 'crypto';
 

@@ -1,6 +1,7 @@
 import { connectToDatabase, getCollection } from '../services/database';
 import { ObjectId } from 'mongodb';
 import logger from '../utils/logger';
+import { User } from '../types';
 
 /**
  * Este script adiciona medalhas e atividades iniciais para todos os usuários

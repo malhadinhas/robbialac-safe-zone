@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { getCollection } from '../services/database';
 import { ObjectId } from 'mongodb';
 import logger from '../utils/logger';
-import { User } from '../types/user';
+import { User } from '../types';
 import { UserMedal } from '../types/userMedal';
 import { Medal } from '../types/medal';
 

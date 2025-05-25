@@ -1,5 +1,6 @@
 import { connectToDatabase, getCollection } from '../services/database';
 import logger from '../utils/logger';
+import { User, Medal } from '../types';
 
 /**
  * Este script atualiza os IDs das medalhas para serem mais descritivos
