@@ -16,9 +16,9 @@ export const uploadImage = [
       const key = `incidents/${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
       await uploadToR2(req.file.buffer, key, req.file.mimetype);
       const url = await getSignedUrl(key);
-      return res.json({ url });
+      res.json({ url });
     } catch (error) {
-      return res.status(500).json({ error: 'Erro ao fazer upload da imagem.' });
+      res.status(500).json({ error: 'Erro ao fazer upload da imagem.' });
     }
   }
 ]; 
