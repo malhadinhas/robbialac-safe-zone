@@ -1,27 +1,14 @@
 import { Collection, ObjectId } from 'mongodb';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { getCollection } from './database';
+import UserModel, { IUser } from '../models/User';
 import logger from '../utils/logger';
 import { User, LoginEvent } from '../types';
-
-interface AuthUser {
-  id: string;
-  email: string;
-  password: string;
-  name: string;
-  role: string;
-  points: number;
-  level: number;
-  medals: string[];
-  viewedVideos: string[];
-  reportedIncidents: string[];
-}
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const SALT_ROUNDS = 10;
 
-export async function validateCredentials(email: string, password: string): Promise<AuthUser | null> {
+export async function validateCredentials(email: string, password: string): Promise<IUser | null> {
   // ---- REMOVER DEBUG LOGS DIRETOS ---- 
   // console.log(`[validateCredentials - Direct Log] Received Email: ${email}`);
   // console.log(`[validateCredentials - Direct Log] Received Password: ${password}`); 
@@ -31,8 +18,7 @@ export async function validateCredentials(email: string, password: string): Prom
   logger.info('[validateCredentials] Password received (length):', password ? password.length : 'undefined/empty');
   
   try {
-    const usersCollection = await getCollection<AuthUser>('users');
-    const user = await usersCollection.findOne({ email });
+    const user = await UserModel.findOne({ email });
 
     if (!user) {
       logger.warn('[validateCredentials] User not found in DB', { email });
@@ -73,15 +59,15 @@ export async function validateCredentials(email: string, password: string): Prom
     }
 
     // Não retornar o hash da senha
-    const { password: _, ...userWithoutPassword } = user;
-    return userWithoutPassword as AuthUser;
+    const { password: _, ...userWithoutPassword } = user.toObject();
+    return userWithoutPassword;
   } catch (error: any) {
     logger.error('Erro durante validação de credenciais', { email, error: error.message });
     throw error; // Re-lança o erro para ser tratado pela rota
   }
 }
 
-export function generateToken(user: Omit<AuthUser, 'password'> & { _id: ObjectId; name?: string }): string {
+export function generateToken(user: Omit<IUser, 'password'> & { _id: ObjectId; name?: string }): string {
   // Convertendo ObjectId para string para incluir no token
   const userIdString = user._id.toString(); 
   return jwt.sign(
@@ -109,12 +95,10 @@ export async function hashPassword(password: string): Promise<string> {
   return bcryptjs.hash(password, SALT_ROUNDS);
 }
 
-export async function createUser(userData: Omit<AuthUser, 'id' | 'password'> & { password: string }): Promise<AuthUser> {
+export async function createUser(userData: Omit<IUser, 'id' | 'password'> & { password: string }): Promise<IUser> {
   try {
-    const collection: Collection<AuthUser> = await getCollection<AuthUser>('users');
-    
     // Verificar se o email já existe
-    const existingUser = await collection.findOne({ email: userData.email });
+    const existingUser = await UserModel.findOne({ email: userData.email });
     if (existingUser) {
       throw new Error('Email já cadastrado');
     }
@@ -122,17 +106,18 @@ export async function createUser(userData: Omit<AuthUser, 'id' | 'password'> & {
     // Hash da senha
     const hashedPassword = await hashPassword(userData.password);
 
-    const newUser: AuthUser = {
+    const newUser: IUser = {
       id: new Date().getTime().toString(), // Pode ser substituído por um UUID
       ...userData,
       password: hashedPassword
     };
 
-    await collection.insertOne(newUser);
+    const created = await UserModel.create(newUser);
+    const userObj = created.toObject() as Partial<IUser>;
 
     // Não retornar o hash da senha
-    const { password: _, ...userWithoutPassword } = newUser;
-    return userWithoutPassword as AuthUser;
+    const { password: _, ...userWithoutPassword } = userObj;
+    return userWithoutPassword as IUser;
   } catch (error) {
     console.error('Erro ao criar usuário:', error);
     throw error;
@@ -146,8 +131,7 @@ export async function validateToken(token: string): Promise<boolean> {
       return false;
     }
 
-    const collection: Collection<AuthUser> = await getCollection<AuthUser>('users');
-    const user = await collection.findOne({ id: decoded.id });
+    const user = await UserModel.findOne({ id: decoded.id });
 
     return !!user;
   } catch (error) {
