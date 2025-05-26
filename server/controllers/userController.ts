@@ -228,7 +228,7 @@ export async function login(req: Request, res: Response): Promise<void> {
 
 export async function getCurrentUser(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
 
     if (!userId) {
       logger.warn('Tentativa de obter usuário atual sem autenticação');

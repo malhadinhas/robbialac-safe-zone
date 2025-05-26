@@ -72,7 +72,7 @@ export const isAuthenticated = async (req: AuthenticatedRequest, res: Response, 
     }
 
     // Adiciona informações do usuário ao objeto de requisição
-    req.user = decodedToken;
+    req.user = { id: decodedToken.userId, role: decodedToken.role };
     
     logger.info('Usuário autenticado com sucesso', { 
       userId: decodedToken.userId,

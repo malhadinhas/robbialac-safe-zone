@@ -28,7 +28,12 @@ export interface CategoryStatsInterface {
 // Função para buscar estatísticas de todas as zonas
 export const getZoneStats = async (req: Request, res: Response) => {
   try {
-    const stats = await ZoneStats.find().lean() as ZoneStatsInterface[];
+    const statsRaw = await ZoneStats.find().lean();
+    const stats: ZoneStatsInterface[] = statsRaw.map((zone: any) => ({
+      zoneId: zone.zoneId,
+      zoneName: zone.zoneName,
+      stats: zone.stats
+    }));
     const formattedStats = stats.map(zone => {
       if (zone.stats && !zone.stats.completionRate && zone.stats.totalVideos > 0) {
         zone.stats.completionRate = (zone.stats.videosWatched / zone.stats.totalVideos) * 100;
@@ -47,12 +52,17 @@ export const getZoneStats = async (req: Request, res: Response) => {
 export const getZoneStatsById = async (req: Request, res: Response) => {
   try {
     const { zoneId } = req.params;
-    const zoneStats = await ZoneStats.findOne({ zoneId }).lean() as ZoneStatsInterface | null;
-    if (!zoneStats) {
+    const zoneStatsRaw = await ZoneStats.findOne({ zoneId }).lean();
+    if (!zoneStatsRaw) {
       logger.warn('Estatísticas da zona não encontradas', { zoneId });
       res.status(404).json({ message: 'Estatísticas da zona não encontradas' });
       return;
     }
+    const zoneStats: ZoneStatsInterface = {
+      zoneId: zoneStatsRaw.zoneId,
+      zoneName: zoneStatsRaw.zoneName,
+      stats: zoneStatsRaw.stats
+    };
     if (zoneStats.stats && !zoneStats.stats.completionRate && zoneStats.stats.totalVideos > 0) {
       zoneStats.stats.completionRate = (zoneStats.stats.videosWatched / zoneStats.stats.totalVideos) * 100;
     }

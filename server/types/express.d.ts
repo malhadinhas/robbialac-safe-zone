@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 // Interface para o usuário autenticado
 export interface AuthenticatedUser {
   id: string;           // Identificador único do utilizador (pode ser o _id do MongoDB ou UUID)
+  userId?: string;      // Alias temporário para compatibilidade
   role: string;         // Papel do utilizador (ex: 'admin_app', 'admin_qa', 'user')
   email?: string;       // Email do utilizador (opcional)
   name?: string;        // Nome do utilizador (opcional)
