@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
-import UserMedal from '../models/UserMedal';
+import UserMedal, { IUserMedal } from '../models/UserMedal';
 import Medal from '../models/Medal';
 import logger from '../utils/logger';
 import { User as UserType } from '../types';
-import { UserMedal as UserMedalType } from '../types/userMedal';
 import { Medal as MedalType } from '../types/medal';
 import { UserActivity } from '../models/UserActivity';
 

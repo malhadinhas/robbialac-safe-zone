@@ -2,12 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import logger from '../utils/logger';
 import { config } from '../config';
+import { JwtPayload as DefaultJwtPayload } from 'jsonwebtoken';
 
 // Interface para estender o objeto Request com usuário autenticado
 // Isto permite adicionar req.user ao objeto de request do Express
 // e usar essa informação em qualquer rota protegida
 // (útil para saber quem está autenticado e qual o seu papel)
-interface JwtPayload {
+interface JwtPayload extends DefaultJwtPayload {
   userId: string;
   role: string;
 }
