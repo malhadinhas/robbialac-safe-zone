@@ -147,9 +147,7 @@ export async function validateToken(token: string): Promise<boolean> {
     if (!decoded) {
       return false;
     }
-
-    const user = await UserModel.findOne({ id: decoded.id });
-
+    const user = await UserModel.findOne({ id: decoded.userId });
     return !!user;
   } catch (error) {
     return false;

@@ -79,7 +79,7 @@ export async function createUser(req: Request, res: Response): Promise<void> {
     await user.save();
 
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { userId: user._id, role: user.role },
       process.env.JWT_SECRET || 'default_secret',
       { expiresIn: '24h' }
     );
@@ -204,7 +204,7 @@ export async function login(req: Request, res: Response): Promise<void> {
     }
 
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { userId: user._id, role: user.role },
       process.env.JWT_SECRET || 'default_secret',
       { expiresIn: '24h' }
     );
@@ -228,7 +228,7 @@ export async function login(req: Request, res: Response): Promise<void> {
 
 export async function getCurrentUser(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
-    const userId = req.user?.id;
+    const userId = req.user?.userId;
 
     if (!userId) {
       logger.warn('Tentativa de obter usuário atual sem autenticação');
@@ -248,6 +248,52 @@ export async function getCurrentUser(req: AuthenticatedRequest, res: Response): 
   } catch (error) {
     logger.error('Erro ao obter usuário atual:', error);
     res.status(500).json({ message: 'Erro ao obter usuário atual' });
+  }
+}
+
+export async function listUsers(req: Request, res: Response): Promise<void> {
+  try {
+    const users = await User.find().select('-password');
+    res.json(users);
+  } catch (error) {
+    logger.error('Erro ao listar usuários:', error instanceof Error ? error.message : String(error));
+    res.status(500).json({ message: 'Erro ao listar usuários' });
+  }
+}
+
+export async function getUserByIdHandler(req: Request, res: Response): Promise<void> {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) {
+      res.status(404).json({ message: 'Usuário não encontrado' });
+      return;
+    }
+    res.json(user);
+  } catch (error) {
+    logger.error('Erro ao obter usuário:', error instanceof Error ? error.message : String(error));
+    res.status(500).json({ message: 'Erro ao obter usuário' });
+  }
+}
+
+export async function updateUserRoleHandler(req: Request, res: Response): Promise<void> {
+  const { id } = req.params;
+  const { role } = req.body;
+  if (!['admin_app', 'admin_qa', 'user'].includes(role)) {
+    res.status(400).json({ error: 'Role inválido' });
+    return;
+  }
+  try {
+    const user = await User.findById(id);
+    if (!user) {
+      res.status(404).json({ error: 'Usuário não encontrado' });
+      return;
+    }
+    user.role = role;
+    await user.save();
+    res.json({ message: 'Role atualizado com sucesso' });
+  } catch (error) {
+    logger.error('Erro ao atualizar role:', error instanceof Error ? error.message : String(error));
+    res.status(500).json({ error: 'Erro ao atualizar role' });
   }
 }
 
