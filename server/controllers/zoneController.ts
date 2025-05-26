@@ -8,11 +8,11 @@ export interface ZoneStatsInterface {
   zoneId: string;
   zoneName: string;
   stats: {
-    videosWatched: number;    // Quantidade de vídeos assistidos na zona
-    totalVideos: number;      // Total de vídeos disponíveis na zona
-    completionRate: number;   // Taxa de conclusão (percentagem de vídeos assistidos)
-    safetyScore: number;      // Pontuação de segurança da zona
-  }
+    videosWatched: number;
+    totalVideos: number;
+    completionRate: number;
+    safetyScore: number;
+  };
 }
 
 // Interface que define a estrutura das estatísticas de uma categoria
@@ -20,9 +20,9 @@ export interface CategoryStatsInterface {
   categoryId: string;
   title: string;
   description: string;
-  videosCompleted: number;    // Quantidade de vídeos concluídos na categoria
-  totalVideos: number;        // Total de vídeos na categoria
-  iconName: string;           // Nome do ícone associado à categoria
+  videosCompleted: number;
+  totalVideos: number;
+  iconName: string;
 }
 
 // Função para buscar estatísticas de todas as zonas
@@ -34,12 +34,14 @@ export const getZoneStats = async (req: Request, res: Response) => {
       zoneName: zone.zoneName,
       stats: zone.stats
     }));
+
     const formattedStats = stats.map(zone => {
       if (zone.stats && !zone.stats.completionRate && zone.stats.totalVideos > 0) {
         zone.stats.completionRate = (zone.stats.videosWatched / zone.stats.totalVideos) * 100;
       }
       return zone;
     });
+
     logger.info('Estatísticas de zonas recuperadas com sucesso', { count: stats.length });
     res.json(formattedStats);
   } catch (error) {
@@ -51,43 +53,20 @@ export const getZoneStats = async (req: Request, res: Response) => {
 // Função para buscar estatísticas de uma zona específica
 export const getZoneStatsById = async (req: Request, res: Response) => {
   try {
-    const { zoneId } = req.params;
-    const zoneStatsRaw = await ZoneStats.findOne({ zoneId }).lean();
-    if (!zoneStatsRaw) {
-      logger.warn('Estatísticas da zona não encontradas', { zoneId });
-      res.status(404).json({ message: 'Estatísticas da zona não encontradas' });
-      return;
+    const { id } = req.params;
+    const zone: any = await ZoneStats.findOne({ zoneId: id }).lean();
+
+    if (!zone) {
+      return res.status(404).json({ message: 'Zona não encontrada' });
     }
-    const zoneStats: ZoneStatsInterface = {
-      zoneId: zoneStatsRaw.zoneId,
-      zoneName: zoneStatsRaw.zoneName,
-      stats: zoneStatsRaw.stats
-    };
-    if (zoneStats.stats && !zoneStats.stats.completionRate && zoneStats.stats.totalVideos > 0) {
-      zoneStats.stats.completionRate = (zoneStats.stats.videosWatched / zoneStats.stats.totalVideos) * 100;
+
+    if (!zone.stats.completionRate && zone.stats.totalVideos > 0) {
+      zone.stats.completionRate = (zone.stats.videosWatched / zone.stats.totalVideos) * 100;
     }
-    logger.info('Estatísticas da zona recuperadas com sucesso', { zoneId });
-    res.json(zoneStats);
+
+    res.json(zone);
   } catch (error) {
-    logger.error('Erro ao recuperar estatísticas da zona', { zoneId: req.params.zoneId, error });
+    logger.error('Erro ao recuperar estatísticas da zona', { error });
     res.status(500).json({ message: 'Erro ao recuperar estatísticas da zona' });
   }
 };
-
-// Função para buscar estatísticas de todas as categorias
-export const getCategoryStats = async (req: Request, res: Response) => {
-  try {
-    const stats = await CategoryStats.find().lean();
-    logger.info('Estatísticas de categorias recuperadas com sucesso', { count: stats.length });
-    res.json(stats);
-  } catch (error) {
-    logger.error('Erro ao recuperar estatísticas de categorias', { error });
-    res.status(500).json({ message: 'Erro ao recuperar estatísticas de categorias' });
-  }
-};
-
-// -----------------------------------------------------------------------------
-// Este ficheiro define o controlador de zonas e categorias para a API.
-// Permite: obter estatísticas globais e detalhadas de zonas e categorias de vídeos.
-// Cada função trata de um endpoint RESTful e faz logging e validação básica.
-// O objetivo é centralizar toda a lógica de estatísticas de zonas e categorias neste módulo. 

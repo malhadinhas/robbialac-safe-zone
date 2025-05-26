@@ -8,30 +8,31 @@ exports.disconnectFromDatabase = disconnectFromDatabase;
 exports.getDatabaseStatus = getDatabaseStatus;
 exports.tryReconnect = tryReconnect;
 const mongoose_1 = __importDefault(require("mongoose"));
-const database_1 = require("../../src/config/database");
+const database_1 = require("../config/database");
 let isConnected = false;
 let connectionError = null;
 async function connectToDatabase() {
     console.log('=== Iniciando conexão com o banco de dados ===');
     console.log('MONGODB_URI do process.env:', process.env.MONGODB_URI);
+    const dbConfig = (0, database_1.getDatabaseConfig)();
+    const uri = dbConfig.uri;
     // Se já estiver conectado, não faz nada
     if (isConnected && mongoose_1.default.connection.readyState === 1) {
         console.log('Já conectado ao banco de dados');
         return;
     }
     try {
-        const uri = database_1.MongoDBConfig.uri;
         console.log('URI usada na conexão:', uri);
-        console.log('DB usado na conexão:', database_1.MongoDBConfig.dbName);
+        console.log('DB usado na conexão:', dbConfig.dbName);
         console.log('Configuração carregada:', {
-            dbName: database_1.MongoDBConfig.dbName,
+            dbName: dbConfig.dbName,
             uriPrefix: uri.substring(0, 20) + '...'
         });
         // Configurar Mongoose
         mongoose_1.default.set('strictQuery', true);
         console.log('Conectando ao MongoDB via Mongoose...');
         await mongoose_1.default.connect(uri, {
-            dbName: database_1.MongoDBConfig.dbName,
+            dbName: dbConfig.dbName,
         });
         console.log('=== Conectado ao MongoDB com sucesso ===');
         isConnected = true;

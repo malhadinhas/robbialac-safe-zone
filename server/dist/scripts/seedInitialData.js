@@ -7,7 +7,7 @@ const database_1 = require("../services/database");
 const User_1 = __importDefault(require("../models/User"));
 const Medal_1 = __importDefault(require("../models/Medal"));
 const UserMedal_1 = __importDefault(require("../models/UserMedal"));
-const UserActivity_1 = __importDefault(require("../models/UserActivity"));
+const UserActivity_1 = require("../models/UserActivity");
 const logger_1 = __importDefault(require("../utils/logger"));
 /**
  * Este script adiciona medalhas e atividades iniciais para todos os usuários
@@ -109,11 +109,11 @@ async function seedInitialData() {
                         manual: true
                     }
                 };
-                await UserActivity_1.default.create(medalActivity);
+                await UserActivity_1.UserActivity.create(medalActivity);
                 totalActivitiesAdded++;
             }
             // Verificar se o usuário já tem atividades
-            const userActivitiesCount = await UserActivity_1.default.countDocuments({ userId: user._id });
+            const userActivitiesCount = await UserActivity_1.UserActivity.countDocuments({ userId: user._id });
             if (userActivitiesCount <= 1) {
                 const ontem = new Date();
                 ontem.setDate(ontem.getDate() - 1);
@@ -142,7 +142,7 @@ async function seedInitialData() {
                         }
                     }
                 ];
-                await UserActivity_1.default.insertMany(initialActivities);
+                await UserActivity_1.UserActivity.insertMany(initialActivities);
                 totalActivitiesAdded += initialActivities.length;
                 if (user.points === 0) {
                     user.points = 100;

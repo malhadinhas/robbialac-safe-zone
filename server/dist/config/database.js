@@ -1,5 +1,9 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.disconnectDB = exports.connectDB = void 0;
 exports.getDatabaseConfig = getDatabaseConfig;
 exports.validateDatabaseConfig = validateDatabaseConfig;
 /**
@@ -10,6 +14,8 @@ exports.validateDatabaseConfig = validateDatabaseConfig;
  * funções para obter e validar essa configuração.
  */
 const dotenv_1 = require("dotenv");
+const mongoose_1 = __importDefault(require("mongoose"));
+const logger_1 = __importDefault(require("../utils/logger"));
 // Carrega as variáveis de ambiente do arquivo .env para process.env.
 // Esta é uma prática padrão para gerenciar configurações sensíveis fora do código.
 (0, dotenv_1.config)();
@@ -28,7 +34,7 @@ const databaseConfig = {
      * ATENÇÃO: O valor padrão hardcoded contém credenciais e não é recomendado para produção.
      * É mais seguro configurar esta URI exclusivamente através de variáveis de ambiente.
      */
-    uri: process.env.MONGODB_URI || 'mongodb+srv://RobbialacSeguranca:L4QZLeo7U0EwsKw8@workplace-safety.j7o51.mongodb.net/workplace-safety',
+    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/robbialac-safe-zone',
     /**
      * O nome do banco de dados a ser utilizado.
      * Prioriza a variável de ambiente MONGODB_DB_NAME.
@@ -71,3 +77,26 @@ function validateDatabaseConfig(config) {
         throw new Error('Nome do banco de dados não definido');
     }
 }
+const connectDB = async () => {
+    try {
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/robbialac-safe-zone';
+        await mongoose_1.default.connect(mongoUri);
+        logger_1.default.info('Conectado ao MongoDB');
+    }
+    catch (error) {
+        logger_1.default.error('Erro ao conectar ao MongoDB:', { error });
+        throw error;
+    }
+};
+exports.connectDB = connectDB;
+const disconnectDB = async () => {
+    try {
+        await mongoose_1.default.disconnect();
+        logger_1.default.info('Desconectado do MongoDB');
+    }
+    catch (error) {
+        logger_1.default.error('Erro ao desconectar do MongoDB:', { error });
+        throw error;
+    }
+};
+exports.disconnectDB = disconnectDB;

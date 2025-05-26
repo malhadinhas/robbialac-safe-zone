@@ -52,7 +52,10 @@ app.get('/api/test', async (req, res) => {
     console.log(`[TEST] Estado da conexão MongoDB: ${states[dbState]}`);
     
     // Lista todas as coleções disponíveis no banco
-    const collections = await mongoose.connection.db.listCollections().toArray();
+    const db = mongoose.connection.db;
+    if (!db) throw new Error("MongoDB connection is not ready.");
+    const collections = await db.listCollections().toArray();
+
     const collectionNames = collections.map(c => c.name);
     console.log(`[TEST] Coleções no banco de dados: ${collectionNames.join(', ')}`);
     

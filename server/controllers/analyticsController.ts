@@ -13,7 +13,8 @@ import Incident from '../models/Incident';
 import LoginEvent from '../models/LoginEvent';
 import UploadLog from '../models/UploadLog';
 import { ObjectId } from 'mongodb'; // Tipo ObjectId do MongoDB
-import UserActivity from '../models/UserActivity';
+import { UserActivity } from '../models/UserActivity';
+
 
 /**
  * @function getBasicAnalytics

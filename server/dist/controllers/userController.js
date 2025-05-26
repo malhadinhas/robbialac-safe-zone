@@ -10,6 +10,9 @@ exports.updateUser = updateUser;
 exports.deleteUser = deleteUser;
 exports.login = login;
 exports.getCurrentUser = getCurrentUser;
+exports.listUsers = listUsers;
+exports.getUserByIdHandler = getUserByIdHandler;
+exports.updateUserRoleHandler = updateUserRoleHandler;
 const User_1 = __importDefault(require("../models/User"));
 const logger_1 = __importDefault(require("../utils/logger"));
 const mongoose_1 = require("mongoose");
@@ -22,8 +25,14 @@ async function getUsers(req, res) {
         res.json(users);
     }
     catch (error) {
-        logger_1.default.error('Erro ao recuperar usuários:', error);
-        res.status(500).json({ message: 'Erro ao recuperar usuários' });
+        logger_1.default.error('Erro ao recuperar usuários:', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+        });
+        res.status(500).json({
+            message: 'Erro ao recuperar usuários',
+            details: error instanceof Error ? error.message : String(error)
+        });
     }
 }
 async function getUserById(req, res) {
@@ -71,7 +80,7 @@ async function createUser(req, res) {
             role: role || 'user'
         });
         await user.save();
-        const token = jsonwebtoken_1.default.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '24h' });
+        const token = jsonwebtoken_1.default.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '24h' });
         logger_1.default.info('Usuário criado com sucesso', { id: user._id });
         res.status(201).json({
             message: 'Usuário criado com sucesso',
@@ -180,7 +189,7 @@ async function login(req, res) {
             res.status(401).json({ message: 'Credenciais inválidas' });
             return;
         }
-        const token = jsonwebtoken_1.default.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '24h' });
+        const token = jsonwebtoken_1.default.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET || 'default_secret', { expiresIn: '24h' });
         logger_1.default.info('Login realizado com sucesso', { id: user._id });
         res.json({
             message: 'Login realizado com sucesso',
@@ -218,6 +227,52 @@ async function getCurrentUser(req, res) {
     catch (error) {
         logger_1.default.error('Erro ao obter usuário atual:', error);
         res.status(500).json({ message: 'Erro ao obter usuário atual' });
+    }
+}
+async function listUsers(req, res) {
+    try {
+        const users = await User_1.default.find().select('-password');
+        res.json(users);
+    }
+    catch (error) {
+        logger_1.default.error('Erro ao listar usuários:', error instanceof Error ? error.message : String(error));
+        res.status(500).json({ message: 'Erro ao listar usuários' });
+    }
+}
+async function getUserByIdHandler(req, res) {
+    try {
+        const user = await User_1.default.findById(req.params.id).select('-password');
+        if (!user) {
+            res.status(404).json({ message: 'Usuário não encontrado' });
+            return;
+        }
+        res.json(user);
+    }
+    catch (error) {
+        logger_1.default.error('Erro ao obter usuário:', error instanceof Error ? error.message : String(error));
+        res.status(500).json({ message: 'Erro ao obter usuário' });
+    }
+}
+async function updateUserRoleHandler(req, res) {
+    const { id } = req.params;
+    const { role } = req.body;
+    if (!['admin_app', 'admin_qa', 'user'].includes(role)) {
+        res.status(400).json({ error: 'Role inválido' });
+        return;
+    }
+    try {
+        const user = await User_1.default.findById(id);
+        if (!user) {
+            res.status(404).json({ error: 'Usuário não encontrado' });
+            return;
+        }
+        user.role = role;
+        await user.save();
+        res.json({ message: 'Role atualizado com sucesso' });
+    }
+    catch (error) {
+        logger_1.default.error('Erro ao atualizar role:', error instanceof Error ? error.message : String(error));
+        res.status(500).json({ error: 'Erro ao atualizar role' });
     }
 }
 // -----------------------------------------------------------------------------

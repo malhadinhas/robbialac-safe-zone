@@ -3,16 +3,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.comparePasswords = exports.hashPassword = exports.verifyToken = exports.generateToken = void 0;
 exports.validateCredentials = validateCredentials;
-exports.generateToken = generateToken;
-exports.verifyToken = verifyToken;
-exports.hashPassword = hashPassword;
 exports.createUser = createUser;
 exports.validateToken = validateToken;
-const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const User_1 = __importDefault(require("../models/User"));
 const logger_1 = __importDefault(require("../utils/logger"));
+const LoginEvent_1 = __importDefault(require("../models/LoginEvent"));
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const SALT_ROUNDS = 10;
 async function validateCredentials(email, password) {
@@ -33,7 +32,7 @@ async function validateCredentials(email, password) {
         // ---- REMOVER DEBUG LOG DIRETO --- 
         // console.log(`[validateCredentials - Direct Log] Stored Hash: ${user.password}`);
         // ---- FIM REMOVER DEBUG LOG DIRETO ---
-        const isValid = await bcryptjs_1.default.compare(password, user.password);
+        const isValid = await bcrypt_1.default.compare(password, user.password);
         logger_1.default.info('[validateCredentials] bcryptjs.compare result:', { isValid });
         if (!isValid) {
             logger_1.default.warn('Tentativa de login falhou: Senha inválida (bcryptjs compare returned false)', { email });
@@ -41,52 +40,53 @@ async function validateCredentials(email, password) {
         }
         // Login bem-sucedido, registar evento
         try {
-            const loginEventsCollection = await types_1.LoginEvent.find();
-            const newLoginEvent = {
+            await LoginEvent_1.default.create({
                 userId: user.id,
                 userEmail: user.email,
                 timestamp: new Date(),
                 // ipAddress: req?.ip, // TODO: Passar req para obter IP
                 // userAgent: req?.headers['user-agent'] // TODO: Passar req para obter User Agent
-            };
-            await loginEventsCollection.insertOne(newLoginEvent);
+            });
             logger_1.default.info('Evento de login registado com sucesso', { userId: user.id, email: user.email });
         }
         catch (logError) {
             // Não impedir o login se o registo do evento falhar, apenas logar o erro
-            logger_1.default.error('Falha ao registar evento de login', { userId: user.id, email: user.email, error: logError.message });
+            logger_1.default.error('Falha ao registar evento de login', { userId: user.id, email: user.email, error: logError instanceof Error ? logError.message : String(logError) });
         }
         // Não retornar o hash da senha
         const { password: _, ...userWithoutPassword } = user.toObject();
         return userWithoutPassword;
     }
     catch (error) {
-        logger_1.default.error('Erro durante validação de credenciais', { email, error: error.message });
+        logger_1.default.error('Erro durante validação de credenciais', { email, error: error instanceof Error ? error.message : String(error) });
         throw error; // Re-lança o erro para ser tratado pela rota
     }
 }
-function generateToken(user) {
-    // Convertendo ObjectId para string para incluir no token
-    const userIdString = user._id.toString();
-    return jsonwebtoken_1.default.sign({
-        id: userIdString, // <<< CORRIGIDO: Usar o _id convertido para string
-        email: user.email,
-        role: user.role,
-        name: user.name || 'Utilizador Desconhecido' // <<< ADICIONADO: Incluir nome do user
-    }, JWT_SECRET, { expiresIn: '24h' });
-}
-async function verifyToken(token) {
+const generateToken = (userId, role) => {
+    return jsonwebtoken_1.default.sign({ userId, role }, process.env.JWT_SECRET || 'default-secret', {
+        expiresIn: '24h',
+    });
+};
+exports.generateToken = generateToken;
+const verifyToken = (token) => {
     try {
-        const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
-        return decoded;
+        return jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET || 'default-secret');
     }
     catch (error) {
-        return null;
+        logger_1.default.error('Erro ao verificar token:', { error });
+        throw new Error('Token inválido');
     }
-}
-async function hashPassword(password) {
-    return bcryptjs_1.default.hash(password, SALT_ROUNDS);
-}
+};
+exports.verifyToken = verifyToken;
+const hashPassword = async (password) => {
+    const salt = await bcrypt_1.default.genSalt(10);
+    return bcrypt_1.default.hash(password, salt);
+};
+exports.hashPassword = hashPassword;
+const comparePasswords = async (password, hashedPassword) => {
+    return bcrypt_1.default.compare(password, hashedPassword);
+};
+exports.comparePasswords = comparePasswords;
 async function createUser(userData) {
     try {
         // Verificar se o email já existe
@@ -95,7 +95,7 @@ async function createUser(userData) {
             throw new Error('Email já cadastrado');
         }
         // Hash da senha
-        const hashedPassword = await hashPassword(userData.password);
+        const hashedPassword = await (0, exports.hashPassword)(userData.password);
         const newUser = {
             id: new Date().getTime().toString(), // Pode ser substituído por um UUID
             ...userData,
@@ -114,11 +114,11 @@ async function createUser(userData) {
 }
 async function validateToken(token) {
     try {
-        const decoded = await verifyToken(token);
+        const decoded = await (0, exports.verifyToken)(token);
         if (!decoded) {
             return false;
         }
-        const user = await User_1.default.findOne({ id: decoded.id });
+        const user = await User_1.default.findOne({ id: decoded.userId });
         return !!user;
     }
     catch (error) {

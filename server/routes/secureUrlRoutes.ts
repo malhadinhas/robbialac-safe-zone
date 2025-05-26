@@ -1,11 +1,13 @@
-import { Router } from 'express';
-import { generateSecureUrl } from '../controllers/secureUrlController';
-import { isAuthenticated } from '../middleware/authMiddleware'; // Proteger o endpoint
+import express from 'express';
+import { generateSecureDownloadUrl, generateSecureUploadUrl } from '../controllers/secureUrlController';
+import { isAuthenticated } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
-// GET /api/secure-url?key=<objectKey>
-// Retorna uma URL assinada para a chave R2 fornecida
-router.get('/', isAuthenticated, generateSecureUrl);
+// URL segura para download
+router.get('/download', isAuthenticated, generateSecureDownloadUrl);
 
-export default router; 
+// URL segura para upload
+router.post('/upload', isAuthenticated, generateSecureUploadUrl);
+
+export default router;

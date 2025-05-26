@@ -11,8 +11,8 @@ const userRoutes_1 = require("./routes/userRoutes");
 const videoRoutes_1 = require("./routes/videoRoutes");
 const incidentRoutes_1 = require("./routes/incidentRoutes");
 const departmentRoutes_1 = require("./routes/departmentRoutes");
-const medalRoutes_1 = require("./routes/medalRoutes");
-const statsRoutes_1 = require("./routes/statsRoutes");
+const medalRoutes_1 = __importDefault(require("./routes/medalRoutes"));
+const statsRoutes_1 = __importDefault(require("./routes/statsRoutes"));
 const mongoService_1 = require("./services/mongoService");
 // Carregar variáveis de ambiente
 dotenv_1.default.config();
@@ -56,8 +56,8 @@ mongodb_1.MongoClient.connect(mongoUri)
     app.use('/api/users', userRoutes_1.userRoutes);
     app.use('/api/incidents', incidentRoutes_1.incidentRoutes);
     app.use('/api/departments', departmentRoutes_1.departmentRoutes);
-    app.use('/api/medals', medalRoutes_1.medalRoutes);
-    app.use('/api/stats', statsRoutes_1.statsRoutes);
+    app.use('/api/medals', medalRoutes_1.default);
+    app.use('/api/stats', statsRoutes_1.default);
     // Middleware de erro
     app.use((err, req, res, next) => {
         console.error(err.stack);

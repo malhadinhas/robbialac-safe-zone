@@ -10,7 +10,7 @@ const User_1 = __importDefault(require("../models/User"));
 const Incident_1 = __importDefault(require("../models/Incident"));
 const LoginEvent_1 = __importDefault(require("../models/LoginEvent"));
 const UploadLog_1 = __importDefault(require("../models/UploadLog"));
-const UserActivity_1 = __importDefault(require("../models/UserActivity"));
+const UserActivity_1 = require("../models/UserActivity");
 /**
  * @function getBasicAnalytics
  * @description Controladora para buscar dados analíticos básicos da aplicação.
@@ -40,8 +40,8 @@ const getBasicAnalytics = async (req, res) => {
     }
     catch (error) {
         logger_1.default.error('Erro ao obter dados analíticos básicos:', {
-            error: error.message,
-            stack: error.stack,
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
         });
         res.status(500).json({ message: 'Erro ao buscar dados analíticos' });
     }
@@ -107,7 +107,7 @@ const getLoginStats = async (req, res) => {
         res.status(200).json(stats);
     }
     catch (error) {
-        logger_1.default.error('Erro ao obter estatísticas de login:', { error: error.message, stack: error.stack, groupBy });
+        logger_1.default.error('Erro ao obter estatísticas de login:', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined, groupBy });
         res.status(500).json({ message: 'Erro ao buscar estatísticas de login' });
     }
 };
@@ -134,7 +134,7 @@ const getUploadStats = async (req, res) => {
         res.status(200).json(stats);
     }
     catch (error) {
-        logger_1.default.error('Erro ao obter estatísticas de upload:', { error: error.message, stack: error.stack, groupBy });
+        logger_1.default.error('Erro ao obter estatísticas de upload:', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined, groupBy });
         res.status(500).json({ message: 'Erro ao buscar estatísticas de upload' });
     }
 };
@@ -149,44 +149,39 @@ exports.getUploadStats = getUploadStats;
  * @returns {Promise<void>} Responde com um objeto contendo os logs de erro paginados e informações de paginação, ou um erro (500).
  */
 const getErrorLogs = async (req, res) => {
-    // Obtém parâmetros de paginação da query string, com padrões.
-    const limit = parseInt(req.query.limit) || 50; // Limite de itens por página.
-    const page = parseInt(req.query.page) || 1; // Número da página atual.
-    const skip = (page - 1) * limit; // Calcula quantos documentos pular.
+    const limit = parseInt(req.query.limit) || 50;
+    const page = parseInt(req.query.page) || 1;
+    const skip = (page - 1) * limit;
     logger_1.default.info(`Requisição para obter logs de erro`, { limit, page });
     try {
-        // Obtém a coleção onde os logs de erro são armazenados (ex: 'errorLogs').
-        // Usar 'any' como tipo genérico se não houver uma interface definida, mas o ideal seria ter uma.
-        const activities = await UserActivity_1.default.find();
-        // Busca os documentos de log.
-        const errors = await UserActivity_1.default
-            .find() // Busca todos (sem filtro específico).
-            .sort({ timestamp: -1 }) // Ordena pelos mais recentes primeiro (baseado no campo 'timestamp' do log).
-            .skip(skip) // Pula os documentos das páginas anteriores.
-            .limit(limit) // Limita o número de documentos retornados para a página atual.
-            .lean(); // Converte para array.
-        // Conta o número total de documentos de erro na coleção para calcular a paginação.
-        const totalErrors = await UserActivity_1.default.countDocuments();
+        const activities = await UserActivity_1.UserActivity.find();
+        const errors = await UserActivity_1.UserActivity
+            .find()
+            .sort({ timestamp: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
+        const totalErrors = await UserActivity_1.UserActivity.countDocuments();
         logger_1.default.info(`Encontrados ${errors.length} logs de erro (página ${page}). Total: ${totalErrors}.`);
-        // Responde com os erros encontrados e informações de paginação.
         res.status(200).json({
-            errors, // Array com os documentos de erro da página atual.
-            totalErrors, // Número total de erros na coleção.
-            currentPage: page, // Número da página atual.
-            totalPages: Math.ceil(totalErrors / limit) // Número total de páginas.
+            errors,
+            totalErrors,
+            currentPage: page,
+            totalPages: Math.ceil(totalErrors / limit)
         });
     }
     catch (error) {
-        // Tratamento específico para erro comum: coleção não encontrada.
-        // Isso pode acontecer se o logger Winston MongoDB ainda não criou a coleção.
-        if (error.message.includes('ns not found')) {
+        if (error instanceof Error && error.message.includes('ns not found')) {
             logger_1.default.warn('Coleção errorLogs não encontrada. Verifique a configuração do logger MongoDB. Retornando array vazio.');
             res.status(200).json({ errors: [], totalErrors: 0, currentPage: 1, totalPages: 0 });
             return;
         }
-        // Captura e loga outros erros.
-        logger_1.default.error('Erro ao obter logs de erro:', { error: error.message, stack: error.stack, limit, page });
-        // Responde com erro 500.
+        logger_1.default.error('Erro ao obter logs de erro:', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+            limit,
+            page
+        });
         res.status(500).json({ message: 'Erro ao buscar logs de erro' });
     }
 };
