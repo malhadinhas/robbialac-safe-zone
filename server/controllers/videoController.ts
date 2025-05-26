@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { isValidObjectId } from 'mongoose';
 import { UploadLog } from '../types';
 import UploadLogModel from '../models/UploadLog';
-import { AuthenticatedRequest } from '../types/express';
+import { AuthenticatedRequest, RouteHandler } from '../types/express';
 
 interface VideoResponse {
   _id: string;
@@ -34,7 +34,7 @@ const videoProcessor = new VideoProcessor();
 const TEMP_DIR = path.join(process.cwd(), 'temp');
 
 // Buscar todos os vídeos
-export async function getVideos(req: Request, res: Response): Promise<void> {
+export const getVideos: RouteHandler = async (req, res) => {
   try {
     const videosFromDb = await Video.find().lean(); 
     logger.info(`Vídeos recuperados do DB para GET /api/videos: ${videosFromDb.length}`);
@@ -47,10 +47,10 @@ export async function getVideos(req: Request, res: Response): Promise<void> {
     });
     res.status(500).json({ message: 'Erro ao recuperar vídeos' });
   }
-}
+};
 
 // Buscar um vídeo específico
-export async function getVideoById(req: Request, res: Response): Promise<void> {
+export const getVideoById: RouteHandler = async (req, res) => {
   try {
     const { id } = req.params;
     if (!isValidObjectId(id)) {
@@ -77,7 +77,7 @@ export async function getVideoById(req: Request, res: Response): Promise<void> {
     res.status(500).json({ message: 'Erro ao obter vídeo por ID' });
     return;
   }
-}
+};
 
 // Função auxiliar para obter mensagem de erro
 function getErrorMessage(error: unknown): string {
@@ -88,7 +88,7 @@ function getErrorMessage(error: unknown): string {
 }
 
 // Criar um novo vídeo
-export async function createVideo(req: AuthenticatedRequest, res: Response): Promise<void> {
+export const createVideo: RouteHandler = async (req, res) => {
   let videoId: string | null = null;
   let originalFilePath: string | null = null;
   let uploadedFileSize: number | null = null;
@@ -348,10 +348,10 @@ export async function createVideo(req: AuthenticatedRequest, res: Response): Pro
     }
     res.status(500).json({ message: 'Erro ao criar vídeo' });
   }
-}
+};
 
 // Atualizar um vídeo
-export async function updateVideo(req: Request, res: Response): Promise<void> {
+export const updateVideo: RouteHandler = async (req, res) => {
   try {
     const video = await Video.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!video) {
@@ -365,10 +365,10 @@ export async function updateVideo(req: Request, res: Response): Promise<void> {
     logger.error('Erro ao atualizar vídeo', { id: req.params.id, error });
     res.status(500).json({ message: 'Erro ao atualizar vídeo' });
   }
-}
+};
 
 // Excluir um vídeo
-export async function deleteVideo(req: Request, res: Response): Promise<void> {
+export const deleteVideo: RouteHandler = async (req, res) => {
   try {
     const video = await Video.findByIdAndDelete(req.params.id);
     if (!video) {
@@ -384,10 +384,10 @@ export async function deleteVideo(req: Request, res: Response): Promise<void> {
     res.status(500).json({ message: 'Erro ao excluir vídeo' });
     return;
   }
-}
+};
 
 // Incrementar visualizações
-export async function incrementVideoViews(req: Request, res: Response): Promise<void> {
+export const incrementVideoViews: RouteHandler = async (req, res) => {
   try {
     if (!req.params.id) {
       logger.warn('Tentativa de incrementar visualizações sem ID do vídeo');
@@ -413,10 +413,10 @@ export async function incrementVideoViews(req: Request, res: Response): Promise<
     });
     res.status(500).json({ message: 'Erro ao incrementar visualizações' });
   }
-}
+};
 
 // Buscar vídeos mais visualizados por categoria
-export async function getLastViewedVideosByCategory(req: Request, res: Response): Promise<void> {
+export const getLastViewedVideosByCategory: RouteHandler = async (req, res) => {
   try {
     const { category } = req.params;
     const limit = parseInt(req.query.limit as string) || 5;
@@ -440,10 +440,10 @@ export async function getLastViewedVideosByCategory(req: Request, res: Response)
     res.status(500).json({ message: 'Erro ao buscar vídeos por categoria' });
     return;
   }
-}
+};
 
 // Função para buscar vídeos recentes
-export async function getRecentVideos(req: Request, res: Response): Promise<void> {
+export const getRecentVideos: RouteHandler = async (req, res) => {
     logger.info('Attempting to fetch recent videos...'); // Log inicial
     try {
         const limit = parseInt(req.query.limit as string) || 5;
@@ -481,4 +481,4 @@ export async function getRecentVideos(req: Request, res: Response): Promise<void
         });
         res.status(500).json({ message: 'Erro ao buscar vídeos recentes' });
     }
-}
+};

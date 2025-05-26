@@ -16,6 +16,7 @@ import fs from 'fs/promises'; // Módulo de sistema de arquivos (operações ass
 import Like from '../models/Like';
 import Comment from '../models/Comment';
 import mongoose from 'mongoose';
+import { AuthenticatedRequest, RouteHandler } from '../types/express';
 
 /**
  * @function createAccident
@@ -120,7 +121,7 @@ export const createAccident = async (req: Request, res: Response): Promise<void>
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com um array de acidentes (incluindo contagens e URL do PDF) ou um erro (status 500).
  */
-export const getAccidents = async (req: Request, res: Response): Promise<void> => {
+export const getAccidents: RouteHandler = async (req, res) => {
   try {
     // Tenta obter o ID do usuário logado do objeto req.user (assumindo middleware de autenticação).
     // Converte para ObjectId se existir, caso contrário fica null.

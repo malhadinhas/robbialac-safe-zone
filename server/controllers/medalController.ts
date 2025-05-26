@@ -10,8 +10,9 @@ import { Request, Response } from 'express';
 import Medal from '../models/Medal';
 import logger from '../utils/logger'; // Utilitário de logging
 import { ObjectId } from 'mongodb'; // Tipo ObjectId do MongoDB
-import UserActivity from '../models/UserActivity';
+import { UserActivity } from '../models/UserActivity';
 import UserMedal from '../models/UserMedal';
+import { AuthenticatedRequest } from '../types/express';
 
 /**
  * @interface Medal
@@ -57,7 +58,7 @@ export interface UserMedal {
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com um array JSON de todas as medalhas ou um erro (500).
  */
-export const getMedals = async (req: Request, res: Response): Promise<void> => {
+export const getMedals = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     // Busca todos os documentos na coleção.
     const medals = await Medal.find();
@@ -82,7 +83,7 @@ export const getMedals = async (req: Request, res: Response): Promise<void> => {
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com um array JSON das medalhas conquistadas pelo usuário (com data) ou um erro (500).
  */
-export const getUserMedals = async (req: Request, res: Response): Promise<void> => {
+export const getUserMedals = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { userId } = req.params; // ID do usuário da URL.
     logger.info(`Buscando medalhas para o usuário: ${userId}`);
@@ -135,7 +136,7 @@ export const getUserMedals = async (req: Request, res: Response): Promise<void> 
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com um array JSON das medalhas não conquistadas pelo usuário ou um erro (500).
  */
-export const getUserUnacquiredMedals = async (req: Request, res: Response): Promise<void> => {
+export const getUserUnacquiredMedals = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { userId } = req.params; // ID do usuário da URL.
     logger.info(`Buscando medalhas não conquistadas pelo usuário: ${userId}`);
@@ -316,7 +317,7 @@ export const checkActionBasedMedals = async (
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com sucesso (200 ou 201) ou erro (400, 404, 500).
  */
-export const assignMedalToUser = async (req: Request, res: Response): Promise<void> => {
+export const assignMedalToUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { userId, medalId } = req.params; // IDs da URL.
     logger.info(`Tentativa de atribuir manualmente a medalha ${medalId} ao usuário ${userId}`);
@@ -399,7 +400,7 @@ export const assignMedalToUser = async (req: Request, res: Response): Promise<vo
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com a medalha criada (201) ou erro (400, 409, 500).
  */
-export const createMedal = async (req: Request, res: Response): Promise<void> => {
+export const createMedal = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     // Obtém os dados da nova medalha do corpo da requisição.
     // Tipagem Omit<Medal, '_id'> indica que esperamos todos os campos exceto _id.
@@ -451,7 +452,7 @@ export const createMedal = async (req: Request, res: Response): Promise<void> =>
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com a medalha atualizada (200) ou erro (400, 404, 500).
  */
-export const updateMedal = async (req: Request, res: Response): Promise<void> => {
+export const updateMedal = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { medalId } = req.params;
     const updateData: Record<string, unknown> = { name: req.body.name, country: req.body.country, date: new Date(req.body.date) };
@@ -502,7 +503,7 @@ export const updateMedal = async (req: Request, res: Response): Promise<void> =>
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com mensagem de sucesso (200) ou erro (404, 500).
  */
-export const deleteMedal = async (req: Request, res: Response): Promise<void> => {
+export const deleteMedal = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { medalId } = req.params; // ID legível (slug) da medalha a ser deletada.
     logger.info(`Requisição para deletar medalha: ${medalId}`);

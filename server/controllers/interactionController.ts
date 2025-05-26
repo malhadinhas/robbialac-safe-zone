@@ -16,7 +16,7 @@ import { registerActivityData } from './activityController';
 import Accident from '../models/Accident';
 import Sensibilizacao from '../models/Sensibilizacao';
 import Incident from '../models/Incident';
-import { AuthenticatedRequest } from '../types/express';
+import { AuthenticatedRequest, RouteHandler } from '../types/express';
 
 /**
  * @function isValidItemType
@@ -140,7 +140,7 @@ export const addLike = async (req: Request, res: Response): Promise<void> => {
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com sucesso (200) ou erro (400, 401, 404, 500).
  */
-export const removeLike = async (req: Request, res: Response): Promise<void> => {
+export const removeLike: RouteHandler = async (req, res) => {
     // 1. Obter ID do usuário da requisição.
     const userId = req.user?.userId;
     if (!userId) {
@@ -199,7 +199,7 @@ export const removeLike = async (req: Request, res: Response): Promise<void> => 
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com o comentário criado (status 201) ou um erro (400, 401, 500).
  */
-export const addComment = async (req: Request, res: Response): Promise<void> => {
+export const addComment: RouteHandler = async (req, res) => {
     const { user } = req as unknown as AuthenticatedRequest;
     const userId = user?.userId;
     const userName = user?.name || 'Utilizador Desconhecido';

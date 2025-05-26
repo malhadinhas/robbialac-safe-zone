@@ -15,7 +15,7 @@ import Comment from '../models/Comment';
 import IncidentModel from '../models/Incident';
 import DepartmentModel from '../models/Department';
 import { isValidObjectId } from 'mongoose';
-import { AuthenticatedRequest } from '../types/express';
+import { AuthenticatedRequest, RouteHandler } from '../types/express';
 
 /**
  * @function getIncidents
@@ -439,7 +439,7 @@ export async function commentIncident(req: AuthenticatedRequest, res: Response):
   }
 }
 
-export async function getIncidentsByUser(req: AuthenticatedRequest, res: Response): Promise<void> {
+export const getIncidentsByUser: RouteHandler = async (req, res) => {
   try {
     const userId = req.user?.id;
 

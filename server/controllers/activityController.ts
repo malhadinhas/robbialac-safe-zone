@@ -21,6 +21,7 @@ import Like from '../models/Like';
 import Comment from '../models/Comment';
 import mongoose from 'mongoose'; // Importa mongoose para usar ObjectId
 import User from '../models/User'; // Importa o modelo User
+import { AuthenticatedRequest, RouteHandler } from '../types/express';
 
 /**
  * @interface FeedItem
@@ -114,7 +115,7 @@ export async function registerActivityData({ userId, category, activityId, point
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com status 201 e dados da atividade/medalhas ou um erro (400/500).
  */
-export const registerActivity = async (req: Request, res: Response): Promise<void> => {
+export const registerActivity: RouteHandler = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { userId, category, activityId, points, details } = req.body;
     await registerActivityData({ userId, category, activityId, points, details });
@@ -202,7 +203,7 @@ function generateActivityDescription(activity: UserActivity): string {
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com um array de atividades formatadas ou um erro (400/500).
  */
-export const getUserActivities = async (req: Request, res: Response): Promise<void> => {
+export const getUserActivities: RouteHandler = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { userId } = req.params; // ID do usuário da URL.
     // Limite de atividades a serem retornadas (padrão 10), obtido da query string.
