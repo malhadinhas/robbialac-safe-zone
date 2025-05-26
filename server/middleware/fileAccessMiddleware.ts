@@ -66,14 +66,16 @@ export const fileAccessMiddleware = async (req: FileAccessRequest, res: Response
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
       logger.warn('Tentativa de acesso não autorizado a arquivo');
-      return res.status(401).json({ error: 'Acesso não autorizado' });
+      res.status(401).json({ error: 'Acesso não autorizado' });
+      return;
     }
 
     // Verificar token
     const decoded = await verifyToken(token);
     if (!decoded) {
       logger.warn('Token inválido ao tentar acessar arquivo');
-      return res.status(401).json({ error: 'Token inválido' });
+      res.status(401).json({ error: 'Token inválido' });
+      return;
     }
 
     // Obter caminho do arquivo
@@ -82,13 +84,15 @@ export const fileAccessMiddleware = async (req: FileAccessRequest, res: Response
     // Verificar se arquivo existe
     if (!fs.existsSync(filePath)) {
       logger.warn('Tentativa de acesso a arquivo inexistente', { filePath });
-      return res.status(404).json({ error: 'Arquivo não encontrado' });
+      res.status(404).json({ error: 'Arquivo não encontrado' });
+      return;
     }
 
     // Validar tipo de arquivo
     if (!validateFileType(filePath)) {
       logger.warn('Tentativa de acesso a tipo de arquivo não permitido', { filePath });
-      return res.status(403).json({ error: 'Tipo de arquivo não permitido' });
+      res.status(403).json({ error: 'Tipo de arquivo não permitido' });
+      return;
     }
 
     // Adicionar informações do arquivo à requisição
