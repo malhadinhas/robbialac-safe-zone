@@ -371,7 +371,8 @@ export const getLikeInfo = async (req: Request, res: Response): Promise<void> =>
     const { itemType, itemId } = req.params;
     const userId = req.user?.userId;
     if (!itemId || !itemType || !isValidObjectId(itemId) || !isValidItemType(itemType)) {
-      return res.status(400).json({ message: 'Dados inválidos.' });
+      res.status(400).json({ message: 'Dados inválidos.' });
+      return;
     }
     // Contar likes
     const likeCount = await Like.countDocuments({ itemId: new ObjectId(itemId), itemType });

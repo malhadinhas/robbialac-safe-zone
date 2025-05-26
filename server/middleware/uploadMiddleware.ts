@@ -112,7 +112,8 @@ export const validateUploadedVideo = async (req: Request, res: Response, next: N
     
     if (!req.file) {
       logger.error('Nenhum arquivo enviado');
-      return res.status(400).json({ message: 'Nenhum arquivo enviado' });
+      res.status(400).json({ message: 'Nenhum arquivo enviado' });
+      return;
     }
 
     // Verifica se todos os campos obrigatórios estão presentes
@@ -132,9 +133,10 @@ export const validateUploadedVideo = async (req: Request, res: Response, next: N
         logger.error('Erro ao remover arquivo', { error: unlinkError });
       }
       
-      return res.status(400).json({ 
+      res.status(400).json({ 
         message: `Campos obrigatórios ausentes: ${missingFields.join(', ')}` 
       });
+      return;
     }
 
     logger.info('Iniciando validação pós-upload', {
@@ -168,9 +170,10 @@ export const validateUploadedVideo = async (req: Request, res: Response, next: N
         message: error instanceof Error ? error.message : 'Erro desconhecido'
       });
       
-      return res.status(400).json({ 
+      res.status(400).json({ 
         message: error instanceof Error ? error.message : 'Erro ao validar vídeo'
       });
+      return;
     }
   } catch (error) {
     // Remove o ficheiro se houver erro inesperado
@@ -191,9 +194,10 @@ export const validateUploadedVideo = async (req: Request, res: Response, next: N
       message: error instanceof Error ? error.message : 'Erro desconhecido'
     });
     
-    return res.status(400).json({ 
+    res.status(400).json({ 
       message: error instanceof Error ? error.message : 'Erro ao validar vídeo'
     });
+    return;
   }
 };
 
@@ -202,7 +206,7 @@ export const handleUploadError = (err: unknown, req: Request, res: Response, nex
   if (err instanceof multer.MulterError) {
     logger.error('Erro no upload', { error: err });
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         message: 'Arquivo muito grande. O tamanho máximo permitido é 10GB.' 
       });
     }
@@ -210,7 +214,8 @@ export const handleUploadError = (err: unknown, req: Request, res: Response, nex
   }
   if (err instanceof Error) {
     logger.error('Erro desconhecido no upload', { error: err.message, stack: err.stack });
-    return res.status(400).json({ message: err.message });
+    res.status(400).json({ message: err.message });
+    return;
   }
   next(err);
 };

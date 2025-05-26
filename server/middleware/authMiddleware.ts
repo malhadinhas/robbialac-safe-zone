@@ -45,7 +45,8 @@ export const isAuthenticated = async (req: AuthenticatedRequest, res: Response, 
         path: req.path,
         method: req.method
       });
-      return res.status(401).json({ message: 'Token de autenticação não fornecido' });
+      res.status(401).json({ message: 'Token de autenticação não fornecido' });
+      return;
     }
 
     const token = authHeader.split(' ')[1]; // Espera formato "Bearer TOKEN"
@@ -55,7 +56,8 @@ export const isAuthenticated = async (req: AuthenticatedRequest, res: Response, 
         authorization: authHeader,
         path: req.path
       });
-      return res.status(401).json({ message: 'Formato de token inválido' });
+      res.status(401).json({ message: 'Formato de token inválido' });
+      return;
     }
 
     const decodedToken = jwt.verify(token, config.jwtSecret) as JwtPayload;
@@ -65,7 +67,8 @@ export const isAuthenticated = async (req: AuthenticatedRequest, res: Response, 
         path: req.path,
         method: req.method
       });
-      return res.status(401).json({ message: 'Token inválido ou expirado' });
+      res.status(401).json({ message: 'Token inválido ou expirado' });
+      return;
     }
 
     // Adiciona informações do usuário ao objeto de requisição
@@ -108,7 +111,8 @@ export const isAdmin = async (req: AuthenticatedRequest, res: Response, next: Ne
     // Primeiro verifica se o usuário está autenticado
     await isAuthenticated(req, res, () => {
       if (!req.user) {
-        return res.status(401).json({ message: 'Usuário não autenticado' });
+        res.status(401).json({ message: 'Usuário não autenticado' });
+        return;
       }
 
       // Verifica se o usuário tem papel de administrador
@@ -118,7 +122,8 @@ export const isAdmin = async (req: AuthenticatedRequest, res: Response, next: Ne
           role: req.user.role,
           path: req.path
         });
-        return res.status(403).json({ message: 'Acesso não autorizado' });
+        res.status(403).json({ message: 'Acesso não autorizado' });
+        return;
       }
 
       logger.info('Acesso de administrador autorizado', { 
@@ -163,7 +168,8 @@ export const hasRole = (roles: string[]) => {
       // Primeiro verifica se o usuário está autenticado
       await isAuthenticated(req, res, () => {
         if (!req.user) {
-          return res.status(401).json({ message: 'Usuário não autenticado' });
+          res.status(401).json({ message: 'Usuário não autenticado' });
+          return;
         }
 
         // Verifica se o usuário tem um dos papéis permitidos
@@ -174,7 +180,8 @@ export const hasRole = (roles: string[]) => {
             requiredRoles: roles,
             path: req.path
           });
-          return res.status(403).json({ message: 'Acesso não autorizado' });
+          res.status(403).json({ message: 'Acesso não autorizado' });
+          return;
         }
 
         logger.info('Acesso autorizado para papel específico', { 
