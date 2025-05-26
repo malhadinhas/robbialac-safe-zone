@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { isValidObjectId } from 'mongoose';
 import { UploadLog } from '../types';
 import UploadLogModel from '../models/UploadLog';
+import { AuthenticatedRequest } from '../types/express';
 
 interface VideoResponse {
   _id: string;
@@ -52,24 +53,21 @@ export async function getVideos(req: Request, res: Response): Promise<void> {
 export async function getVideoById(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
-    
     if (!isValidObjectId(id)) {
       logger.warn('Tentativa de acesso GET /api/videos/:id com ID inválido', { id });
       res.status(400).json({ message: 'ID de vídeo inválido' });
       return;
     }
-    
-    // Busca o vídeo como objeto JS plano
     const video = await Video.findById(id).lean(); 
-    
     if (!video) {
       logger.warn('Vídeo não encontrado em GET /api/videos/:id', { id });
       res.status(404).json({ message: 'Vídeo não encontrado' });
       return;
     }
-    
     logger.info(`Vídeo encontrado em GET /api/videos/:id : ${id}`, { videoStatus: video.status });
     logger.info(`Dados do vídeo a serem enviados na resposta GET /api/videos/${id}:`, video);
+    res.json(video);
+    return;
   } catch (error: unknown) {
     logger.error('Erro ao obter vídeo por ID em GET /api/videos/:id', { 
       error: error instanceof Error ? error.message : String(error), 
@@ -77,6 +75,7 @@ export async function getVideoById(req: Request, res: Response): Promise<void> {
       stack: error instanceof Error ? error.stack : undefined
     });
     res.status(500).json({ message: 'Erro ao obter vídeo por ID' });
+    return;
   }
 }
 
@@ -89,7 +88,7 @@ function getErrorMessage(error: unknown): string {
 }
 
 // Criar um novo vídeo
-export async function createVideo(req: Request, res: Response): Promise<void> {
+export async function createVideo(req: AuthenticatedRequest, res: Response): Promise<void> {
   let videoId: string | null = null;
   let originalFilePath: string | null = null;
   let uploadedFileSize: number | null = null;
@@ -378,9 +377,12 @@ export async function deleteVideo(req: Request, res: Response): Promise<void> {
       return;
     }
     logger.info('Vídeo excluído com sucesso', { id: req.params.id });
+    res.json({ message: 'Vídeo excluído com sucesso' });
+    return;
   } catch (error) {
     logger.error('Erro ao excluir vídeo', { id: req.params.id, error });
     res.status(500).json({ message: 'Erro ao excluir vídeo' });
+    return;
   }
 }
 
@@ -418,26 +420,25 @@ export async function getLastViewedVideosByCategory(req: Request, res: Response)
   try {
     const { category } = req.params;
     const limit = parseInt(req.query.limit as string) || 5;
-
     logger.info('Buscando vídeos por categoria', { category, limit });
-
     const videos = await Video.find({ category })
       .sort({ views: -1 })
       .limit(limit)
       .lean();
-
     logger.info('Vídeos recuperados com sucesso', { 
       category,
       count: videos.length 
     });
-
     res.json(videos);
+    return;
   } catch (error) {
     logger.error('Erro ao buscar vídeos por categoria', { 
       error: error instanceof Error ? error.message : String(error),
       category: req.params.category,
       message: error instanceof Error ? error.message : 'Erro desconhecido'
     });
+    res.status(500).json({ message: 'Erro ao buscar vídeos por categoria' });
+    return;
   }
 }
 
