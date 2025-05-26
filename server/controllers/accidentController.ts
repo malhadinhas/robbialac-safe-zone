@@ -203,7 +203,7 @@ export const getAccidents = async (req: Request, res: Response): Promise<void> =
     if (accidents.length === 0) {
       logger.info('Nenhum acidente encontrado com os filtros aplicados.');
       res.json([]);
-      return; // Encerra a execução.
+      return;
     }
 
     // Mapeia os resultados da agregação para adicionar a URL assinada do PDF a cada acidente.
@@ -295,9 +295,8 @@ export const getAccidentById = async (req: Request, res: Response): Promise<void
     // Verifica se a agregação retornou algum resultado.
     if (!results || results.length === 0) {
       logger.warn('Acidente não encontrado após agregação por ID.', { docId: docId.toString() });
-      // Responde com 404 Not Found se nenhum documento corresponder ao ID.
       res.status(404).json({ error: 'Documento de acidente não encontrado' });
-      return; // Para a execução.
+      return;
     }
 
     // Pega o primeiro (e único) documento do array de resultados.
