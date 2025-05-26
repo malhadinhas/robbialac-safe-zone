@@ -80,20 +80,15 @@ const createAccident = async (req, res) => {
         res.status(201).json(savedAccident);
     }
     catch (error) {
-        // Captura qualquer erro ocorrido no bloco try.
-        // Log detalhado do erro no servidor para depuração.
         logger_1.default.error('Erro detalhado ao criar acidente:', {
-            errorMessage: error.message, // Mensagem do erro
-            stack: error.stack, // Stack trace do erro
-            requestBody: req.body, // Corpo da requisição original
-            fileName: req.file?.originalname // Nome do arquivo original (se houver)
+            errorMessage: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+            requestBody: req.body,
+            fileName: req.file?.originalname
         });
-        // Responde com um erro genérico para o cliente e detalhes do erro (status 400 Bad Request).
-        // 400 é usado aqui assumindo que a maioria dos erros seria por dados inválidos.
-        // Poderia ser 500 se o erro for claramente interno do servidor.
         res.status(400).json({
             error: 'Erro ao criar registro de acidente',
-            details: error.message // Inclui a mensagem original do erro nos detalhes
+            details: error instanceof Error ? error.message : String(error)
         });
     }
 };
@@ -116,7 +111,7 @@ const getAccidents = async (req, res) => {
     try {
         // Tenta obter o ID do usuário logado do objeto req.user (assumindo middleware de autenticação).
         // Converte para ObjectId se existir, caso contrário fica null.
-        const userId = req.user?.id ? new mongoose_1.default.Types.ObjectId(req.user.id) : null;
+        const userId = req.user?.userId ? new mongoose_1.default.Types.ObjectId(req.user.userId) : null;
         logger_1.default.info('Requisição para buscar acidentes recebida.', { userId: userId?.toString(), query: req.query });
         // Extrai possíveis parâmetros de filtro da query string da URL.
         const { country, startDate, endDate } = req.query;
@@ -190,7 +185,7 @@ const getAccidents = async (req, res) => {
         if (accidents.length === 0) {
             logger_1.default.info('Nenhum acidente encontrado com os filtros aplicados.');
             res.json([]);
-            return; // Encerra a execução.
+            return;
         }
         // Mapeia os resultados da agregação para adicionar a URL assinada do PDF a cada acidente.
         // Usa Promise.all para executar as chamadas assíncronas de getSignedUrl em paralelo.
@@ -211,9 +206,7 @@ const getAccidents = async (req, res) => {
                 return { ...accident, pdfUrl: signedUrl };
             }
             catch (urlError) {
-                // Captura erros que podem ocorrer durante a geração da URL para um PDF específico.
-                logger_1.default.error('Erro ao gerar URL assinada para PDF específico.', { accidentId: accident._id, key: accident.pdfFile?.key, error: urlError.message });
-                // Retorna o acidente mesmo assim, mas com pdfUrl como null para indicar a falha.
+                logger_1.default.error('Erro ao gerar URL assinada para PDF específico.', { accidentId: accident._id, key: accident.pdfFile?.key, error: urlError instanceof Error ? urlError.message : String(urlError) });
                 return { ...accident, pdfUrl: null };
             }
         }));
@@ -222,16 +215,14 @@ const getAccidents = async (req, res) => {
         res.json(accidentsWithUrls);
     }
     catch (error) {
-        // Captura erros gerais que podem ocorrer no controlador.
         logger_1.default.error('Erro geral no controlador getAccidents:', {
-            errorMessage: error.message,
-            stack: error.stack,
-            query: req.query // Loga os parâmetros da query que causaram o erro
+            errorMessage: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+            query: req.query
         });
-        // Responde com erro 500 Internal Server Error.
         res.status(500).json({
             error: 'Erro ao buscar documentos de acidentes',
-            details: error.message
+            details: error instanceof Error ? error.message : String(error)
         });
     }
 };
@@ -258,7 +249,7 @@ const getAccidentById = async (req, res) => {
         // Converte o ID string para um objeto ObjectId do Mongoose.
         const docId = new mongoose_1.default.Types.ObjectId(id);
         // Obtém o ID do usuário logado, se disponível.
-        const userId = req.user?.id ? new mongoose_1.default.Types.ObjectId(req.user.id) : null;
+        const userId = req.user?.userId ? new mongoose_1.default.Types.ObjectId(req.user.userId) : null;
         logger_1.default.info('Requisição para buscar acidente por ID recebida.', { docId: docId.toString(), userId: userId?.toString() });
         // Pipeline de agregação similar ao getAccidents, mas com $match pelo _id específico.
         const aggregationPipeline = [
@@ -280,9 +271,8 @@ const getAccidentById = async (req, res) => {
         // Verifica se a agregação retornou algum resultado.
         if (!results || results.length === 0) {
             logger_1.default.warn('Acidente não encontrado após agregação por ID.', { docId: docId.toString() });
-            // Responde com 404 Not Found se nenhum documento corresponder ao ID.
             res.status(404).json({ error: 'Documento de acidente não encontrado' });
-            return; // Para a execução.
+            return;
         }
         // Pega o primeiro (e único) documento do array de resultados.
         const accident = results[0];
@@ -306,7 +296,7 @@ const getAccidentById = async (req, res) => {
         }
         catch (urlError) {
             // Captura erros específicos da geração da URL.
-            logger_1.default.error('Erro ao gerar URL assinada para PDF (get by ID).', { accidentId: accident._id, key: accident.pdfFile?.key, error: urlError.message });
+            logger_1.default.error('Erro ao gerar URL assinada para PDF (get by ID).', { accidentId: accident._id, key: accident.pdfFile?.key, error: urlError instanceof Error ? urlError.message : String(urlError) });
             // Responde com os dados do acidente, mas indica que a URL não pôde ser gerada.
             res.json({ ...accident, pdfUrl: null });
         }
@@ -314,14 +304,14 @@ const getAccidentById = async (req, res) => {
     catch (error) {
         // Captura erros gerais no processo.
         logger_1.default.error('Erro geral no controlador getAccidentById:', {
-            errorMessage: error.message,
+            errorMessage: error instanceof Error ? error.message : String(error),
             id: req.params.id, // Loga o ID que causou o erro
-            stack: error.stack
+            stack: error instanceof Error ? error.stack : undefined
         });
         // Responde com erro 500 Internal Server Error.
         res.status(500).json({
             error: 'Erro ao buscar documento de acidente',
-            details: error.message
+            details: error instanceof Error ? error.message : String(error)
         });
     }
 };
@@ -342,7 +332,7 @@ const updateAccident = async (req, res) => {
         const { name, country, date } = req.body; // Dados a serem atualizados.
         logger_1.default.info('Requisição para atualizar acidente recebida.', { id, body: req.body, file: req.file?.originalname });
         // Objeto para armazenar os dados que serão efetivamente enviados para atualização no MongoDB.
-        let updateData = { name, country, date: new Date(date) };
+        const updateData = { name, country, date: new Date(date) };
         // Verifica se um novo arquivo foi enviado na requisição para substituir o existente.
         if (req.file) {
             logger_1.default.info('Novo arquivo PDF recebido para atualização.');
@@ -417,7 +407,7 @@ const updateAccident = async (req, res) => {
             }
             catch (urlError) {
                 // Loga o erro mas não impede a resposta, apenas a URL ficará null.
-                logger_1.default.error('Erro ao gerar URL assinada para PDF após atualização.', { id, key: updatedAccident.pdfFile.key, error: urlError.message });
+                logger_1.default.error('Erro ao gerar URL assinada para PDF após atualização.', { id, key: updatedAccident.pdfFile.key, error: urlError instanceof Error ? urlError.message : String(urlError) });
             }
         }
         else {
@@ -433,18 +423,16 @@ const updateAccident = async (req, res) => {
         res.json(accidentWithUrl);
     }
     catch (error) {
-        // Captura erros gerais, como falhas de validação ou problemas de rede/banco.
         logger_1.default.error('Erro geral no controlador updateAccident:', {
-            errorMessage: error.message,
-            id: req.params.id, // Loga o ID que estava sendo atualizado
-            requestBody: req.body, // Loga o corpo da requisição
-            fileName: req.file?.originalname, // Loga o nome do arquivo (se houver)
-            stack: error.stack
+            errorMessage: error instanceof Error ? error.message : String(error),
+            id: req.params.id,
+            requestBody: req.body,
+            fileName: req.file?.originalname,
+            stack: error instanceof Error ? error.stack : undefined
         });
-        // Responde com erro 400 Bad Request (comum para erros de validação).
         res.status(400).json({
             error: 'Erro ao atualizar registro de acidente',
-            details: error.message
+            details: error instanceof Error ? error.message : String(error)
         });
     }
 };
@@ -495,14 +483,14 @@ const deleteAccident = async (req, res) => {
     catch (error) {
         // Captura erros gerais que possam ocorrer durante a busca ou deleção.
         logger_1.default.error('Erro geral no controlador deleteAccident:', {
-            errorMessage: error.message,
+            errorMessage: error instanceof Error ? error.message : String(error),
             id: req.params.id, // Loga o ID que estava sendo deletado
-            stack: error.stack
+            stack: error instanceof Error ? error.stack : undefined
         });
         // Responde com erro 500 Internal Server Error.
         res.status(500).json({
             error: 'Erro ao deletar registro de acidente',
-            details: error.message
+            details: error instanceof Error ? error.message : String(error)
         });
     }
 };

@@ -33,25 +33,16 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserActivity = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const userActivitySchema = new mongoose_1.Schema({
-    userId: {
-        type: String,
-        required: true,
-        index: true,
-    },
-    action: {
-        type: String,
-        required: true,
-    },
-    details: {
-        type: mongoose_1.Schema.Types.Mixed,
-        required: true,
-    },
-    timestamp: {
-        type: Date,
-        default: Date.now,
-    },
+const IncidentSchema = new mongoose_1.Schema({
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    date: { type: Date, required: true },
+    location: { type: String },
+    reportedBy: { type: String, required: true },
+    status: { type: String, enum: ['open', 'closed', 'in_progress'], default: 'open' },
+    category: { type: String },
+}, {
+    timestamps: true
 });
-exports.UserActivity = mongoose_1.default.model('UserActivity', userActivitySchema);
+exports.default = mongoose_1.default.model('Incident', IncidentSchema);

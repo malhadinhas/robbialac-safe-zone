@@ -3,14 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getVideos = getVideos;
-exports.getVideoById = getVideoById;
-exports.createVideo = createVideo;
-exports.updateVideo = updateVideo;
-exports.deleteVideo = deleteVideo;
-exports.incrementVideoViews = incrementVideoViews;
-exports.getLastViewedVideosByCategory = getLastViewedVideosByCategory;
-exports.getRecentVideos = getRecentVideos;
+exports.getRecentVideos = exports.getLastViewedVideosByCategory = exports.incrementVideoViews = exports.deleteVideo = exports.updateVideo = exports.createVideo = exports.getVideoById = exports.getVideos = void 0;
 const Video_1 = __importDefault(require("../models/Video"));
 const logger_1 = __importDefault(require("../utils/logger"));
 const videoProcessingService_1 = require("../services/videoProcessingService");
@@ -22,23 +15,24 @@ const UploadLog_1 = __importDefault(require("../models/UploadLog"));
 const videoProcessor = new videoProcessingService_1.VideoProcessor();
 const TEMP_DIR = path_1.default.join(process.cwd(), 'temp');
 // Buscar todos os vídeos
-async function getVideos(req, res) {
+const getVideos = async (req, res) => {
     try {
-        // Busca os vídeos diretamente como objetos JS planos
         const videosFromDb = await Video_1.default.find().lean();
         logger_1.default.info(`Vídeos recuperados do DB para GET /api/videos: ${videosFromDb.length}`);
-        // Retorna os dados como estão (com as chaves R2, não URLs assinadas)
-        // ** LOG ANTES DE ENVIAR RESPOSTA **
-        logger_1.default.info('Dados dos vídeos a serem enviados na resposta GET /api/videos:', videosFromDb);
         res.json(videosFromDb);
+        logger_1.default.info('Dados dos vídeos a serem enviados na resposta GET /api/videos:', videosFromDb);
     }
     catch (error) {
-        logger_1.default.error('Erro ao recuperar vídeos em GET /api/videos', { error: error instanceof Error ? error.message : String(error) });
+        logger_1.default.error('Erro ao recuperar vídeos em GET /api/videos', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+        });
         res.status(500).json({ message: 'Erro ao recuperar vídeos' });
     }
-}
+};
+exports.getVideos = getVideos;
 // Buscar um vídeo específico
-async function getVideoById(req, res) {
+const getVideoById = async (req, res) => {
     try {
         const { id } = req.params;
         if (!(0, mongoose_1.isValidObjectId)(id)) {
@@ -46,34 +40,28 @@ async function getVideoById(req, res) {
             res.status(400).json({ message: 'ID de vídeo inválido' });
             return;
         }
-        // Busca o vídeo como objeto JS plano
         const video = await Video_1.default.findById(id).lean();
         if (!video) {
             logger_1.default.warn('Vídeo não encontrado em GET /api/videos/:id', { id });
             res.status(404).json({ message: 'Vídeo não encontrado' });
             return;
         }
-        // Não incrementa mais visualizações aqui, deve ser feito no frontend se necessário após carregar
-        /*
-        if (req.query.view === 'true' && video.status === 'ready') {
-          // A lógica de incremento precisa ser reavaliada,
-          // pois lean() retorna objeto plano, não documento Mongoose
-          // Poderia fazer um findByIdAndUpdate separado se necessário.
-          // await Video.findByIdAndUpdate(id, { $inc: { views: 1 } });
-          // logger.info('Visualização incrementada', { id });
-        }
-        */
-        // Retorna o vídeo como está (com as chaves R2, sem URLs assinadas)
         logger_1.default.info(`Vídeo encontrado em GET /api/videos/:id : ${id}`, { videoStatus: video.status });
-        // ** LOG ANTES DE ENVIAR RESPOSTA **
         logger_1.default.info(`Dados do vídeo a serem enviados na resposta GET /api/videos/${id}:`, video);
         res.json(video);
+        return;
     }
     catch (error) {
-        logger_1.default.error('Erro ao obter vídeo por ID em GET /api/videos/:id', { error: error instanceof Error ? error.message : String(error), id: req.params.id });
-        res.status(500).json({ message: 'Erro interno ao obter vídeo', error: error instanceof Error ? error.message : String(error) });
+        logger_1.default.error('Erro ao obter vídeo por ID em GET /api/videos/:id', {
+            error: error instanceof Error ? error.message : String(error),
+            id: req.params.id,
+            stack: error instanceof Error ? error.stack : undefined
+        });
+        res.status(500).json({ message: 'Erro ao obter vídeo por ID' });
+        return;
     }
-}
+};
+exports.getVideoById = getVideoById;
 // Função auxiliar para obter mensagem de erro
 function getErrorMessage(error) {
     if (error instanceof Error) {
@@ -82,7 +70,7 @@ function getErrorMessage(error) {
     return String(error);
 }
 // Criar um novo vídeo
-async function createVideo(req, res) {
+const createVideo = async (req, res) => {
     let videoId = null;
     let originalFilePath = null;
     let uploadedFileSize = null;
@@ -98,7 +86,6 @@ async function createVideo(req, res) {
         });
         if (!req.file) {
             logger_1.default.error('Nenhum arquivo enviado');
-            res.status(400).json({ message: 'Nenhum arquivo enviado' });
             return;
         }
         originalFilePath = req.file.path;
@@ -109,9 +96,6 @@ async function createVideo(req, res) {
         const missingFields = requiredFields.filter(field => !req.body[field]);
         if (missingFields.length > 0) {
             logger_1.default.warn('Campos obrigatórios ausentes', { missingFields });
-            res.status(400).json({
-                message: `Campos obrigatórios ausentes: ${missingFields.join(', ')}`
-            });
             return;
         }
         try {
@@ -120,7 +104,6 @@ async function createVideo(req, res) {
             const videoInfo = await videoProcessor.validateVideo(req.file.path);
             if (!videoInfo) {
                 logger_1.default.error('Erro na validação do vídeo');
-                res.status(400).json({ message: 'Erro na validação do vídeo' });
                 return;
             }
             // Gerar um videoId único usando UUID
@@ -248,7 +231,7 @@ async function createVideo(req, res) {
                             logger_1.default.info('Evento de upload registado com sucesso', { videoId: videoId.toString(), fileKey: newUploadLog.fileKey });
                         }
                         catch (logError) {
-                            logger_1.default.error('Falha ao registar evento de upload', { videoId: videoId.toString(), error: logError.message });
+                            logger_1.default.error('Falha ao registar evento de upload', { videoId: videoId.toString(), error: logError instanceof Error ? logError.message : String(logError) });
                         }
                     }
                     // <<< FIM: Registar Upload Log >>>
@@ -299,60 +282,45 @@ async function createVideo(req, res) {
             });
         }
         catch (validationError) {
-            logger_1.default.error('Erro na validação ou criação do vídeo', { validationError });
-            // Limpar arquivo temporário
+            logger_1.default.error('Erro na validação ou criação do vídeo', { validationError: validationError instanceof Error ? validationError.message : String(validationError) });
             if (req.file) {
                 try {
                     await fs_1.promises.unlink(req.file.path);
-                    logger_1.default.info('Arquivo temporário removido após erro de validação', {
-                        path: req.file.path
-                    });
+                    logger_1.default.info('Arquivo temporário removido após erro de validação', { path: req.file.path });
                 }
                 catch (cleanupError) {
-                    logger_1.default.error('Erro ao remover arquivo temporário', {
-                        error: cleanupError,
-                        path: req.file.path
-                    });
+                    logger_1.default.error('Erro ao remover arquivo temporário', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError), path: req.file.path });
                 }
             }
-            res.status(400).json({
-                message: validationError instanceof Error ? validationError.message : 'Erro na validação ou criação do vídeo'
-            });
             return;
         }
     }
     catch (error) {
         logger_1.default.error('Erro GERAL ao criar vídeo', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-        // Limpar arquivo temporário original em caso de erro inicial
         if (originalFilePath) {
             try {
                 await fs_1.promises.unlink(originalFilePath);
                 logger_1.default.info('Arquivo temporário original removido após erro inicial', { path: originalFilePath });
             }
             catch (cleanupError) {
-                logger_1.default.error('Erro ao remover arquivo temporário original após erro inicial', { error: cleanupError });
+                logger_1.default.error('Erro ao remover arquivo temporário original após erro inicial', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
             }
         }
         if (error instanceof Error && error.name === 'ValidationError') {
-            res.status(400).json({
-                message: 'Erro de validação',
-                errors: error.errors
-            });
+            res.status(400).json({ message: 'Erro de validação ao criar vídeo' });
             return;
         }
-        res.status(500).json({
-            message: 'Erro ao criar vídeo',
-            error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
-        });
+        res.status(500).json({ message: 'Erro ao criar vídeo' });
     }
-}
+};
+exports.createVideo = createVideo;
 // Atualizar um vídeo
-async function updateVideo(req, res) {
+const updateVideo = async (req, res) => {
     try {
         const video = await Video_1.default.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!video) {
             logger_1.default.warn('Vídeo não encontrado para atualização', { id: req.params.id });
-            res.status(404).json({ message: 'Vídeo não encontrado' });
+            res.status(404).json({ message: 'Vídeo não encontrado para atualização' });
             return;
         }
         logger_1.default.info('Vídeo atualizado com sucesso', { id: video._id });
@@ -362,26 +330,30 @@ async function updateVideo(req, res) {
         logger_1.default.error('Erro ao atualizar vídeo', { id: req.params.id, error });
         res.status(500).json({ message: 'Erro ao atualizar vídeo' });
     }
-}
+};
+exports.updateVideo = updateVideo;
 // Excluir um vídeo
-async function deleteVideo(req, res) {
+const deleteVideo = async (req, res) => {
     try {
         const video = await Video_1.default.findByIdAndDelete(req.params.id);
         if (!video) {
             logger_1.default.warn('Vídeo não encontrado para exclusão', { id: req.params.id });
-            res.status(404).json({ message: 'Vídeo não encontrado' });
+            res.status(404).json({ message: 'Vídeo não encontrado para exclusão' });
             return;
         }
         logger_1.default.info('Vídeo excluído com sucesso', { id: req.params.id });
         res.json({ message: 'Vídeo excluído com sucesso' });
+        return;
     }
     catch (error) {
         logger_1.default.error('Erro ao excluir vídeo', { id: req.params.id, error });
         res.status(500).json({ message: 'Erro ao excluir vídeo' });
+        return;
     }
-}
+};
+exports.deleteVideo = deleteVideo;
 // Incrementar visualizações
-async function incrementVideoViews(req, res) {
+const incrementVideoViews = async (req, res) => {
     try {
         if (!req.params.id) {
             logger_1.default.warn('Tentativa de incrementar visualizações sem ID do vídeo');
@@ -391,7 +363,7 @@ async function incrementVideoViews(req, res) {
         const video = await Video_1.default.findOneAndUpdate({ id: req.params.id }, { $inc: { views: 1 } }, { new: true });
         if (!video) {
             logger_1.default.warn(`Vídeo não encontrado para incremento de views: ${req.params.id}`);
-            res.status(404).json({ message: 'Vídeo não encontrado' });
+            res.status(404).json({ message: 'Vídeo não encontrado para incremento de views' });
             return;
         }
         logger_1.default.info(`Visualizações incrementadas com sucesso para o vídeo: ${video.id}`);
@@ -402,14 +374,12 @@ async function incrementVideoViews(req, res) {
             error,
             videoId: req.params.id
         });
-        res.status(500).json({
-            message: 'Erro ao incrementar visualizações',
-            details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+        res.status(500).json({ message: 'Erro ao incrementar visualizações' });
     }
-}
+};
+exports.incrementVideoViews = incrementVideoViews;
 // Buscar vídeos mais visualizados por categoria
-async function getLastViewedVideosByCategory(req, res) {
+const getLastViewedVideosByCategory = async (req, res) => {
     try {
         const { category } = req.params;
         const limit = parseInt(req.query.limit) || 5;
@@ -423,6 +393,7 @@ async function getLastViewedVideosByCategory(req, res) {
             count: videos.length
         });
         res.json(videos);
+        return;
     }
     catch (error) {
         logger_1.default.error('Erro ao buscar vídeos por categoria', {
@@ -430,21 +401,20 @@ async function getLastViewedVideosByCategory(req, res) {
             category: req.params.category,
             message: error instanceof Error ? error.message : 'Erro desconhecido'
         });
-        res.status(500).json({
-            message: 'Erro ao buscar vídeos',
-            details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+        res.status(500).json({ message: 'Erro ao buscar vídeos por categoria' });
+        return;
     }
-}
+};
+exports.getLastViewedVideosByCategory = getLastViewedVideosByCategory;
 // Função para buscar vídeos recentes
-async function getRecentVideos(req, res) {
+const getRecentVideos = async (req, res) => {
     logger_1.default.info('Attempting to fetch recent videos...'); // Log inicial
     try {
         const limit = parseInt(req.query.limit) || 5;
         logger_1.default.info(`Parsed limit: ${limit}`); // Log do limite
         if (limit <= 0) {
             logger_1.default.warn('Invalid limit requested for recent videos', { limit });
-            res.status(400).json({ error: 'O limite deve ser um número positivo.' });
+            res.status(400).json({ message: 'O limite deve ser um número positivo.' });
             return;
         }
         logger_1.default.info(`Querying database for ${limit} recent videos...`);
@@ -468,9 +438,7 @@ async function getRecentVideos(req, res) {
             stack: error instanceof Error ? error.stack : undefined,
             query: req.query
         });
-        res.status(500).json({
-            error: 'Erro ao buscar vídeos recentes',
-            details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+        res.status(500).json({ message: 'Erro ao buscar vídeos recentes' });
     }
-}
+};
+exports.getRecentVideos = getRecentVideos;

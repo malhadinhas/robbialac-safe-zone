@@ -3,70 +3,44 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.medalRoutes = void 0;
-exports.setMongoClient = setMongoClient;
 const express_1 = __importDefault(require("express"));
 const mongodb_1 = require("mongodb");
+const User_1 = __importDefault(require("../models/User"));
+const Medal_1 = __importDefault(require("../models/Medal"));
 const router = express_1.default.Router();
-let mongoClient;
-function setMongoClient(client) {
-    mongoClient = client;
-}
-// Listar todas as medalhas
-router.get('/', async (req, res) => {
-    try {
-        const db = mongoClient.db();
-        const medals = await db.collection('medals').find().toArray();
-        res.json(medals);
-    }
-    catch (error) {
-        console.error('Erro ao buscar medalhas:', error);
-        res.status(500).json({ error: 'Erro ao buscar medalhas' });
-    }
-});
-// Buscar medalhas de um usuário específico
 router.get('/user/:userId', async (req, res) => {
     try {
-        const db = mongoClient.db();
-        const user = await db.collection('users').findOne({
-            _id: new mongodb_1.ObjectId(req.params.userId)
-        });
+        const { userId } = req.params;
+        const user = await User_1.default.findById(userId);
         if (!user) {
-            return res.status(404).json({ error: 'Usuário não encontrado' });
+            return res.status(404).json({ message: 'Utilizador não encontrado.' });
         }
-        const medals = await db.collection('medals')
-            .find({
-            _id: { $in: user.medals?.map(id => new mongodb_1.ObjectId(id)) || [] }
-        })
-            .toArray();
-        res.json(medals);
+        const userMedals = await Medal_1.default.find({
+            _id: { $in: user.medals?.map((id) => new mongodb_1.ObjectId(id)) || [] }
+        });
+        res.json(userMedals);
     }
     catch (error) {
-        console.error('Erro ao buscar medalhas do usuário:', error);
-        res.status(500).json({ error: 'Erro ao buscar medalhas do usuário' });
+        res.status(500).json({ message: 'Erro ao obter medalhas do utilizador.', error });
     }
 });
-// Atribuir medalha a um usuário
 router.post('/award/:userId/:medalId', async (req, res) => {
     try {
-        const db = mongoClient.db();
-        const result = await db.collection('users').updateOne({ _id: new mongodb_1.ObjectId(req.params.userId) }, {
-            $addToSet: {
-                medals: new mongodb_1.ObjectId(req.params.medalId),
-                medalAcquisitions: {
-                    medalId: new mongodb_1.ObjectId(req.params.medalId),
-                    acquiredDate: new Date()
-                }
-            }
-        });
-        if (result.matchedCount === 0) {
-            return res.status(404).json({ error: 'Usuário não encontrado' });
+        const { userId, medalId } = req.params;
+        const user = await User_1.default.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'Utilizador não encontrado.' });
         }
-        res.json({ message: 'Medalha atribuída com sucesso' });
+        const alreadyAwarded = user.medals?.some((id) => id === medalId);
+        if (alreadyAwarded) {
+            return res.status(400).json({ message: 'Utilizador já tem esta medalha.' });
+        }
+        user.medals = [...(user.medals || []), medalId];
+        await user.save();
+        res.status(200).json({ message: 'Medalha atribuída com sucesso.' });
     }
     catch (error) {
-        console.error('Erro ao atribuir medalha:', error);
-        res.status(500).json({ error: 'Erro ao atribuir medalha' });
+        res.status(500).json({ message: 'Erro ao atribuir medalha.', error });
     }
 });
-exports.medalRoutes = router;
+exports.default = router;

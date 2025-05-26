@@ -1,8 +1,7 @@
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { Video } from "../../src/types";
 
-// Configuração do cliente R2
+// Variáveis de ambiente
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
 const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
@@ -12,6 +11,7 @@ if (!R2_ACCOUNT_ID || !R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY || !R2_BUCKET_N
   throw new Error('Variáveis de ambiente do Cloudflare R2 não configuradas');
 }
 
+// Cliente S3 configurado para Cloudflare R2
 const r2Client = new S3Client({
   region: 'auto',
   endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -22,7 +22,7 @@ const r2Client = new S3Client({
 });
 
 /**
- * Gera uma URL assinada para acesso temporário ao vídeo
+ * Gera uma URL assinada para acesso temporário ao vídeo HLS
  */
 export async function generateSignedUrl(videoId: string, expirationMinutes: number = 60): Promise<string> {
   try {
@@ -44,46 +44,24 @@ export async function generateSignedUrl(videoId: string, expirationMinutes: numb
 }
 
 /**
- * Gera uma URL assinada para upload de vídeo
+ * Gera uma URL assinada para upload de vídeo original
  */
 export async function generateUploadUrl(videoId: string, contentType: string): Promise<string> {
   try {
-    const command = new GetObjectCommand({
+    const command = new PutObjectCommand({
       Bucket: R2_BUCKET_NAME,
-      Key: `videos/${videoId}/original`,
+      Key: `videos/${videoId}/original.mp4`,
       ContentType: contentType,
     });
 
     const signedUrl = await getSignedUrl(r2Client, command, {
-      expiresIn: 3600, // 1 hora para upload
+      expiresIn: 3600, // 1 hora
     });
 
     console.log(`URL de upload gerada para o vídeo ${videoId}`);
     return signedUrl;
   } catch (error) {
     console.error("Erro ao gerar URL de upload:", error);
-    throw new Error("Falha ao gerar URL para upload do vídeo");
+    throw new Error("Falha ao gerar URL de upload para o vídeo");
   }
 }
-
-/**
- * Gera uma URL assinada para acesso temporário a um modelo 3D
- */
-export async function generate3DModelSignedUrl(modelId: string, expirationMinutes: number = 60): Promise<string> {
-  try {
-    const command = new GetObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: `models/${modelId}`,
-    });
-
-    const signedUrl = await getSignedUrl(r2Client, command, {
-      expiresIn: expirationMinutes * 60,
-    });
-
-    console.log(`URL assinada gerada para o modelo 3D ${modelId}, expira em ${expirationMinutes} minutos`);
-    return signedUrl;
-  } catch (error) {
-    console.error("Erro ao gerar URL assinada para modelo 3D:", error);
-    throw new Error("Falha ao gerar URL de acesso ao modelo 3D");
-  }
-} 

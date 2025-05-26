@@ -8,7 +8,8 @@
 import { config } from 'dotenv';
 import { DatabaseConfig } from '../types';
 import mongoose from 'mongoose';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
+
 
 // Carrega as variáveis de ambiente do arquivo .env para process.env.
 // Esta é uma prática padrão para gerenciar configurações sensíveis fora do código.

@@ -1,16 +1,15 @@
-import { Router } from 'express';
-import { getUserPointsBreakdown, getUserRanking, getLeaderboard } from '../controllers/statsController';
+import express from 'express';
+import {
+  getUserRanking,
+} from '../controllers/statsController';
 import { isAuthenticated } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
-// Obter distribuição de pontos do usuário por categoria
-router.get('/user/:userId/points-breakdown', getUserPointsBreakdown);
+// Middleware global
+router.use(isAuthenticated);
 
-// Obter ranking do usuário
-router.get('/user/:userId/ranking', getUserRanking);
+// Obter ranking dos utilizadores
+router.get('/ranking', getUserRanking);
 
-// Obter leaderboard geral
-router.get('/leaderboard', getLeaderboard);
-
-export default router; 
+export default router;

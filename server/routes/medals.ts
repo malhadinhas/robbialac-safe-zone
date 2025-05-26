@@ -1,31 +1,28 @@
 import express from 'express';
 import {
-  getMedals,
-  getUserMedals,
-  getUserUnacquiredMedals,
+  getAllMedals,
   assignMedalToUser,
-  createMedal,
-  updateMedal,
-  deleteMedal
 } from '../controllers/medalController';
-
-// Middleware de autenticação/autorização
-import { isAdmin, isAuthenticated } from '../middleware/authMiddleware';
+import { isAuthenticated } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-// Rotas Públicas (ou protegidas por autenticação geral)
-router.get('/', getMedals);
-router.get('/user/:userId', isAuthenticated, getUserMedals);
-router.get('/user/:userId/unacquired', isAuthenticated, getUserUnacquiredMedals);
+// Obter todas as medalhas
+router.get('/', isAuthenticated, getAllMedals);
 
-// Rota para Atribuição Manual (protegida por admin)
-router.post('/assign/:userId/:medalId', isAdmin, assignMedalToUser);
+// Atribuir medalha a um utilizador
+router.post(
+  '/assign/:userId/:medalId',
+  isAuthenticated,
+  async (req, res) => {
+    const { userId, medalId } = req.params;
+    try {
+      await assignMedalToUser(userId, medalId);
+      res.status(200).json({ message: 'Medalha atribuída com sucesso.' });
+    } catch (error) {
+      res.status(500).json({ error: 'Erro ao atribuir medalha.' });
+    }
+  }
+);
 
-// --- NOVAS ROTAS CRUD (protegidas por admin) ---
-router.post('/', isAdmin, createMedal);
-router.put('/:medalId', isAdmin, updateMedal);
-router.delete('/:medalId', isAdmin, deleteMedal);
-// -----------------------------------------------
-
-export default router; 
+export default router;

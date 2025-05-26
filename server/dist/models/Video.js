@@ -92,6 +92,25 @@ const VideoSchema = new mongoose_1.Schema({
     },
     processingError: {
         type: String
+    },
+    url: {
+        type: String,
+        required: true
+    },
+    thumbnailUrl: {
+        type: String,
+        required: true
+    },
+    tags: [{
+            type: String
+        }],
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
     }
 }, {
     timestamps: true // Adiciona automaticamente createdAt e updatedAt
@@ -105,7 +124,9 @@ VideoSchema.index({ videoId: 1 }, { unique: true }); // Garante unicidade do vid
 VideoSchema.pre('save', function (next) {
     // Atualiza updatedAt
     if (this.isModified()) {
-        this.updatedAt = new Date();
+        if ('updatedAt' in this) {
+            this.updatedAt = new Date();
+        }
     }
     // Garante que o id não seja nulo
     if (this.id === null || this.id === undefined) {

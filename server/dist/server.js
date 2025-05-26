@@ -12,26 +12,11 @@ const express_1 = __importDefault(require("express"));
 const helmet_1 = __importDefault(require("helmet"));
 const path_1 = __importDefault(require("path"));
 const database_1 = require("./services/database");
-const incidents_1 = __importDefault(require("./routes/incidents"));
-const videos_1 = __importDefault(require("./routes/videos"));
-const secureUrlRoutes_1 = __importDefault(require("./routes/secureUrlRoutes"));
-const departments_1 = __importDefault(require("./routes/departments"));
-const medals_1 = __importDefault(require("./routes/medals"));
-const zones_1 = __importDefault(require("./routes/zones"));
-const statsRoutes_1 = __importDefault(require("./routes/statsRoutes"));
-const activityRoutes_1 = __importDefault(require("./routes/activityRoutes"));
-const system_1 = __importDefault(require("./routes/system"));
-const accidentRoutes_1 = __importDefault(require("./routes/accidentRoutes"));
 const checkStorage_1 = require("./scripts/checkStorage");
 const logger_1 = __importDefault(require("./utils/logger"));
-const sensibilizacaoRoutes_1 = __importDefault(require("./routes/sensibilizacaoRoutes"));
-const analyticsRoutes_1 = __importDefault(require("./routes/analyticsRoutes"));
-const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
-const interactionRoutes_1 = __importDefault(require("./routes/interactionRoutes"));
 const cors_1 = __importDefault(require("./config/cors"));
 const fileAccessMiddleware_1 = __importDefault(require("./middleware/fileAccessMiddleware"));
-const uploads_1 = __importDefault(require("./routes/uploads"));
-const users_1 = __importDefault(require("./routes/users"));
+const routes_1 = __importDefault(require("./routes"));
 /**
  * Verificação das variáveis de ambiente necessárias para o Cloudflare R2
  * Estas variáveis são críticas para o funcionamento do armazenamento de arquivos
@@ -92,28 +77,14 @@ if (process.env.NODE_ENV === 'development') {
  * Captura e formata todos os erros não tratados
  */
 app.use((err, req, res, next) => {
-    res.status(500).json({ error: err.message });
+    logger_1.default.error('Erro não tratado:', { error: err });
+    res.status(500).json({ message: 'Erro interno do servidor' });
 });
 /**
  * Configuração das rotas da API
  * Cada rota é modularizada em seu próprio arquivo
  */
-app.use('/api/auth', authRoutes_1.default);
-app.use('/api/accidents', accidentRoutes_1.default); // Gestão de acidentes
-app.use('/api/incidents', incidents_1.default); // Gestão de incidentes
-app.use('/api/videos', videos_1.default); // Gestão de vídeos
-app.use('/api/secure-url', secureUrlRoutes_1.default); // URLs seguras
-app.use('/api/departments', departments_1.default); // Gestão de departamentos
-app.use('/api/medals', medals_1.default); // Sistema de gamificação
-app.use('/api/zones', zones_1.default); // Gestão de zonas
-app.use('/api/stats', statsRoutes_1.default); // Estatísticas
-app.use('/api/activities', activityRoutes_1.default); // Registro de atividades
-app.use('/api/system', system_1.default); // Configurações do sistema
-app.use('/api/sensibilizacao', sensibilizacaoRoutes_1.default); // Gestão de sensibilização
-app.use('/api/analytics', analyticsRoutes_1.default); // Adiciona as rotas de analytics
-app.use('/api/interactions', interactionRoutes_1.default);
-app.use('/api/uploads', uploads_1.default);
-app.use('/api/users', users_1.default);
+app.use('/api', routes_1.default);
 /**
  * Rota de diagnóstico para verificar status do banco de dados
  */
@@ -130,15 +101,18 @@ app.get('/api/health', (req, res) => {
  * Conecta ao banco de dados antes de iniciar o servidor
  */
 console.log('Início do server/server.ts');
-(0, database_1.connectToDatabase)().then(() => {
-    console.log('Antes do app.listen');
-    app.listen(port, '0.0.0.0', () => {
-        logger_1.default.info(`Servidor rodando em http://0.0.0.0:${port}`);
-        console.log('Depois do app.listen');
-    });
-}).catch(error => {
-    console.error('Erro no connectToDatabase:', error);
-    throw new Error(`Erro ao iniciar o servidor: ${error.message}`);
-});
+const startServer = async () => {
+    try {
+        await (0, database_1.connectToDatabase)();
+        app.listen(port, '0.0.0.0', () => {
+            logger_1.default.info(`Servidor rodando em http://0.0.0.0:${port}`);
+        });
+    }
+    catch (error) {
+        logger_1.default.error('Erro ao iniciar servidor:', { error });
+        process.exit(1);
+    }
+};
+startServer();
 // Mantém o processo vivo para debug no Railway (remover depois)
 setInterval(() => { }, 1000 * 60 * 60);

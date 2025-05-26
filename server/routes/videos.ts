@@ -1,35 +1,33 @@
-import { Router } from 'express';
+import express from 'express';
 import {
   createVideo,
-  getVideos,
-  getVideoById,
   deleteVideo,
+  getVideoById,
+  getVideos,
   getLastViewedVideosByCategory
 } from '../controllers/videoController';
 import { isAuthenticated, isAdmin } from '../middleware/authMiddleware';
-import { uploadVideo } from '../middleware/uploadMiddleware';
+import {upload} from '../middleware/uploadMiddleware';
 
-const router = Router();
+const router = express.Router();
 
-// Middleware de log
-router.use((req, res, next) => {
-  console.log(`[ROUTE LOG] ${req.method} ${req.originalUrl} chegou em /api/videos`);
-  next();
-});
+// Middleware global
+router.use(isAuthenticated);
 
-// Upload de vídeo
-router.post('/upload', isAuthenticated, uploadVideo, createVideo);
+// Upload de novo vídeo (apenas admins)
+router.post('/upload', isAdmin, upload.single('video'), createVideo);
 
-// Listar vídeos
-router.get('/', isAuthenticated, getVideos);
+// Listar todos os vídeos
+router.get('/', getVideos);
 
 // Obter vídeo por ID
-router.get('/:id', isAuthenticated, getVideoById);
+router.get('/:id', getVideoById);
 
-// Deletar vídeo (apenas admin)
-router.delete('/:id', isAuthenticated, isAdmin, deleteVideo);
+// Remover vídeo (apenas admins)
+router.delete('/:id', isAdmin, deleteVideo);
 
-// Vídeos mais vistos por categoria
-router.get('/category/:category/most-viewed', isAuthenticated, getLastViewedVideosByCategory);
+// Obter últimos vídeos vistos por categoria
+router.get('/category/:category/most-viewed', getLastViewedVideosByCategory);
 
-export default router; 
+export default router;
+

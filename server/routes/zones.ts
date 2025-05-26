@@ -1,15 +1,19 @@
-import { Router } from 'express';
-import { getZoneStats, getZoneStatsById, getCategoryStats } from '../controllers/zoneController';
+import express from 'express';
+import {
+  getZoneStats,
+  getZoneStatsById
+} from '../controllers/zoneController';
+import { isAuthenticated } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
-// Listar estatísticas de todas as zonas
-router.get('/stats', getZoneStats);
+// Middleware global de autenticação
+router.use(isAuthenticated);
 
-// Buscar estatísticas de uma zona específica
+// Obter estatísticas globais por zona
+router.get('/', getZoneStats);
+
+// Obter estatísticas por ID de zona
 router.get('/:zoneId/stats', getZoneStatsById);
 
-// Buscar estatísticas de categorias
-router.get('/categories/stats', getCategoryStats);
-
-export default router; 
+export default router;

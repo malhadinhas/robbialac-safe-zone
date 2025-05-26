@@ -1,43 +1,25 @@
-import express from 'express';
-import multer from 'multer';
+import express, { RequestHandler } from 'express';
 import {
   createSensibilizacao,
   getSensibilizacoes,
-  getSensibilizacaoById,
-  updateSensibilizacao,
-  deleteSensibilizacao
 } from '../controllers/sensibilizacaoController';
+import { upload } from '../middleware/uploadMiddleware'; // <- CORRIGIDO
 import { isAuthenticated, hasRole } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-// Configuração do multer para upload de arquivos
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
-      cb(null, true);
-    } else {
-      cb(new Error('Apenas arquivos PDF são permitidos'));
-    }
-  },
-});
-
-// Middleware de autenticação para todas as rotas
+// Middleware global
 router.use(isAuthenticated);
 
-// Rotas para documentos de sensibilização
+// Obter todas as sensibilizações
+router.get('/', getSensibilizacoes);
 
-// Permitir que qualquer usuário autenticado visualize documentos (sem restrição de role)
-router.get('/', getSensibilizacoes);  
-router.get('/:id', getSensibilizacaoById);
+// Criar nova sensibilização
+router.post(
+  '/',
+  hasRole(['admin_qa', 'admin_app']) as RequestHandler,
+  upload.single('document'),
+  createSensibilizacao
+);
 
-// Manter restrições para operações de modificação
-router.post('/', hasRole(['admin_qa', 'admin_app']), upload.single('document'), createSensibilizacao);
-router.put('/:id', hasRole(['admin_qa']), upload.single('document'), updateSensibilizacao);
-router.delete('/:id', hasRole(['admin_qa']), deleteSensibilizacao);
-
-export default router; 
+export default router;

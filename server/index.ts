@@ -6,8 +6,8 @@ import { userRoutes } from './routes/userRoutes';
 import { videoRoutes } from './routes/videoRoutes';
 import { incidentRoutes } from './routes/incidentRoutes';
 import { departmentRoutes } from './routes/departmentRoutes';
-import { medalRoutes } from './routes/medalRoutes';
-import { statsRoutes } from './routes/statsRoutes';
+import medalRoutes from './routes/medalRoutes';
+import statsRoutes from './routes/statsRoutes';
 import { setMongoClient } from './services/mongoService';
 
 // Carregar variáveis de ambiente

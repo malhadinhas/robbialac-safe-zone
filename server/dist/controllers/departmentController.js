@@ -26,7 +26,7 @@ const getDepartments = async (req, res) => {
     }
     catch (error) {
         // Captura qualquer erro que ocorra durante a busca no banco de dados.
-        logger_1.default.error('Erro ao recuperar departamentos:', { error: error.message, stack: error.stack });
+        logger_1.default.error('Erro ao recuperar departamentos:', { error: error instanceof Error ? error.message : String(error) });
         // Responde com um status 500 (Internal Server Error) e uma mensagem de erro genérica.
         res.status(500).json({ message: 'Erro ao recuperar departamentos' });
     }
@@ -62,7 +62,7 @@ const getDepartmentById = async (req, res) => {
     }
     catch (error) {
         // Captura e loga erros ocorridos durante a busca.
-        logger_1.default.error('Erro ao recuperar departamento por ID (string):', { id: req.params.id, error: error.message, stack: error.stack });
+        logger_1.default.error('Erro ao recuperar departamento por ID (string):', { id: req.params.id, error: error instanceof Error ? error.message : String(error) });
         // Responde com erro 500.
         res.status(500).json({ message: 'Erro ao recuperar departamento' });
     }
@@ -90,7 +90,7 @@ const getDepartmentsWithEmployees = async (req, res) => {
     }
     catch (error) {
         // Captura e loga erros.
-        logger_1.default.error('Erro ao recuperar departamentos (com funcionários?):', { error: error.message, stack: error.stack });
+        logger_1.default.error('Erro ao recuperar departamentos (com funcionários?):', { error: error instanceof Error ? error.message : String(error) });
         // Responde com erro 500.
         res.status(500).json({ message: 'Erro ao recuperar departamentos com funcionários' });
     }
@@ -166,7 +166,7 @@ const updateDepartmentEmployeeCount = async (req, res) => {
     }
     catch (error) {
         // Captura e loga erros gerais que possam ocorrer.
-        logger_1.default.error('Erro ao atualizar contagem de funcionários:', { id: req.params.departmentId, error: error.message, stack: error.stack });
+        logger_1.default.error('Erro ao atualizar contagem de funcionários:', { id: req.params.departmentId, error: error instanceof Error ? error.message : String(error) });
         // Responde com erro 500.
         res.status(500).json({ message: 'Erro ao atualizar contagem de funcionários' });
     }
