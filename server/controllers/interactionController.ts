@@ -43,7 +43,7 @@ const isValidItemType = (type: string): type is 'qa' | 'accident' | 'sensibiliza
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com sucesso (200) ou erro (400, 401, 500).
  */
-export const addLike = async (req: Request, res: Response): Promise<void> => {
+export const addLike = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     // 1. Obter ID do usuário da requisição (assumindo que o middleware de autenticação adicionou `req.user`).
     //    Acessa `req.user?.id` - o `?` previne erro se `req.user` não existir.
     const userId = req.user?.userId;
@@ -140,7 +140,7 @@ export const addLike = async (req: Request, res: Response): Promise<void> => {
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com sucesso (200) ou erro (400, 401, 404, 500).
  */
-export const removeLike: RouteHandler = async (req, res) => {
+export const removeLike: RouteHandler = async (req: AuthenticatedRequest, res: Response) => {
     // 1. Obter ID do usuário da requisição.
     const userId = req.user?.userId;
     if (!userId) {
@@ -199,7 +199,7 @@ export const removeLike: RouteHandler = async (req, res) => {
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com o comentário criado (status 201) ou um erro (400, 401, 500).
  */
-export const addComment: RouteHandler = async (req, res) => {
+export const addComment: RouteHandler = async (req: AuthenticatedRequest, res: Response) => {
     const { user } = req as unknown as AuthenticatedRequest;
     const userId = user?.userId;
     const userName = user?.name || 'Utilizador Desconhecido';
@@ -310,7 +310,7 @@ export const addComment: RouteHandler = async (req, res) => {
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com um objeto contendo a lista de comentários e dados de paginação, ou um erro (400, 500).
  */
-export const getCommentsByItem = async (req: Request, res: Response): Promise<void> => {
+export const getCommentsByItem = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     // 1. Obter itemId e itemType dos parâmetros da rota.
     const { itemId, itemType } = req.params;
     // Obter parâmetros de paginação da query string, com valores padrão.
@@ -366,7 +366,7 @@ export const getCommentsByItem = async (req: Request, res: Response): Promise<vo
  * @description Devolve o número de likes e se o utilizador autenticado já fez like num item.
  * @route GET /api/interactions/like/:itemType/:itemId
  */
-export const getLikeInfo = async (req: Request, res: Response): Promise<void> => {
+export const getLikeInfo = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { itemType, itemId } = req.params;
     const userId = req.user?.userId;

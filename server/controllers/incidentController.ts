@@ -117,7 +117,7 @@ export async function getIncidentById(req: Request, res: Response): Promise<void
  * @param {Response} res - Objeto da resposta Express.
  * @returns {Promise<void>} Responde com o incidente criado (status 201) ou um erro (400, 401, 500).
  */
-export async function createIncident(req: Request, res: Response): Promise<void> {
+export async function createIncident(req: AuthenticatedRequest, res: Response): Promise<void> {
   try {
     const { title, description, location, department, severity, type } = req.body;
 
@@ -439,7 +439,7 @@ export async function commentIncident(req: AuthenticatedRequest, res: Response):
   }
 }
 
-export const getIncidentsByUser: RouteHandler = async (req, res) => {
+export const getIncidentsByUser: RouteHandler = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
 

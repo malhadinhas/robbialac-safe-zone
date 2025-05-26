@@ -9,6 +9,7 @@ import fs from 'fs/promises';
 import Like from '../models/Like';
 import Comment from '../models/Comment';
 import mongoose from 'mongoose';
+import { AuthenticatedRequest } from '../types/AuthenticatedRequest';
 
 interface SensibilizacaoWithUrls extends ISensibilizacao {
   pdfUrl: string | null;
@@ -83,7 +84,7 @@ export const createSensibilizacao = async (req: Request, res: Response): Promise
   }
 };
 
-export const getSensibilizacoes = async (req: Request, res: Response): Promise<void> => {
+export const getSensibilizacoes = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id ? new mongoose.Types.ObjectId(req.user.id) : null;
     logger.info('Iniciando busca de documentos de sensibilização com agregação');
@@ -191,7 +192,7 @@ export const getSensibilizacoes = async (req: Request, res: Response): Promise<v
   }
 };
 
-export const getSensibilizacaoById = async (req: Request, res: Response): Promise<void> => {
+export const getSensibilizacaoById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
        logger.warn('ID inválido fornecido para getSensibilizacaoById', { id: req.params.id });
