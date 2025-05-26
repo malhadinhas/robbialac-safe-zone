@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import mime from 'mime-types';
 import { verifyToken } from '../services/auth';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 
 // Lista de tipos MIME permitidos
 const ALLOWED_MIME_TYPES = [
@@ -38,6 +38,10 @@ interface FileAccessRequest extends Request {
   user?: {
     userId: string;
     role: string;
+  };
+  fileInfo?: {
+    path: string;
+    sanitizedName: string;
   };
 }
 

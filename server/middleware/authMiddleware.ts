@@ -127,7 +127,7 @@ export const isAdmin = async (req: AuthenticatedRequest, res: Response, next: Ne
       }
 
       logger.info('Acesso de administrador autorizado', { 
-        userId: req.user.id, 
+        userId: req.user.userId, 
         role: req.user.role,
         path: req.path
       });
@@ -158,8 +158,7 @@ export const hasRole = (roles: string[]) => {
       if (BYPASS_AUTH) {
         logger.warn('BYPASS_AUTH ativado: Pulando verificação de papéis');
         req.user = {
-          id: 'dev-admin',
-          email: 'admin@robbialac.pt',
+          userId: 'dev-admin',
           role: 'admin_app'
         };
         return next();
@@ -175,7 +174,7 @@ export const hasRole = (roles: string[]) => {
         // Verifica se o usuário tem um dos papéis permitidos
         if (!roles.includes(req.user.role)) {
           logger.warn('Acesso não autorizado para o papel requerido', { 
-            userId: req.user.id, 
+            userId: req.user.userId, 
             role: req.user.role,
             requiredRoles: roles,
             path: req.path
@@ -185,7 +184,7 @@ export const hasRole = (roles: string[]) => {
         }
 
         logger.info('Acesso autorizado para papel específico', { 
-          userId: req.user.id, 
+          userId: req.user.userId, 
           role: req.user.role,
           path: req.path
         });
